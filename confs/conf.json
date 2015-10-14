@@ -1,0 +1,153 @@
+{
+  "interval": 0.1,
+  "log": "/tmp/io_manager.log",
+  "vms": [
+     {
+       "id": "0",
+       "pid": "4405",
+       "cpu": "1",
+       "devices": [
+         {
+               "id": "d.1",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.2",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }, {
+       "id": "1",
+       "pid": "4577",
+       "cpu": "2",
+       "devices": [
+         {
+               "id": "d.3",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.4",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }, {
+       "id": "2",
+       "pid": "4749",
+       "cpu": "3",
+       "devices": [
+         {
+               "id": "d.5",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.6",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }, {
+       "id": "3",
+       "pid": "4922",
+       "cpu": "4",
+       "devices": [
+         {
+               "id": "d.7",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.8",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }, {
+       "id": "4",
+       "pid": "5101",
+       "cpu": "5",
+       "devices": [
+         {
+               "id": "d.9",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.10",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }, {
+       "id": "5",
+       "pid": "5275",
+       "cpu": "6",
+       "devices": [
+         {
+               "id": "d.11",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.12",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }, {
+       "id": "6",
+       "pid": "5456",
+       "cpu": "7",
+       "devices": [
+         {
+               "id": "d.13",
+               "backing_device_id": "bd.1",
+               "vhost_worker":"w.1"
+         },
+         {
+               "id": "d.14",
+               "backing_device_id": "bd.2",
+               "vhost_worker":"w.1"
+         }
+       ]
+     }
+  ],
+  "backing_devices": [
+    {
+      "id": "bd.1",
+      "type": "physical",
+      "interrupts": [{"irq_prefix": "eth_scorpio"}],
+      "vhost_worker":"w.1"
+    },
+    {
+      "id": "bd.2",
+      "type": "software",
+      "threads": [],
+      "vhost_worker":"w.1"
+    }
+  ],
+  "workers":[
+    {
+       "id":"w.1",
+       "cpu":"0"
+    }
+  ],
+  "throughput_balancer": {
+    "stop_shared_ratio": "0.3",
+    "start_shared_ratio": "0.45",
+    "add_ratio": "0.9",
+    "remove_ratio": "1.5",
+    "cooling_off_period": "6",
+    "epochs_last_action": "0"
+  },
+  "latency_balancer": {
+    "cooling_off_period": "0",
+    "epochs_last_action": "0",
+    "add_ratio": "0.5",
+    "remove_ratio": "0.01"
+  }
+}

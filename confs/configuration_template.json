@@ -1,0 +1,102 @@
+{
+  "interval": "<the interval in which the IO manager algorithm should be run(secs)>",
+  "log": "<log file, if element is absent then send log to stdout or /dev/null in case of daemon>",
+  "daemon": "<start/stop/restart/no>",
+  "vms": [
+     {
+       "id": "<vm unique id/name>",
+       "pid": "<vm process id>",
+       "cpu": "<core affinity list>",
+       "devices": [
+         {
+               "id": "<IO virtual device unique id>",
+               "backing_device_id": "<backing device unique id>",
+               "vhost_worker":"<IO worker unique id>"
+         },
+         ...
+       ]
+     },
+     ...
+  ],
+  "backing_devices": [
+    {
+      "id": "<backing device unique id>",
+      "type": "software",
+      "threads": [{"pid": "<thread pid>"}, ...]
+    },
+    {
+      "id": "<backing device unique id>",
+      "type": "physical",
+      "interrupts": [{"irq_prefix": "<the IRQ prefix for the device>"}, ...]
+    },
+    ...
+  ],
+  "workers":[
+    {
+       "id":"<IO worker unique id>",
+       "cpu":"<core affinity list>"
+    },
+    ...
+  ],
+  "throughput_policy": {
+    "stop_shared_ratio": "ratio of empty cycles to stop handling multiple devices in a single worker.",
+    "start_shared_ratio": "ratio of worker cycles to start handling multiple devices in a single worker.",
+    "add_ratio": "ratio of worker cycles to add an IO core.",
+    "remove_ratio": "ratio of empty cycles to remove an IO core."
+  },
+  "latency_policy": {
+    "add_ratio": "0.5",
+    "remove_ratio": "0.01"
+  },
+  "io_cores_balance_policy": {
+    "id": "preconfigured",
+    "configurations" : [
+      {
+        "id": "<The configuration id. for example, elvis-1>",
+        "vhost_workers": [{"id": "<IO worker unique id>"}],
+        "vms": [
+          {
+               "id": "<IO virtual device unique id>",
+               "vhost_worker":"<IO worker unique id>"
+          },
+          ...
+        ]
+      },
+      ...
+    ]
+  },
+  "vms_balance_policy": {
+    "id": "preconfigured",
+    "configurations" : [
+      {
+        "id": "<The configuration id. for example, elvis-1>",
+        "cores": "<The number vm cores used in this configuration>",
+        "vms": [
+          {
+               "id": "<IO virtual device unique id>",
+               "cpu":"<IO worker unique id>"
+          },
+          ...
+        ]
+      },
+      ...
+    ]
+  }
+
+  "virtual_queue_classifier":{
+    "items_threshold": "<the maximum number of pending items allowed in a queue to be considered stuck.>",
+    "max_stuck_cycles": "<the maximum number of cycles a queue can be stuck without service before switching to it>",
+
+    "latency_threshold": "<the number of times a queue needs to be stuck during an epoch to be considered latency sensitive>",
+    "latency_min_processed_data_limit": "",
+    "latency_max_processed_data_limit": "",
+
+    "throughput_threshold": "<the number of times a queue needs to be limited during an epoch to be considered throughput oriented>",
+    "throughput_min_processed_data_limit": "",
+    "throughput_max_processed_data_limit": "",
+
+    "work_list_max_stuck_cycles": "<the maximum number of cycles the worker work list can with pending items without service>",
+
+    "active_threshold": "<the amount of bytes that has to pass through the queue to be considered active>"
+  }
+}
