@@ -1,4 +1,5 @@
 import re
+import logging
 
 from utils.aux import spilt_output_into_rows
 from utils.aux import syscmd, err
@@ -217,3 +218,9 @@ class CPUUsage:
 
     def get_interrupts(self, requested_cpus):
         return sum(self.interrups_counters[k] for k in requested_cpus)
+
+    def get_ticks(self):
+        # in jiffies rather then seconds
+        logging.info(self.uptime.up_time_diff)
+        return self.uptime.up_time_diff * 100
+

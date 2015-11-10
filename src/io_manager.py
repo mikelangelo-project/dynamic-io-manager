@@ -127,13 +127,19 @@ def main(argv):
 
     # start the log file if exists
     if "log" in conf and conf["log"]:
+        timestamp = time.strftime("%Y-%m-%d_%H:%M:%S")
+        log_file = os.path.expanduser(conf["log"])
+        timestamp_log_file = log_file + ".%s.txt" % (timestamp,)
         log_format = "[%(filename)s:%(lineno)s] %(message)s"
-        logging.basicConfig(filename=os.path.expanduser(conf["log"]),
+        logging.basicConfig(filename=timestamp_log_file,
                             format=log_format, level=logging.INFO)
         # logging.basicConfig(stream=sys.stdout, format=log_format,
         #                     level=logging.INFO)
         logging.info("****** start of a new run: %s ******" %
-                     (time.strftime("%Y-%m-%d %H:%M:%S"),))
+                     (timestamp,))
+        if os.path.exists(log_file):
+            os.unlink(log_file)
+        os.symlink(timestamp_log_file, log_file)
 
     # set the interval in which the IO manager works
     interval = float(conf["interval"]) if "interval" in conf \
@@ -162,7 +168,7 @@ def main(argv):
     devices = [dev for vm in vm_manager.vms for dev in vm.devices]
 
     # set up manager policies
-    vq_classifier = VirtualQueueClassifier()
+    vq_classifier = VirtualQueueClassifier(conf["virtual_queue_classifier"])
     # poll_policy = PollPolicy(conf["poll_policy"])
     poll_policy = NullPollPolicy()
     io_core_policy = LastAddedPolicy.create_io_cores_policy(conf["workers"])

@@ -1,7 +1,8 @@
 import logging
 
 from utils.vhost import Vhost, vhost_write, vhost_read, \
-    vhost_worker_set_cpu_mask
+    vhost_worker_set_cpu_mask, get_cpu_usage
+# ProcessCPUUsageCounter
 from utils.io_worker import IOWorker
 
 __author__ = 'eyalmo'
@@ -31,7 +32,7 @@ class IOWorkersManager:
         logging.info("\x1b[37mIOWorkersManager initialize\x1b[39m")
         shared_workers = len(self.io_workers) > 0
 
-        self.vq_classifier.initialize(shared_workers)
+        self.vq_classifier.initialize()
         self.poll_policy.initialize(shared_workers)
         self.throughput_policy.initialize()
         self.latency_policy.initialize()
@@ -125,10 +126,8 @@ class IOWorkersManager:
         self.poll_policy.update_polling()
 
     def update_vq_classifications(self):
-        if self.epochs_last_action <= self.cooling_off_period:
-            return
-
-        self.vq_classifier.update_classifications()
+        can_update = self.epochs_last_action > self.cooling_off_period
+        self.vq_classifier.update_classifications(can_update)
 
     def _move_devices(self, balance_changes):
         logging.info("\x1b[37mMoving devices:\x1b[39m")
@@ -159,6 +158,7 @@ class IOWorkersManager:
         logging.info("initialize the io worker")
         self.io_workers = [IOWorker({"id": worker_id, "cpu": io_core}), ]
         vhost_worker_set_cpu_mask(vhost.workers[worker_id], 1 << io_core)
+        vhost.workers[worker_id]["cpu"] = io_core
 
         # move all devices to the single worker
         logging.info("move all devices to the single worker")
@@ -197,6 +197,10 @@ class IOWorkersManager:
         vhost_write(vhost.workersGlobal, "create", new_io_core)
         new_worker_id = vhost_read(vhost.workersGlobal, "create").strip()
         vhost.update_all_entries_with_id(new_worker_id)
+        vhost.workers[new_worker_id]["cpu_usage_counter"] = \
+            get_cpu_usage(vhost.workers[new_worker_id]["pid"])
+        # vhost.workers[new_worker_id]["cpu_usage_counter"] = \
+        #     ProcessCPUUsageCounter(new_worker_id)
         vhost_worker_set_cpu_mask(vhost.workers[new_worker_id],
                                   1 << new_io_core)
         # logging.info("Added Worker: {id: %s, cpu: %d}" % (new_worker_id,

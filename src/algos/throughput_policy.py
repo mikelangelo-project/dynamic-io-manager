@@ -52,29 +52,34 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # The ratio of total empty cycles to cycles this epoch
         self.start_shared_ratio = float(policy_info["start_shared_ratio"])
 
+        self.average_bytes_per_packet = None
         self.ratio = None
+        self.overall_io_ratio = None
         self.io_cores = None
         self.shared_workers = False
 
+        self.cycles = VhostCounter("cycles")
         self.work_cycles = VhostCounter("work_cycles", "total_work_cycles")
         self.softirq_interference = VhostCounter("softirq_interference",
                                                  "ksoftirqs")
 
         self.per_worker_counters = {
-            n: VhostCounter(n) for n in ["empty_polls", "empty_works", "loops"]
+            n: VhostCounter(n) for n in ["empty_polls", "empty_works", "loops", 
+                                         "cpu_usage_counter"]
         }
         self.per_queue_counters = {
             n: VhostCounter(n) for n in
             ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
-             "notif_wait", "notif_works", "poll_cycles", "poll_empty",
-             "poll_empty_cycles", "poll_limited", "poll_pending_cycles",
-             "poll_wait"]
+             "notif_wait", "notif_works", "poll_cycles", "poll_bytes", 
+             "poll_empty", "poll_empty_cycles", "poll_limited", 
+             "poll_pending_cycles", "poll_wait", "sendmsg_calls"]
         }
 
     def initialize(self):
         vhost = Vhost.INSTANCE.vhost
         self.work_cycles.initialize(vhost, Vhost.INSTANCE.vhost["cycles"])
-        self.softirq_interference.initialize(vhost)
+        self.cycles.initialize(vhost, Vhost.INSTANCE.vhost["cycles"])
+        self.softirq_interference.initialize(vhost, Vhost.INSTANCE.vhost["cycles"])
 
         for c in self.per_worker_counters.values():
             c.initialize(vhost)
@@ -84,10 +89,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def calculate_load(self, shared_workers):
         vhost = Vhost.INSTANCE.vhost
         workers = Vhost.INSTANCE.workers
-
+        
+        self.cycles.update(vhost, [vhost])
         self.work_cycles.update(vhost, workers.values())
         self.softirq_interference.update(vhost, workers.values())
-        cycles_this_epoch = vhost["cycles_this_epoch"]
+        cycles_this_epoch = self.cycles.delta # vhost["cycles_this_epoch"]
 
         self.io_cores = len(workers) if shared_workers else 1
         self.shared_workers = shared_workers
@@ -95,6 +101,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
         empty_cycles = total_cycles_this_epoch - self.work_cycles.delta
 
+        logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
+                     (self.cycles.delta,))
         logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
                      (self.work_cycles.delta,))
         logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
@@ -135,26 +143,54 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # activity (which is a useful work). 1 means a full core was wasted.
         self.ratio = float(empty_cycles) / float(cycles_this_epoch) - \
             softirq_cpu_ratio
+        # this the ratio of cycles used to handle virtual IO.    
+        effective_io_ratio = \
+            float(self.work_cycles.delta) / float(self.cycles.delta) + \
+                softirq_cpu_ratio
 
         logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
+        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" % 
+                     (effective_io_ratio,))
 
         logging.info("----------------")
         for c in sorted(self.per_worker_counters.values(),
                         key=lambda x: x.name):
             c.update(vhost, workers.values())
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
+        self.overall_io_ratio = \
+            self.per_worker_counters["cpu_usage_counter"].delta / \
+                float(CPUUsage.INSTANCE.get_ticks())
+        if self.overall_io_ratio == 0:
+            self.overall_io_ratio = 0.0000001
+        logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
+            (self.overall_io_ratio,))
         logging.info("----------------")
         queues = Vhost.INSTANCE.queues.values()
         for c in sorted(self.per_queue_counters.values(), key=lambda x: x.name):
             c.update(vhost, queues)
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
         logging.info("----------------")
-        logging.info("empty_polls ratio: %.2f." %
-                     (float(self.per_worker_counters["empty_polls"].delta) /
-                      float(self.per_worker_counters["loops"].delta,)))
-        logging.info("empty_works ratio: %.2f." %
-                     (float(self.per_worker_counters["empty_works"].delta) /
-                      float(self.per_worker_counters["loops"].delta,)))
+        if int(self.per_worker_counters["loops"].delta) != 0:
+            logging.info("empty_polls ratio: %.2f." %
+                         (float(self.per_worker_counters["empty_polls"].delta) /
+                          float(self.per_worker_counters["loops"].delta,)))
+            logging.info("empty_works ratio: %.2f." %
+                         (float(self.per_worker_counters["empty_works"].delta) /
+                          float(self.per_worker_counters["loops"].delta,)))
+        else:
+            logging.info("empty_polls ratio: 0.0.")
+            logging.info("empty_works ratio: 0.0.")
+        
+        self.average_bytes_per_packet = 0
+        if self.per_queue_counters["sendmsg_calls"].delta > 0:
+            self.average_bytes_per_packet = \
+                float(self.per_queue_counters["notif_bytes"].delta + 
+                      self.per_queue_counters["poll_cycles"].delta) / \
+                self.per_queue_counters["sendmsg_calls"].delta
+
+        logging.info("efficient io ratio: %.2f" % 
+            (effective_io_ratio / self.overall_io_ratio,))
+
 
     def should_update_core_number(self):
         add, can_remove = self._should_update_core_number(self.ratio)
@@ -163,7 +199,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
                          "ratio is %.2f.\x1b[39m" % (self.ratio,))
 
             vhost = Vhost.INSTANCE.vhost
-            cycles_this_epoch = vhost["cycles_this_epoch"]
+            cycles_this_epoch = self.cycles.delta # vhost["cycles_this_epoch"]i
+            logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
+                         (cycles_this_epoch,))
 
             total_cycles_this_epoch = cycles_this_epoch * self.io_cores
             empty_cycles = total_cycles_this_epoch - self.work_cycles.delta
@@ -176,7 +214,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def should_start_shared_worker(self):
         if self.shared_workers:
             return False
-        full_ratio = 1 - self.ratio
+        full_ratio = self.overall_io_ratio  # 1 - self.ratio
         if self.start_shared_ratio >= full_ratio:
             return False
         logging.info("\x1b[mstart_shared_ratio: %0.2f.\x1b[39m" %
@@ -188,7 +226,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def should_stop_shared_worker(self):
         if not self.shared_workers or self.io_cores > 1:
             return False
-        full_ratio = 1 - self.ratio
+        full_ratio = self.overall_io_ratio  #1 - self.ratio
         if self.stop_shared_ratio <= full_ratio:
             return False
 

@@ -49,6 +49,44 @@ def vhost_worker_get_cpu_mask(worker):
     return parse_cpu_mask_from_pid(pid)
 
 
+def get_cpu_usage(pid):
+    cmd = "/bin/cat /proc/%s/stat" % (pid,)
+    res = syscmd(cmd).split()
+    # msg({i: n for i, n in enumerate(res)})
+    if not res:
+        warn("%s failed, a process with that pid was not found.")
+        return 0
+    return int(res[13]) + int(res[14])
+
+
+class ProcessCPUUsageCounter:
+    def __init__(self, pid):
+        # gets both user and kernel cpu ticks.
+        self.cmd = "/bin/cat /proc/%s/stat" % (pid,)
+        self.pid = pid
+
+        self.current = self._parse_output() 
+        self.delta = 0
+
+    def _parse_output(self):
+        res = syscmd(self.cmd).split()
+        # msg({i: n for i, n in enumerate(res)})
+        if not res:
+            warn("%s failed, a process with that pid was not found. update "
+                 "vm pids file and run again" % (self.cmd,))
+            return 0
+        return int(res[13]) + int(res[14])
+
+    def update(self):
+        value = self._parse_output()
+        self.delta = value - self.current
+        self.current = value
+
+    def __str__(self):
+        return "%s(pid=%s, current=%d, delta=%d)" % \
+                (self.__class__, self.pid, self.current, self.delta)
+
+
 class Vhost:
     workersGlobalPattern = re.compile('worker')
 
@@ -166,6 +204,8 @@ class Vhost:
                                                  show_files=True,
                                                  show_only_readable=True)}
             Vhost.update_all_entries(w)
+            w["cpu_usage_counter"] = get_cpu_usage(w["pid"])
+            # w["cpu_usage_counter"] = ProcessCPUUsageCounter(w["pid"])
 
         for d_id in ls(os.path.join(self.path, "dev")):
             d_id = d_id.strip()
@@ -202,7 +242,9 @@ class Vhost:
         
         for w in self.workers.values():
             Vhost.update_all_entries(w)
-        
+            w["cpu_usage_counter"] = get_cpu_usage(w["pid"])
+            # w["cpu_usage_counter"].update()
+             
         for dev in self.devices.values():
             Vhost.update_all_entries(dev)
         
