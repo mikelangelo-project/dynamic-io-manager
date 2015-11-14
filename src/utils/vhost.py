@@ -87,6 +87,28 @@ class ProcessCPUUsageCounter:
                 (self.__class__, self.pid, self.current, self.delta)
 
 
+class VhostCounter:
+    def __init__(self, name, element_name=None):
+        self.name = name
+        self.element_name = element_name if element_name is not None else name
+
+        self.total = "total_%s" % (self.name,)
+        self.last_epoch = "%s_last_epoch" % (self.name,)
+
+        self.delta = 0
+
+    def initialize(self, vhost, initial_value=0):
+        vhost[self.total] = initial_value
+
+    def update(self, vhost, elements):
+        total = sum(e[self.element_name] for e in elements)
+        last_epoch = vhost[self.last_epoch] = vhost[self.total]
+        vhost[self.total] = total
+
+        self.delta = total - last_epoch
+        return self.delta
+
+
 class Vhost:
     workersGlobalPattern = re.compile('worker')
 
@@ -123,6 +145,23 @@ class Vhost:
         self.cpus = CPU.parse_cpus()
         self.sockets = len(self.cpus) / self.cores_per_socket
         self._initialize()
+
+        self.cycles = VhostCounter("cycles")
+        self.work_cycles = VhostCounter("work_cycles", "total_work_cycles")
+        self.softirq_interference = VhostCounter("softirq_interference",
+                                                 "ksoftirqs")
+
+        self.per_worker_counters = {
+            n: VhostCounter(n) for n in ["empty_polls", "empty_works", "loops",
+                                         "cpu_usage_counter"]
+        }
+        self.per_queue_counters = {
+            n: VhostCounter(n) for n in
+            ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
+             "notif_wait", "notif_works", "poll_cycles", "poll_bytes",
+             "poll_empty", "poll_empty_cycles", "poll_limited",
+             "poll_pending_cycles", "poll_wait", "sendmsg_calls"]
+        }
 
     @staticmethod
     def is_workers_global(key, value):
@@ -228,6 +267,15 @@ class Vhost:
                 
         self.vhost["cycles_last_epoch"] = self.vhost["cycles"]
 
+        self.work_cycles.initialize(self.vhost, self.vhost["cycles"])
+        self.cycles.initialize(self.vhost, self.vhost["cycles"])
+        self.softirq_interference.initialize(self.vhost, self.vhost["cycles"])
+
+        for c in self.per_worker_counters.values():
+            c.initialize(self.vhost)
+        for c in self.per_queue_counters.values():
+            c.initialize(self.vhost)
+
     def update(self, update_epoch=True, rescan_files=False):
         if rescan_files:
             self._initialize()
@@ -255,6 +303,15 @@ class Vhost:
             vq["notif_works_last_epoch"] = vq["notif_works"] 
             vq["notif_works_this_epoch"] = notif_works_this_epoch
 
+
+        self.cycles.update(vhost, [vhost])
+        self.work_cycles.update(vhost, workers.values())
+        self.softirq_interference.update(vhost, workers.values())
+
+        for c in self.per_worker_counters.values():
+            c.update(self.vhost, self.workers.values())
+        for c in self.per_queue_counters.values():
+            c.update(self.vhost, self.queues.values())
 
 if __name__ == '__main__':
     workers = True          

@@ -15,7 +15,7 @@ from algos.io_cores_rebalance_policy import IOCoresPreConfiguredBalancePolicy
 from algos.vms_rebalance_policy import VmsPreConfiguredBalancePolicy
 from algos.removal_policy import LastAddedPolicy
 from algos.throughput_policy import VMCoreAdditionPolicy, \
-    IOWorkerThroughputPolicy
+    IOWorkerThroughputPolicy, ThroughputRegretPolicy
 from algos.latency_policy import LatencyPolicy
 from algos.vq_classifier import VirtualQueueClassifier
 
@@ -178,6 +178,7 @@ def main(argv):
     # io_core_balance_policy = BalanceByDeviceNumberPolicy()
     throughput_policy = IOWorkerThroughputPolicy(conf["throughput_policy"])
     latency_policy = LatencyPolicy(conf["latency_policy"])
+    regret_policy = ThroughputRegretPolicy(conf["throughput_regret_policy"])
 
     # setup the io core controller
     io_workers_manager = IOWorkersManager(devices, bdm, conf["workers"],
@@ -186,7 +187,8 @@ def main(argv):
                                           throughput_policy,
                                           latency_policy,
                                           io_core_policy,
-                                          io_core_balance_policy)
+                                          io_core_balance_policy,
+                                          regret_policy)
 
     daemon = IOManagerDaemon(io_workers_manager, vm_manager, bdm, interval)
     if "daemon" in conf:

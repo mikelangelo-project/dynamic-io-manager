@@ -1,9 +1,38 @@
 #!/usr/bin/python
 import logging
+import time
 
 from utils.vhost import Vhost
 from utils.cpuusage import CPUUsage
 from utils.aux import parse_user_list
+
+
+class ThroughputRegretPolicy:
+    def __init__(self, policy_info):
+        self.interval = float(policy_info["interval"])
+
+    def initialize(self):
+        pass
+
+    def should_regret(self):
+        vhost_inst = Vhost.INSTANCE
+        vhost = Vhost.INSTANCE.vhost
+        bytes = vhost_inst.per_queue_counters["notif_bytes"] + \
+            vhost_inst.per_queue_counters["poll_bytes"]
+        cycles = vhost_inst.cycles
+        ratio_before = bytes / cycles
+
+        time.sleep(self.interval)
+        vhost_inst.update()
+        time.sleep(self.interval)
+        vhost_inst.update()
+
+        bytes = vhost_inst.per_queue_counters["notif_bytes"] + \
+            vhost_inst.per_queue_counters["poll_bytes"]
+        cycles = vhost_inst.cycles
+        ratio_after = bytes / cycles
+
+        return ratio_before > ratio_after
 
 
 class AdditionPolicy:
@@ -23,27 +52,6 @@ class AdditionPolicy:
         return add, can_remove
 
 
-class VhostCounter:
-    def __init__(self, name, element_name=None):
-        self.name = name
-        self.element_name = element_name if element_name is not None else name
-
-        self.total = "total_%s" % (self.name,)
-        self.last_epoch = "%s_last_epoch" % (self.name,)
-
-        self.delta = 0
-
-    def initialize(self, vhost, initial_value=0):
-        vhost[self.total] = initial_value
-
-    def update(self, vhost, elements):
-        total = sum(e[self.element_name] for e in elements)
-        last_epoch = vhost[self.last_epoch] = vhost[self.total]
-        vhost[self.total] = total
-
-        self.delta = total - last_epoch
-        return self.delta
-
 class IOWorkerThroughputPolicy(AdditionPolicy):
     def __init__(self, policy_info):
         AdditionPolicy.__init__(self, policy_info)
@@ -58,55 +66,28 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.io_cores = None
         self.shared_workers = False
 
-        self.cycles = VhostCounter("cycles")
-        self.work_cycles = VhostCounter("work_cycles", "total_work_cycles")
-        self.softirq_interference = VhostCounter("softirq_interference",
-                                                 "ksoftirqs")
-
-        self.per_worker_counters = {
-            n: VhostCounter(n) for n in ["empty_polls", "empty_works", "loops", 
-                                         "cpu_usage_counter"]
-        }
-        self.per_queue_counters = {
-            n: VhostCounter(n) for n in
-            ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
-             "notif_wait", "notif_works", "poll_cycles", "poll_bytes", 
-             "poll_empty", "poll_empty_cycles", "poll_limited", 
-             "poll_pending_cycles", "poll_wait", "sendmsg_calls"]
-        }
-
     def initialize(self):
-        vhost = Vhost.INSTANCE.vhost
-        self.work_cycles.initialize(vhost, Vhost.INSTANCE.vhost["cycles"])
-        self.cycles.initialize(vhost, Vhost.INSTANCE.vhost["cycles"])
-        self.softirq_interference.initialize(vhost, Vhost.INSTANCE.vhost["cycles"])
-
-        for c in self.per_worker_counters.values():
-            c.initialize(vhost)
-        for c in self.per_queue_counters.values():
-            c.initialize(vhost)
+        pass
 
     def calculate_load(self, shared_workers):
+        vhost_inst = Vhost.INSTANCE
         vhost = Vhost.INSTANCE.vhost
         workers = Vhost.INSTANCE.workers
-        
-        self.cycles.update(vhost, [vhost])
-        self.work_cycles.update(vhost, workers.values())
-        self.softirq_interference.update(vhost, workers.values())
-        cycles_this_epoch = self.cycles.delta # vhost["cycles_this_epoch"]
+
+        cycles_this_epoch = vhost_inst.cycles.delta # vhost["cycles_this_epoch"]
 
         self.io_cores = len(workers) if shared_workers else 1
         self.shared_workers = shared_workers
 
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
-        empty_cycles = total_cycles_this_epoch - self.work_cycles.delta
+        empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
         logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
-                     (self.cycles.delta,))
+                     (vhost_inst.cycles.delta,))
         logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
-                     (self.work_cycles.delta,))
+                     (vhost_inst.work_cycles.delta,))
         logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-                     (self.io_cores,))
+                     (vhost_inst.io_cores,))
         logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
                      (cycles_this_epoch,))
         logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
@@ -124,7 +105,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
                          (total_interrupts,))
             logging.info("\x1b[37msoftirq_interference_this_epoch %d.\x1b[39m" %
-                         (self.softirq_interference.delta,))
+                         (vhost_inst.softirq_interference.delta,))
             # ksoftirq thread is scheduled on our iocores, and worse yet it
             # preempts the iocores thread. We measure the iocores activity and
             # CPU usage using rdtsc assuming it is never preempts. softirq_cpu_
@@ -134,7 +115,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             if float(total_interrupts) > 0:
                 softirq_cpu_ratio = \
                     float(softirq_cpu) - float(softirq_cpu) * \
-                    float(self.softirq_interference.delta) / \
+                    float(vhost_inst.softirq_interference.delta) / \
                     float(total_interrupts)
             logging.info("\x1b[37msoftirq cpu %.2f.\x1b[39m" %
                          (softirq_cpu_ratio,))
@@ -145,66 +126,62 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             softirq_cpu_ratio
         # this the ratio of cycles used to handle virtual IO.    
         effective_io_ratio = \
-            float(self.work_cycles.delta) / float(self.cycles.delta) + \
-                softirq_cpu_ratio
+            float(vhost_inst.work_cycles.delta) / float(vhost_inst.cycles.delta) + \
+            softirq_cpu_ratio
 
         logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
         logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" % 
                      (effective_io_ratio,))
 
         logging.info("----------------")
-        for c in sorted(self.per_worker_counters.values(),
+        for c in sorted(vhost_inst.per_worker_counters.values(),
                         key=lambda x: x.name):
-            c.update(vhost, workers.values())
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
         self.overall_io_ratio = \
-            self.per_worker_counters["cpu_usage_counter"].delta / \
-                float(CPUUsage.INSTANCE.get_ticks())
+            vhost_inst.per_worker_counters["cpu_usage_counter"].delta / \
+            float(CPUUsage.INSTANCE.get_ticks())
         if self.overall_io_ratio == 0:
             self.overall_io_ratio = 0.0000001
         logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
             (self.overall_io_ratio,))
         logging.info("----------------")
-        queues = Vhost.INSTANCE.queues.values()
-        for c in sorted(self.per_queue_counters.values(), key=lambda x: x.name):
-            c.update(vhost, queues)
+        for c in sorted(vhost_inst.per_queue_counters.values(), key=lambda x: x.name):
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
         logging.info("----------------")
-        if int(self.per_worker_counters["loops"].delta) != 0:
+        if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
             logging.info("empty_polls ratio: %.2f." %
-                         (float(self.per_worker_counters["empty_polls"].delta) /
-                          float(self.per_worker_counters["loops"].delta,)))
+                         (float(vhost_inst.per_worker_counters["empty_polls"].delta) /
+                          float(vhost_inst.per_worker_counters["loops"].delta,)))
             logging.info("empty_works ratio: %.2f." %
-                         (float(self.per_worker_counters["empty_works"].delta) /
-                          float(self.per_worker_counters["loops"].delta,)))
+                         (float(vhost_inst.per_worker_counters["empty_works"].delta) /
+                          float(vhost_inst.per_worker_counters["loops"].delta,)))
         else:
             logging.info("empty_polls ratio: 0.0.")
             logging.info("empty_works ratio: 0.0.")
         
         self.average_bytes_per_packet = 0
-        if self.per_queue_counters["sendmsg_calls"].delta > 0:
+        if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
             self.average_bytes_per_packet = \
-                float(self.per_queue_counters["notif_bytes"].delta + 
-                      self.per_queue_counters["poll_cycles"].delta) / \
-                self.per_queue_counters["sendmsg_calls"].delta
+                float(vhost_inst.per_queue_counters["notif_bytes"].delta +
+                      vhost_inst.per_queue_counters["poll_cycles"].delta) / \
+                vhost_inst.per_queue_counters["sendmsg_calls"].delta
 
         logging.info("efficient io ratio: %.2f" % 
-            (effective_io_ratio / self.overall_io_ratio,))
-
+            (effective_io_ratio / vhost_inst.overall_io_ratio,))
 
     def should_update_core_number(self):
+        vhost_inst = Vhost.INSTANCE
         add, can_remove = self._should_update_core_number(self.ratio)
         if add:
             logging.info("\x1b[37mshould add IO workers, empty cycles "
                          "ratio is %.2f.\x1b[39m" % (self.ratio,))
 
-            vhost = Vhost.INSTANCE.vhost
-            cycles_this_epoch = self.cycles.delta # vhost["cycles_this_epoch"]i
+            cycles_this_epoch = vhost_inst.cycles.delta
             logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
                          (cycles_this_epoch,))
 
             total_cycles_this_epoch = cycles_this_epoch * self.io_cores
-            empty_cycles = total_cycles_this_epoch - self.work_cycles.delta
+            empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
             logging.info("\x1b[37mempty_cycles: %d.\x1b[39m" %
                          (empty_cycles,))
             logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %

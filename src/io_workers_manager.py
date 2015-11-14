@@ -11,7 +11,7 @@ __author__ = 'eyalmo'
 class IOWorkersManager:
     def __init__(self, devices, backing_devices_manager, io_workers_info,
                  vq_classifier, poll_policy, throughput_policy, latency_policy,
-                 io_core_policy=None, balance_policy=None):
+                 io_core_policy=None, balance_policy=None, regret_policy=None):
         self.io_workers = [IOWorker(w_info) for w_info in io_workers_info]
         self.backing_devices_manager = backing_devices_manager
 
@@ -22,6 +22,7 @@ class IOWorkersManager:
 
         self.io_core_policy = io_core_policy
         self.balance_policy = balance_policy
+        self.regret_policy = regret_policy
 
         self.devices = devices
 
@@ -37,6 +38,7 @@ class IOWorkersManager:
         self.throughput_policy.initialize()
         self.latency_policy.initialize()
         self.backing_devices_manager.initialize()
+        self.should_regret.initialize()
 
     def update_io_core_number(self, vm_manager):
         shared_workers = len(self.io_workers) > 0
@@ -75,6 +77,9 @@ class IOWorkersManager:
         if add_io_core and can_add_io_core:
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
             cpu_id = vm_manager.remove_core()
+            if self.regret_policy.should_regret():
+                vm_manager.add_core(cpu_id)
+                return
             self.io_core_policy.add(cpu_id)
             new_worker_id = self._add_io_worker(cpu_id)
             self.io_workers.append(IOWorker({"id": new_worker_id,
@@ -93,7 +98,6 @@ class IOWorkersManager:
         logging.info("\x1b[33mremove IOcore\x1b[39m")
         # remove the IO core
         cpu_id = self.io_core_policy.remove()
-        vm_manager.add_core(cpu_id)
         removed_worker = [w for w in Vhost.INSTANCE.workers.values()
                           if w["cpu"] == cpu_id][0]
         removed_worker_id = removed_worker["id"]
@@ -102,12 +106,20 @@ class IOWorkersManager:
             self.balance_policy.balance_before_removal(self.io_workers,
                                                        removed_worker_id)
         self._move_devices(balance_changes)
+        if self.regret_policy.should_regret():
+            undo_balance_changes = {}
+            for dev_id, (old_worker, new_worker) in balance_changes.items():
+                undo_balance_changes[dev_id] = (new_worker, old_worker)
+            self._move_devices(undo_balance_changes)
+            return
 
         self._remove_io_worker(removed_worker)
         self.io_workers = [w for w in self.io_workers
                            if w.id != removed_worker_id]
         logging.info("Removed Worker: {id: %s, cpu: %d}" %
                      (removed_worker["id"], cpu_id))
+
+        vm_manager.add_core(cpu_id)
         self.epochs_last_action = 0
 
     def update_balance(self):
