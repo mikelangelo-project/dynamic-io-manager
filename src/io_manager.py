@@ -9,6 +9,8 @@ import getopt
 from io_workers_manager import IOWorkersManager
 from backing_device_manager import BackingDeviceManager
 from poll_policy import NullPollPolicy
+from src.algos.backing_devices_rebalance_policy import \
+    BackingDevicesPreConfiguredBalancePolicy, BackingDevicesPolicy
 from vm_manager import VMManager
 
 from algos.io_cores_rebalance_policy import IOCoresPreConfiguredBalancePolicy
@@ -129,7 +131,7 @@ def main(argv):
 
     # start the log file if exists
     if "log" in conf and conf["log"]:
-        timestamp = time.strftime("%Y-%m-%d_%H:%M:%S")
+        timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
         log_file = os.path.expanduser(conf["log"])
         timestamp_log_file = log_file + ".%s.txt" % (timestamp,)
         log_format = "[%(filename)s:%(lineno)s] %(message)s"
@@ -153,7 +155,14 @@ def main(argv):
     Vhost.INSTANCE.update(True)
 
     # get backing devices info
-    bdm = BackingDeviceManager(conf["backing_devices"])
+    if "preconfigured" in conf["backing_devices_balance_policy"]["id"]:
+        backing_devices_policy = \
+            BackingDevicesPreConfiguredBalancePolicy(
+                conf["backing_devices_balance_policy"])
+    else:
+        backing_devices_policy = BackingDevicesPolicy()
+    bdm = BackingDeviceManager(conf["backing_devices"],
+                               backing_devices_policy)
 
     # start the vm manager
     vm_policy = LastAddedPolicy.create_vm_policy(conf["vms"])
@@ -183,7 +192,8 @@ def main(argv):
     regret_policy = ThroughputRegretPolicy(conf["throughput_regret_policy"])
 
     # setup the io core controller
-    io_workers_manager = IOWorkersManager(devices, bdm, conf["workers"],
+    io_workers_manager = IOWorkersManager(devices, vm_manager, bdm,
+                                          conf["workers"],
                                           vq_classifier,
                                           poll_policy,
                                           throughput_policy,

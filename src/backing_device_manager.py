@@ -5,29 +5,20 @@ __author__ = 'eyalmo'
 
 
 class BackingDeviceManager:
-    def __init__(self, backing_devices_info):
+    def __init__(self, backing_devices_info, backing_devices_policy):
         self.backing_devices = {bd_info["id"]: BackingDevice(bd_info)
                                 for bd_info in backing_devices_info}
 
-    def initialize(self):
+        self.backing_devices_policy = backing_devices_policy
+
+    def initialize(self, io_workers, vm_manager):
         logging.info("\x1b[37mBackingDeviceManager initialize\x1b[39m")
+        self.backing_devices_policy.initialize(self.backing_devices,
+                                               io_workers, vm_manager)
 
-    def clear_affinity(self):
-        logging.info("\x1b[37mClear the affinity of the backing "
-                     "devices\x1b[39m")
-        for bd in self.backing_devices.values():
-            bd.zero_cpu_mask()
-
-    def devices_moved(self, change_list):
+    def balance(self, io_workers):
         logging.info("\x1b[37mUpdating backing devices\x1b[39m")
-        for dev_id, (old_cpu_id, new_cpu_id) in change_list.items():
-            logging.info("dev_id: %s, old_cpu_id: %s, new_cpu_id: %s" %
-                         (dev_id, old_cpu_id, new_cpu_id))
-            for bd in self.backing_devices.values():
-                if dev_id not in bd.devices:
-                    continue
-                logging.info("bd_id: %s" % (bd.id,))
-                bd.update_cpu_mask(dev_id, old_cpu_id, new_cpu_id)
+        self.backing_devices_policy.balance(io_workers)
 
     def update(self):
         for bd in self.backing_devices.values():

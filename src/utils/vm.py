@@ -38,10 +38,6 @@ class VM:
             t.set_cpu_mask(cpu_mask=cpu_mask)
             t.apply_cpu_mask()
 
-    def disable_shared_workers(self):
-        for d in self.devices:
-            d.set_affinity_to_backing_devices(self.vcpus[0].cpu_mask)
-
     def __str__(self):
         return "VM: {pid: %d, id: %s}" % (self.pid, self.idx)
 

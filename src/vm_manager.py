@@ -1,12 +1,15 @@
 import logging
 
+from src.algos.throughput_policy import VMCoreAdditionPolicy
 from utils.vm import VM
 from utils.vhost import ProcessCPUUsageCounter
+
 
 class VMManager:
     def __init__(self, vms_info, backing_devices, vm_policy,
                  vm_core_addition_policy, vm_balance_policy):
         self.vms = [VM(vm_info, backing_devices) for vm_info in vms_info]
+        self.cpus = VMCoreAdditionPolicy.get_initial_cpus(vms_info)
         # logging.info(self.vms)
         self.backing_devices = backing_devices
 
@@ -14,10 +17,10 @@ class VMManager:
         self.vm_core_addition_policy = vm_core_addition_policy
         self.vm_balance_policy = vm_balance_policy
 
-        self.vms_cpuusage = [ProcessCPUUsageCounter(vm.pid) for vm in self.vms]
+        self.vms_cpu_usage = [ProcessCPUUsageCounter(vm.pid) for vm in self.vms]
 
     def update(self):
-        for idx, c in enumerate(self.vms_cpuusage):
+        for idx, c in enumerate(self.vms_cpu_usage):
             c.update()
             logging.info("vm %s: %s" % (self.vms[idx].idx, str(c)))
 
@@ -31,6 +34,7 @@ class VMManager:
         logging.info("cpu_id = %s" % (str(cpu_id),))
 
         self.vm_balance_policy.balance_before_removal(self.vms, cpu_id)
+        del self.cpus[self.cpus.index(cpu_id)]
         return cpu_id
 
     def add_core(self, cpu_id):
@@ -39,17 +43,7 @@ class VMManager:
         self.vm_policy.add(cpu_id)
         self.vm_core_addition_policy.add(cpu_id)
         self.vm_balance_policy.balance_after_addition(self.vms, cpu_id)
-
-    def disable_shared_workers(self):
-        logging.info("\x1b[33mVM Manager: going to no IO core state.\x1b[39m")
-        for bd in self.backing_devices.values():
-            bd.zero_cpu_mask()
-
-        for vm in self.vms:
-            vm.disable_shared_workers()
-
-        for bd in self.backing_devices.values():
-            bd.apply_cpu_mask()
+        self.cpus.append(cpu_id)
 
     def __str__(self):
         return "VMs: %s" % (self.vms, )

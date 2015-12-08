@@ -2,14 +2,14 @@ import logging
 
 from utils.vhost import Vhost, vhost_write, vhost_read, \
     vhost_worker_set_cpu_mask, get_cpu_usage
-# ProcessCPUUsageCounter
 from utils.io_worker import IOWorker
 
 __author__ = 'eyalmo'
 
 
 class IOWorkersManager:
-    def __init__(self, devices, backing_devices_manager, io_workers_info,
+    def __init__(self, devices, vm_manager, backing_devices_manager,
+                 io_workers_info,
                  vq_classifier, poll_policy, throughput_policy, latency_policy,
                  io_core_policy=None, balance_policy=None, regret_policy=None):
         self.io_workers = [IOWorker(w_info) for w_info in io_workers_info]
@@ -26,6 +26,8 @@ class IOWorkersManager:
 
         self.devices = devices
 
+        self.vm_manager = vm_manager
+
         self.cooling_off_period = 1  # 20
         self.epochs_last_action = 0
 
@@ -37,10 +39,11 @@ class IOWorkersManager:
         self.poll_policy.initialize(shared_workers)
         self.throughput_policy.initialize()
         self.latency_policy.initialize()
-        self.backing_devices_manager.initialize()
+        self.backing_devices_manager.initialize(self.io_workers,
+                                                self.vm_manager)
         self.regret_policy.initialize()
 
-    def update_io_core_number(self, vm_manager):
+    def update_io_core_number(self):
         shared_workers = len(self.io_workers) > 0
         self.throughput_policy.calculate_load(shared_workers)
 
@@ -56,7 +59,7 @@ class IOWorkersManager:
             self.epochs_last_action = 0
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
-            cpu_id = vm_manager.remove_core()
+            cpu_id = self.vm_manager.remove_core()
             self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_id)
             return
@@ -67,19 +70,20 @@ class IOWorkersManager:
             logging.info("\x1b[33mremove IOcore\x1b[39m")
             # remove the IO core
             cpu_id = self.io_core_policy.remove()
-            vm_manager.add_core(cpu_id)
+            self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
-            vm_manager.disable_shared_workers()
+            self.vm_manager.disable_shared_workers()
             return
 
         add_io_core, can_remove_io_core = \
             self.throughput_policy.should_update_core_number()
-        remove_io_core, can_add_io_core = vm_manager.should_update_core_number()
+        remove_io_core, can_add_io_core = \
+            self.vm_manager.should_update_core_number()
 
         if add_io_core and can_add_io_core:
             self.epochs_last_action = 0
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
-            cpu_id = vm_manager.remove_core()
+            cpu_id = self.vm_manager.remove_core()
             # if self.regret_policy.should_regret():
             #     vm_manager.add_core(cpu_id)
             #     return
@@ -123,7 +127,7 @@ class IOWorkersManager:
         logging.info("Removed Worker: {id: %s, cpu: %d}" %
                      (removed_worker["id"], cpu_id))
 
-        vm_manager.add_core(cpu_id)
+        self.vm_manager.add_core(cpu_id)
 
     def update_balance(self):
         if self.epochs_last_action <= self.cooling_off_period:
@@ -158,13 +162,10 @@ class IOWorkersManager:
                         new_worker["id"])
             Vhost.INSTANCE.devices[dev_id]["worker"] = new_worker["id"]
 
-
             new_worker["dev_list"].append(dev_id)
             old_worker["dev_list"].remove(dev_id)
 
-        self.backing_devices_manager.devices_moved({
-            dev_id: (old_worker["cpu"], new_worker["cpu"])
-            for dev_id, (old_worker, new_worker) in balance_changes.items()})
+        self.backing_devices_manager.balance(self.io_workers)
 
     def enable_shared_workers(self, io_core):
         vhost = Vhost.INSTANCE
@@ -182,7 +183,6 @@ class IOWorkersManager:
         balance_changes = \
             self.balance_policy.balance_after_addition(self.io_workers,
                                                        worker_id)
-        self.backing_devices_manager.clear_affinity()
         self._move_devices(balance_changes)
 
         # notify poll policy that we moved to shared worker configuration
