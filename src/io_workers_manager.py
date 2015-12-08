@@ -38,12 +38,14 @@ class IOWorkersManager:
         self.throughput_policy.initialize()
         self.latency_policy.initialize()
         self.backing_devices_manager.initialize()
-        self.should_regret.initialize()
+        self.regret_policy.initialize()
 
     def update_io_core_number(self, vm_manager):
         shared_workers = len(self.io_workers) > 0
         self.throughput_policy.calculate_load(shared_workers)
 
+        if len(self.io_workers) == 4:
+            return
         self.epochs_last_action += 1
         if self.epochs_last_action <= self.cooling_off_period:
             return
@@ -51,15 +53,16 @@ class IOWorkersManager:
         if not shared_workers:
             if not self.throughput_policy.should_start_shared_worker():
                 return
+            self.epochs_last_action = 0
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
             cpu_id = vm_manager.remove_core()
             self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_id)
-            self.epochs_last_action = 0
             return
 
         if self.throughput_policy.should_stop_shared_worker():
+            self.epochs_last_action = 0
             logging.info("\x1b[33mdisable shared IO workers.\x1b[39m")
             logging.info("\x1b[33mremove IOcore\x1b[39m")
             # remove the IO core
@@ -67,7 +70,6 @@ class IOWorkersManager:
             vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
             vm_manager.disable_shared_workers()
-            self.epochs_last_action = 0
             return
 
         add_io_core, can_remove_io_core = \
@@ -75,11 +77,12 @@ class IOWorkersManager:
         remove_io_core, can_add_io_core = vm_manager.should_update_core_number()
 
         if add_io_core and can_add_io_core:
+            self.epochs_last_action = 0
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
             cpu_id = vm_manager.remove_core()
-            if self.regret_policy.should_regret():
-                vm_manager.add_core(cpu_id)
-                return
+            # if self.regret_policy.should_regret():
+            #     vm_manager.add_core(cpu_id)
+            #     return
             self.io_core_policy.add(cpu_id)
             new_worker_id = self._add_io_worker(cpu_id)
             self.io_workers.append(IOWorker({"id": new_worker_id,
@@ -89,13 +92,13 @@ class IOWorkersManager:
                                                            new_worker_id)
             self._move_devices(balance_changes)
 
-            self.epochs_last_action = 0
             return
 
         if not remove_io_core or not can_remove_io_core:
             return
 
         logging.info("\x1b[33mremove IOcore\x1b[39m")
+        self.epochs_last_action = 0
         # remove the IO core
         cpu_id = self.io_core_policy.remove()
         removed_worker = [w for w in Vhost.INSTANCE.workers.values()
@@ -106,6 +109,7 @@ class IOWorkersManager:
             self.balance_policy.balance_before_removal(self.io_workers,
                                                        removed_worker_id)
         self._move_devices(balance_changes)
+        self.backing_devices_manager.update()
         if self.regret_policy.should_regret():
             undo_balance_changes = {}
             for dev_id, (old_worker, new_worker) in balance_changes.items():
@@ -120,7 +124,6 @@ class IOWorkersManager:
                      (removed_worker["id"], cpu_id))
 
         vm_manager.add_core(cpu_id)
-        self.epochs_last_action = 0
 
     def update_balance(self):
         if self.epochs_last_action <= self.cooling_off_period:
@@ -153,6 +156,8 @@ class IOWorkersManager:
                          (dev_id, old_worker["id"], new_worker["id"]))
             vhost_write(Vhost.INSTANCE.devices[dev_id], "worker",
                         new_worker["id"])
+            Vhost.INSTANCE.devices[dev_id]["worker"] = new_worker["id"]
+
 
             new_worker["dev_list"].append(dev_id)
             old_worker["dev_list"].remove(dev_id)

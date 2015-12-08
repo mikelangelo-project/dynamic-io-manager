@@ -168,13 +168,18 @@ class Device:
     def __init__(self, vm, dev_info, backing_devices):
         self.id = dev_info["id"]
         self.vm = vm
+        logging.info("Device %s, vm: %s" % (self.id, self.vm.idx))
 
         self.backing_device = None
         if "backing_device" in dev_info:
             self.backing_device = backing_devices[dev_info["backing_device"]]
             self.backing_device.add_device(self.id)
+            logging.info("backing device: %s" % (dev_info["backing_device"],))
+
 
     def set_affinity_to_backing_devices(self, cpu_mask):
+        logging.info("set affinity to backing device of Device %s, vm: %s" %
+            (self.id, self.vm.idx))
         vhost_worker_id = Vhost.INSTANCE.devices[self.id]["worker"]
         vhost_worker = Vhost.INSTANCE.workers[vhost_worker_id]
         vhost_worker_set_cpu_mask(vhost_worker, cpu_mask)

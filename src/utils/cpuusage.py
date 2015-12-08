@@ -163,7 +163,7 @@ class CPUUsage:
         CPUUsage.INSTANCE = CPUUsage(hysteresis=hysteresis)
         return True
 
-    def __init__(self, hysteresis=0):
+    def __init__(self, hysteresis=0.0):
         # gets both user and kernel cpu ticks.
         self.current = CPUStatCounter(syscmd(CPUUsage.cmd))
         self.projected = {c[0]: 0 for c in self.current.per_cpu_counters}
@@ -179,12 +179,23 @@ class CPUUsage:
         self.current = CPUStatCounter(syscmd(CPUUsage.cmd))
 
         h = self.hysteresis
-        # logging.info(self.uptime.up_time_diff)
+        t_diff = 100.0 * float(self.uptime.up_time_diff)
+        logging.info(self.uptime.up_time_diff)
         for c in self.current.diff(old).per_cpu_counters:
             # logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
-                (1 - h) * (1 - float(c[4]) / float(self.uptime.up_time_diff))
-            self.softirqs[c[0]] = float(c[7]) / float(self.uptime.up_time_diff)
+                (1.0 - h) * (1.0 - float(c[4]) / t_diff)
+            self.softirqs[c[0]] = float(c[7]) / float(t_diff)
+
+            cpu_usage_str = "%s: " % (c[0],)
+            for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
+                cpu_usage_str += "%s: %.2f " % (f, float(c[i+1])/ t_diff)
+            logging.info(cpu_usage_str)
+
+            # logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
+            #        (c[0], c[4], c[7]))
+            # logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
+            #        (c[0], self.projected[c[0]], self.softirqs[c[0]]))
 
         self.interrups_counters.update()
 

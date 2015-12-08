@@ -15,22 +15,33 @@ class ThroughputRegretPolicy:
         pass
 
     def should_regret(self):
+        logging.info("should regret")
         vhost_inst = Vhost.INSTANCE
         vhost = Vhost.INSTANCE.vhost
-        bytes = vhost_inst.per_queue_counters["notif_bytes"] + \
-            vhost_inst.per_queue_counters["poll_bytes"]
-        cycles = vhost_inst.cycles
-        ratio_before = bytes / cycles
+        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+            vhost_inst.per_queue_counters["poll_bytes"].delta
+        cycles = vhost_inst.cycles.delta
+        ratio_before = handled_bytes / float(cycles)
+        logging.info("cycles:       %d", cycles)
+        logging.info("handled_bytes:%d", handled_bytes)
+        logging.info("ratio_before: %.2f", ratio_before)
+        logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
         time.sleep(self.interval)
         vhost_inst.update()
-        time.sleep(self.interval)
-        vhost_inst.update()
+        for _ in xrange(5):
+            time.sleep(self.interval)
+            vhost_inst.update()
 
-        bytes = vhost_inst.per_queue_counters["notif_bytes"] + \
-            vhost_inst.per_queue_counters["poll_bytes"]
-        cycles = vhost_inst.cycles
-        ratio_after = bytes / cycles
+            handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+                vhost_inst.per_queue_counters["poll_bytes"].delta
+            cycles = vhost_inst.cycles.delta
+            ratio_after = handled_bytes / float(cycles)
+
+            logging.info("cycles:       %d", cycles)
+            logging.info("handled_bytes:%d", handled_bytes)
+            logging.info("ratio_after:  %.2f", ratio_after)
+            logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
 
         return ratio_before > ratio_after
 
@@ -87,19 +98,27 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
                      (vhost_inst.work_cycles.delta,))
         logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-                     (vhost_inst.io_cores,))
+                     (self.io_cores,))
         logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
                      (cycles_this_epoch,))
         logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
                      (empty_cycles,))
+
+        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+            vhost_inst.per_queue_counters["poll_bytes"].delta
+        cycles = vhost_inst.cycles.delta
+        ratio_before = handled_bytes / float(cycles)
+        logging.info("cycles:       %d", cycles)
+        logging.info("handled_bytes:%d", handled_bytes)
+        logging.info("ratio_before: %.2f", ratio_before)
+        logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
         softirq_cpu_ratio = 0
         if shared_workers:
             io_cores_cpus = [w["cpu"] for w in workers.values()]
             logging.info("\x1b[37mio_cores_cpus %s.\x1b[39m" %
                          (str(io_cores_cpus),))
-            softirq_cpu = \
-                CPUUsage.INSTANCE.get_softirq_cpu(io_cores_cpus) / float(100)
+            softirq_cpu = CPUUsage.INSTANCE.get_softirq_cpu(io_cores_cpus)
             logging.info("\x1b[37msoftirq_cpu %.2f.\x1b[39m" % (softirq_cpu,))
             total_interrupts = CPUUsage.INSTANCE.get_interrupts(io_cores_cpus)
             logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
@@ -124,13 +143,13 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # activity (which is a useful work). 1 means a full core was wasted.
         self.ratio = float(empty_cycles) / float(cycles_this_epoch) - \
             softirq_cpu_ratio
-        # this the ratio of cycles used to handle virtual IO.    
+        # this the ratio of cycles used to handle virtual IO.
         effective_io_ratio = \
             float(vhost_inst.work_cycles.delta) / float(vhost_inst.cycles.delta) + \
             softirq_cpu_ratio
 
         logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
-        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" % 
+        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
                      (effective_io_ratio,))
 
         logging.info("----------------")
@@ -158,16 +177,16 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         else:
             logging.info("empty_polls ratio: 0.0.")
             logging.info("empty_works ratio: 0.0.")
-        
-        self.average_bytes_per_packet = 0
-        if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
-            self.average_bytes_per_packet = \
-                float(vhost_inst.per_queue_counters["notif_bytes"].delta +
-                      vhost_inst.per_queue_counters["poll_cycles"].delta) / \
-                vhost_inst.per_queue_counters["sendmsg_calls"].delta
 
-        logging.info("efficient io ratio: %.2f" % 
-            (effective_io_ratio / vhost_inst.overall_io_ratio,))
+        self.average_bytes_per_packet = 0
+        # if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
+        #     self.average_bytes_per_packet = \
+        #         float(vhost_inst.per_queue_counters["notif_bytes"].delta +
+        #               vhost_inst.per_queue_counters["poll_cycles"].delta) / \
+        #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
+
+        logging.info("efficient io ratio: %.2f" %
+            (effective_io_ratio / self.overall_io_ratio,))
 
     def should_update_core_number(self):
         vhost_inst = Vhost.INSTANCE
@@ -236,7 +255,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         self.cpus.remove(int(cpu_id))
 
     def should_update_core_number(self):
-        ratio = CPUUsage.INSTANCE.get_empty_cpu(self.cpus) / float(100)
+        ratio = CPUUsage.INSTANCE.get_empty_cpu(self.cpus)
         add, can_remove = self._should_update_core_number(ratio)
         logging.info("\x1b[37mcan%s remove a VM core, empty cycles ratio is "
                      "%.2f.\x1b[39m" % ("" if can_remove else "not", ratio))

@@ -1,7 +1,7 @@
 import logging
 
 from utils.vm import VM
-
+from utils.vhost import ProcessCPUUsageCounter
 
 class VMManager:
     def __init__(self, vms_info, backing_devices, vm_policy,
@@ -13,6 +13,13 @@ class VMManager:
         self.vm_policy = vm_policy
         self.vm_core_addition_policy = vm_core_addition_policy
         self.vm_balance_policy = vm_balance_policy
+
+        self.vms_cpuusage = [ProcessCPUUsageCounter(vm.pid) for vm in self.vms]
+
+    def update(self):
+        for idx, c in enumerate(self.vms_cpuusage):
+            c.update()
+            logging.info("vm %s: %s" % (self.vms[idx].idx, str(c)))
 
     def should_update_core_number(self):
         return self.vm_core_addition_policy.should_update_core_number()

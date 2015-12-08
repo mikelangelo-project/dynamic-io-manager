@@ -61,6 +61,7 @@ class IOManagerDaemon(Daemon):
         CPUUsage.INSTANCE.update()
         # print_all(self.vhost)
         self.io_workers_manager.initialize()
+        self.vm_manager.update()
 
         i = 0
         # while i < 15:
@@ -69,6 +70,7 @@ class IOManagerDaemon(Daemon):
             logging.info("round %d" % (i,))
             Vhost.INSTANCE.update()
             CPUUsage.INSTANCE.update()
+            self.vm_manager.update()
             # logging.info("cycles: %d" %
             #              (Vhost.INSTANCE.vhost["cycles"], ))
             # logging.info("cycles_last_epoch: %d" %

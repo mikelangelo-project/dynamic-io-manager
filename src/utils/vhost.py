@@ -24,13 +24,13 @@ MOUNT_POINT = "/sys/class/vhost"
 
 def get_cpus_per_sockets():
     # return 8
-    return int(syscmd('lscpu | grep "Core(s) per socket" | rev | cut -c1')) 
+    return int(syscmd('lscpu | grep "Core(s) per socket" | rev | cut -c1'))
 
 
 def vhost_write(elem, key, value):
     file_path = os.path.join(elem["path"], key)
     with open(file_path, "w") as f:
-        f.write(str(value))    
+        f.write(str(value))
 
 
 def vhost_read(elem, key):
@@ -65,7 +65,7 @@ class ProcessCPUUsageCounter:
         self.cmd = "/bin/cat /proc/%s/stat" % (pid,)
         self.pid = pid
 
-        self.current = self._parse_output() 
+        self.current = self._parse_output()
         self.delta = 0
 
     def _parse_output(self):
@@ -144,7 +144,6 @@ class Vhost:
         self.cores_per_socket = get_cpus_per_sockets()
         self.cpus = CPU.parse_cpus()
         self.sockets = len(self.cpus) / self.cores_per_socket
-        self._initialize()
 
         self.cycles = VhostCounter("cycles")
         self.work_cycles = VhostCounter("work_cycles", "total_work_cycles")
@@ -160,8 +159,10 @@ class Vhost:
             ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
              "notif_wait", "notif_works", "poll_cycles", "poll_bytes",
              "poll_empty", "poll_empty_cycles", "poll_limited",
-             "poll_pending_cycles", "poll_wait", "sendmsg_calls"]
+             "poll_pending_cycles", "poll_wait"] # , "sendmsg_calls"]
         }
+
+        self._initialize()
 
     @staticmethod
     def is_workers_global(key, value):
@@ -214,14 +215,14 @@ class Vhost:
             parent = self.devices
         elif Vhost.is_virtual_queue(elem_id):
             directory = "vq"
-            parent = self.queues 
+            parent = self.queues
         dir_path = os.path.join(self.path, directory, elem_id)
         elem = parent[elem_id] = {
             "id": elem_id, "path": dir_path,
             "keys": ls(dir_path, show_dirs=False, show_files=True,
                        show_only_readable=True)}
         Vhost.update_all_entries(elem)
-    
+
     def _initialize(self):
         self.vhost["path"] = self.path
         self.vhost["keys"] = ls(self.path, show_dirs=False, show_files=True,
@@ -264,7 +265,7 @@ class Vhost:
                             show_only_readable=True)}
             Vhost.update_all_entries(queue)
             queue["notif_works_last_epoch"] = queue["notif_works"]
-                
+
         self.vhost["cycles_last_epoch"] = self.vhost["cycles"]
 
         self.work_cycles.initialize(self.vhost, self.vhost["cycles"])
@@ -287,26 +288,26 @@ class Vhost:
         self.vhost["cycles_last_epoch"] = self.vhost["cycles"]
         self.vhost["cycles_this_epoch"] = cycles_this_epoch
         Vhost.update_all_entries(self.workersGlobal)
-        
+
         for w in self.workers.values():
             Vhost.update_all_entries(w)
             w["cpu_usage_counter"] = get_cpu_usage(w["pid"])
             # w["cpu_usage_counter"].update()
-             
+
         for dev in self.devices.values():
             Vhost.update_all_entries(dev)
-        
+
         for vq in self.queues.values():
             Vhost.update_all_entries(vq)
             notif_works_this_epoch = vq["notif_works"] - \
                 vq["notif_works_last_epoch"]
-            vq["notif_works_last_epoch"] = vq["notif_works"] 
+            vq["notif_works_last_epoch"] = vq["notif_works"]
             vq["notif_works_this_epoch"] = notif_works_this_epoch
 
 
-        self.cycles.update(vhost, [vhost])
-        self.work_cycles.update(vhost, workers.values())
-        self.softirq_interference.update(vhost, workers.values())
+        self.cycles.update(self.vhost, [self.vhost])
+        self.work_cycles.update(self.vhost, self.workers.values())
+        self.softirq_interference.update(self.vhost, self.workers.values())
 
         for c in self.per_worker_counters.values():
             c.update(self.vhost, self.workers.values())
@@ -314,7 +315,7 @@ class Vhost:
             c.update(self.vhost, self.queues.values())
 
 if __name__ == '__main__':
-    workers = True          
+    workers = True
     devices = False
     queues = False
 
@@ -328,7 +329,7 @@ if __name__ == '__main__':
     except getopt.GetoptError:
         msg("Error: unknown option")
         usage(sys.argv[0])
-    
+
     for opt, _ in opts:
         if opt in ("-h", "--help"):
             usage(sys.argv[0])
@@ -342,28 +343,28 @@ if __name__ == '__main__':
             short = True
         elif opt in ("-l", "--long"):
             short = False
-    
+
     vhost = Vhost()
     vhost.update(False)
-    
-    if not short: 
+
+    if not short:
         msg("\x1b[35mvhost:\x1b[39m %s" % (vhost.vhost, ))
 
         msg("\x1b[35mworkers global:\x1b[39m %s" % (vhost.workersGlobal, ))
 
-    if short:  
-        if workers:  
+    if short:
+        if workers:
             print_selected_stuff("worker", vhost.workers,
                                  ("id", "pid", "cpu", "dev_list"))
-        if devices:  
+        if devices:
             print_selected_stuff("device", vhost.devices,
                                  ("id", "worker", "owner"))
         if queues:
             print_selected_stuff("queue", vhost.queues, ("id", "poll"))
-    else: 
-        if workers:  
+    else:
+        if workers:
             print_stuff("worker", vhost.workers)
-        if devices:  
+        if devices:
             print_stuff("device", vhost.devices)
         if queues:
             print_stuff("queue", vhost.queues)
