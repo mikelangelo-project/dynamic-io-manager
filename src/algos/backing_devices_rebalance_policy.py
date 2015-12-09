@@ -48,7 +48,9 @@ class BackingDevicesPreConfiguredBalancePolicy:
                 cpu_mask += (1 << cpu_mapping[c])
             logging.info("\x1b[37mbacking device %s: %x\x1b[39m" %
                          (bd.id, cpu_mask))
-            bd.set_cpu_mask(cpu_mask)
+            bd.zero_cpu_mask()
+            bd.merge_cpu_mask(cpu_mask)
+            bd.apply_cpu_mask()
 
 
 class BackingDevicesPolicy:
