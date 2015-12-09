@@ -42,7 +42,7 @@ class BackingDevicesPreConfiguredBalancePolicy:
         # moving vms to the correct cpu cores
         logging.info("\x1b[37mmoving backing devices to the correct cpu "
                      "cores\x1b[39m")
-        for bd in self.backing_devices:
+        for bd in self.backing_devices.values():
             cpu_mask = 0
             for c in backing_devices_conf[bd.id]:
                 cpu_mask += (1 << cpu_mapping[c])
