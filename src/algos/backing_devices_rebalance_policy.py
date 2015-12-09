@@ -43,12 +43,11 @@ class BackingDevicesPreConfiguredBalancePolicy:
         logging.info("\x1b[37mmoving backing devices to the correct cpu "
                      "cores\x1b[39m")
         for bd in self.backing_devices:
-            new_cpu_sequence = [cpu_mapping[c] for c in bd[bd.idx]]
-            logging.info("\x1b[37mbacking device %s: %s\x1b[39m" %
-                         (bd.idx, new_cpu_sequence))
             cpu_mask = 0
-            for c in backing_devices_conf[bd.idx]:
+            for c in backing_devices_conf[bd.id]:
                 cpu_mask += (1 << cpu_mapping[c])
+            logging.info("\x1b[37mbacking device %s: %x\x1b[39m" %
+                         (bd.id, cpu_mask))
             bd.set_cpu_mask(cpu_mask)
 
 

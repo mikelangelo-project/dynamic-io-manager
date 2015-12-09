@@ -87,7 +87,7 @@
     "configurations" : [
       {
         "id": "<The configuration id. for example, elvis-1>",
-        "cores": "<The number vm cores used in this configuration>",
+        "vhost_workers": "<The number of whost workers used in this configuration>",
         "backing_devices": [
           {
                "id": "<backing device unique id>",
@@ -98,8 +98,7 @@
       },
       ...
     ]
-  }
-
+  },
   "virtual_queue_classifier":{
     "items_threshold": "<the maximum number of pending items allowed in a queue to be considered stuck.>",
     "max_stuck_cycles": "<the maximum number of cycles a queue can be stuck without service before switching to it>",
