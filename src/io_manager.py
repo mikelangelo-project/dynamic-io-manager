@@ -83,7 +83,7 @@ class IOManagerDaemon(Daemon):
             logging.info("vq_classifier update_classification")
             self.io_workers_manager.update_vq_classifications()
             logging.info("io_workers_manager update_io_core_number")
-            self.io_workers_manager.update_io_core_number(self.vm_manager)
+            self.io_workers_manager.update_io_core_number()
             logging.info("io_workers_manager update_balance")
             self.io_workers_manager.update_balance()
             logging.info("io_workers_manager update_polling")
