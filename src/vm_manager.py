@@ -1,6 +1,6 @@
 import logging
 
-from src.algos.throughput_policy import VMCoreAdditionPolicy
+from algos.throughput_policy import VMCoreAdditionPolicy
 from utils.vm import VM
 from utils.vhost import ProcessCPUUsageCounter
 

@@ -9,7 +9,7 @@ import getopt
 from io_workers_manager import IOWorkersManager
 from backing_device_manager import BackingDeviceManager
 from poll_policy import NullPollPolicy
-from src.algos.backing_devices_rebalance_policy import \
+from algos.backing_devices_rebalance_policy import \
     BackingDevicesPreConfiguredBalancePolicy, BackingDevicesPolicy
 from vm_manager import VMManager
 
