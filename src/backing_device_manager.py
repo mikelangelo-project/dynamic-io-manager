@@ -1,5 +1,5 @@
 import logging
-from utils.device import BackingDevice
+from utils.backing_device import BackingDevice
 
 __author__ = 'eyalmo'
 

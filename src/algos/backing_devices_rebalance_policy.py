@@ -14,10 +14,20 @@ class BackingDevicesPreConfiguredBalancePolicy:
             }
             for conf in balancer_info["configurations"]
         }
+        logging.info("backing devices configurations:")
+        for w, bds in self.backing_devices_configurations.items():
+            logging.info("vhost_workers %d:")
+            for bd_id, bd in bds.items():
+                 logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
+
         self.cpu_configuration = {
             c: list(set([cpu for cpus in bd.values() for cpu in cpus]))
             for c, bd in self.backing_devices_configurations.items()
         }
+        logging.info("cpu configurations:")
+        for c, cl in self.cpu_configuration.items():
+           logging.info("cpu %d: %s" % (c, cl))
+
         self.backing_devices = None
         self.vm_manager = None
 
@@ -27,9 +37,17 @@ class BackingDevicesPreConfiguredBalancePolicy:
         self.balance(io_workers)
 
     def balance(self, io_workers):
+        logging.info("io_workers: %s" % (io_workers, ))
+
         backing_devices_conf = \
             self.backing_devices_configurations[len(io_workers)]
         cpus_conf = self.cpu_configuration[len(io_workers)]
+
+        logging.info("backing devices configuration:")
+        for bd_id, bd in backing_devices_conf.items():
+            logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
+        logging.info("cpu configurations: %s" % (cpus_conf, ))
+
         if io_workers:
             cpu_mapping = {cpu_conf: io_worker.cpu
                            for cpu_conf, io_worker in zip(cpus_conf,
@@ -38,6 +56,10 @@ class BackingDevicesPreConfiguredBalancePolicy:
             cpu_mapping = {cpu_conf: cpu
                            for cpu_conf, cpu in zip(cpus_conf,
                                                     self.vm_manager.cpus)}
+
+        logging.info("cpu_mapping:")
+        for cpu_conf, cpu in cpu_mapping.items():
+            logging.info("\x1b[37m%s: %s\x1b[39m" % (cpu_conf, cpu))
 
         # moving vms to the correct cpu cores
         logging.info("\x1b[37mmoving backing devices to the correct cpu "
