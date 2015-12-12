@@ -16,9 +16,9 @@ class BackingDevicesPreConfiguredBalancePolicy:
         }
         logging.info("backing devices configurations:")
         for w, bds in self.backing_devices_configurations.items():
-            logging.info("vhost_workers %d:")
+            logging.info("vhost_workers %d:" % (w,))
             for bd_id, bd in bds.items():
-                 logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
+                logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
 
         self.cpu_configuration = {
             c: list(set([cpu for cpus in bd.values() for cpu in cpus]))
@@ -26,7 +26,7 @@ class BackingDevicesPreConfiguredBalancePolicy:
         }
         logging.info("cpu configurations:")
         for c, cl in self.cpu_configuration.items():
-           logging.info("cpu %d: %s" % (c, cl))
+            logging.info("cpu %d: %s" % (c, cl))
 
         self.backing_devices = None
         self.vm_manager = None

@@ -65,14 +65,14 @@ class BackingDevice:
             ea.merge_cpu_mask(cpumask)
 
     def add_device(self, dev_id):
-        devices = Vhost.INSTANCE.devices
-        workers = Vhost.INSTANCE.workers
+        # devices = Vhost.INSTANCE.devices
+        # workers = Vhost.INSTANCE.workers
 
         self.devices.add(dev_id)
-        worker = workers[devices[dev_id]["worker"]]
-        cpu_mask = vhost_worker_get_cpu_mask(worker)
-        self.merge_cpu_mask(cpu_mask)
-        self.apply_cpu_mask()
+        # worker = workers[devices[dev_id]["worker"]]
+        # cpu_mask = vhost_worker_get_cpu_mask(worker)
+        # self.merge_cpu_mask(cpu_mask)
+        # self.apply_cpu_mask()
 
     def update_cpu_mask(self, dev_id, old_cpu, new_cpu):
         devices = Vhost.INSTANCE.devices
