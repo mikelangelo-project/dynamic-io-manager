@@ -19,16 +19,16 @@ class VM(Thread):
                         for dev_info in vm_info["devices"]]
 
     def remove_core(self, cpu_id):
-        self.remove_cpu(cpu_id)
-        self.apply_cpu_mask()
+        Thread.remove_cpu(self, cpu_id)
+        Thread.apply_cpu_mask(self)
 
     def add_core(self, cpu_id):
-        self.add_cpu(cpu_id)
-        self.apply_cpu_mask()
+        Thread.add_cpu(self, cpu_id)
+        Thread.apply_cpu_mask(self)
 
     def set_cpu_mask(self, cpu_mask=None, cpu_sequence=None):
-        self.set_cpu_mask(cpu_mask=cpu_mask, cpu_sequence=cpu_sequence)
-        self.apply_cpu_mask()
+        Thread.set_cpu_mask(self, cpu_mask=cpu_mask, cpu_sequence=cpu_sequence)
+        Thread.apply_cpu_mask(self)
 
     def __str__(self):
         return "VM: {pid: %d, id: %s}" % (self.pid, self.idx)
