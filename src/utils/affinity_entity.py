@@ -1,5 +1,7 @@
 import os
 
+import logging
+
 from utils.aux import syscmd, ls, parse_user_list
 
 
@@ -121,9 +123,10 @@ class Thread(AffinityEntity):
         AffinityEntity.__init__(self, cpu_mask=cpu_mask)
         self.pid = int(pid)
         self.idx = idx
+        logging.info(str(self))
 
     def apply_cpu_mask(self):
-        # msg(str(self))
+        logging.info(str(self))
         # for tid in ls(os.path.join("/proc", str(self.pid), "task")):
         #    syscmd("taskset -p %x %s" % (self.cpu_mask, tid))
         syscmd("taskset -ap %x %s" % (self.cpu_mask, str(self.pid)))
