@@ -109,11 +109,11 @@ def parse_cpu_mask_from_cpu_list(cpu_list):
 
 
 def parse_cpu_mask_from_pid(pid):
-    return int(syscmd("taskset -p %d" % (pid, )).split(":")[1].strip(), 16)
+    return int(syscmd("taskset -ap %d" % (pid, )).split(":")[1].strip(), 16)
 
 
 def set_cpu_mask_to_pid(pid, cpu_mask):
-    syscmd("taskset -p %x %s" % (cpu_mask, pid))
+    syscmd("taskset -ap %x %s" % (cpu_mask, pid))
 
 
 class Thread(AffinityEntity):
@@ -124,8 +124,9 @@ class Thread(AffinityEntity):
 
     def apply_cpu_mask(self):
         # msg(str(self))
-        for tid in ls(os.path.join("/proc", str(self.pid), "task")):
-            syscmd("taskset -p %x %s" % (self.cpu_mask, tid))
+        # for tid in ls(os.path.join("/proc", str(self.pid), "task")):
+        #    syscmd("taskset -p %x %s" % (self.cpu_mask, tid))
+        syscmd("taskset -ap %x %s" % (self.cpu_mask, str(self.pid)))
 
     def __str__(self):
         return "pid: %d, cpus: %s" % (self.pid, AffinityEntity.__str__(self))

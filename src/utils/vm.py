@@ -1,42 +1,34 @@
 #!/usr/bin/python
 
-import os
 import logging
 
-from aux import ls
 from affinity_entity import Thread, parse_cpu_mask_from_cpu_list
 from device import Device
 
 
-class VM:
+class VM(Thread):
     def __init__(self, vm_info, backing_devices):
-        self.pid = int(vm_info["pid"])
-        self.idx = vm_info["id"]
+        Thread.__init__(self, int(vm_info["pid"]), vm_info["id"],
+                        parse_cpu_mask_from_cpu_list(vm_info["cpu"]))
 
         logging.info(self.idx)
         logging.info(self.pid)
-        self.vcpus = [Thread(tid, idx,
-                             parse_cpu_mask_from_cpu_list(vm_info["cpu"]))
-                      for idx, tid in enumerate(ls(os.path.join("/proc",
-                                                                str(self.pid),
-                                                                "task")))]
+        logging.info(self.cpu_mask)
+
         self.devices = [Device(self, dev_info, backing_devices)
                         for dev_info in vm_info["devices"]]
 
     def remove_core(self, cpu_id):
-        for t in self.vcpus:
-            t.remove_cpu(cpu_id)
-            t.apply_cpu_mask()
+        self.remove_cpu(cpu_id)
+        self.apply_cpu_mask()
 
     def add_core(self, cpu_id):
-        for t in self.vcpus:
-            t.add_cpu(cpu_id)
-            t.apply_cpu_mask()
+        self.add_cpu(cpu_id)
+        self.apply_cpu_mask()
 
-    def set_cpu_mask(self, cpu_mask):
-        for t in self.vcpus:
-            t.set_cpu_mask(cpu_mask=cpu_mask)
-            t.apply_cpu_mask()
+    def set_cpu_mask(self, cpu_mask=None, cpu_sequence=None):
+        self.set_cpu_mask(cpu_mask=cpu_mask, cpu_sequence=cpu_sequence)
+        self.apply_cpu_mask()
 
     def __str__(self):
         return "VM: {pid: %d, id: %s}" % (self.pid, self.idx)
