@@ -20,7 +20,8 @@ def number_of_set_bits(i):
 class AffinityEntity:
     def __init__(self, cpu_mask=None, cpu_sequence=None):
         self.cpu_mask = None
-        self.set_cpu_mask(cpu_mask=cpu_mask, cpu_sequence=cpu_sequence)
+        AffinityEntity.set_cpu_mask(self, cpu_mask=cpu_mask,
+                                    cpu_sequence=cpu_sequence)
 
     def set_cpu_mask(self, cpu_mask=None, cpu_sequence=None):
         if cpu_mask is not None:
