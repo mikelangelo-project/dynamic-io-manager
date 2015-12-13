@@ -47,8 +47,6 @@ class IOWorkersManager:
         shared_workers = len(self.io_workers) > 0
         self.throughput_policy.calculate_load(shared_workers)
 
-        if len(self.io_workers) == 4:
-            return
         self.epochs_last_action += 1
         if self.epochs_last_action <= self.cooling_off_period:
             return
@@ -84,9 +82,9 @@ class IOWorkersManager:
             self.epochs_last_action = 0
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
             cpu_id = self.vm_manager.remove_core()
-            # if self.regret_policy.should_regret():
-            #     vm_manager.add_core(cpu_id)
-            #     return
+            if self.regret_policy.should_regret():
+                self.vm_manager.add_core(cpu_id)
+                return
             self.io_core_policy.add(cpu_id)
             new_worker_id = self._add_io_worker(cpu_id)
             self.io_workers.append(IOWorker({"id": new_worker_id,
