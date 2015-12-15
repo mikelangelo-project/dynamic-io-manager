@@ -164,7 +164,7 @@ class CPUUsage:
         CPUUsage.INSTANCE = CPUUsage(historesis=historesis)
         return True
 
-    def __init__(self, hysteresis=0.0):
+    def __init__(self, historesis=0.0):
         # gets both user and kernel cpu ticks.
         self.current = CPUStatCounter(syscmd(CPUUsage.cmd))
         self.projected = {c[0]: 0 for c in self.current.per_cpu_counters}
@@ -172,14 +172,14 @@ class CPUUsage:
         self.interrups_counters = IRQCounter(len(self.current.per_cpu_counters))
 
         self.uptime = UpTimeCounter()
-        self.hysteresis = hysteresis
+        self.historesis = historesis
 
     def update(self):
         self.uptime.update()
         old = self.current
         self.current = CPUStatCounter(syscmd(CPUUsage.cmd))
 
-        h = self.hysteresis
+        h = self.historesis
         t_diff = 100.0 * float(self.uptime.up_time_diff)
         logging.info(self.uptime.up_time_diff)
         for c in self.current.diff(old).per_cpu_counters:
