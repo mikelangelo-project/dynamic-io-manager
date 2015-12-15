@@ -178,7 +178,6 @@ class IOWorkersManager:
         logging.info("initialize the io workers")
         self.io_workers = []
         for worker_id, io_core in zip(worker_ids, io_cores):
-            worker_ids.add(worker_id)
             self.io_workers.append(IOWorker({"id": worker_id, "cpu": io_core}))
             vhost_worker_set_cpu_mask(vhost.workers[worker_id], 1 << io_core)
             vhost.workers[worker_id]["cpu"] = io_core
