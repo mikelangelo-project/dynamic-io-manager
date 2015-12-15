@@ -225,8 +225,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
                      (self.start_shared_ratio,))
 
         logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
-        # suggested number of io cores
-        return True, int(self.effective_io_ratio + .5)
+        # suggested number of io cores, we are always rounding up
+        return True, int(self.effective_io_ratio + .9)
 
     def should_stop_shared_worker(self):
         if not self.shared_workers or self.io_cores > 1:
