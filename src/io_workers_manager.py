@@ -52,14 +52,28 @@ class IOWorkersManager:
             return
 
         if not shared_workers:
-            if not self.throughput_policy.should_start_shared_worker():
+            should_start, suggested_io_cores = \
+                self.throughput_policy.should_start_shared_worker()
+            if not should_start:
                 return
             self.epochs_last_action = 0
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
+
             cpu_id = self.vm_manager.remove_core()
             self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_id)
+
+            for _ in xrange(suggested_io_cores - 1):
+                cpu_id = self.vm_manager.remove_core()
+                self.io_core_policy.add(cpu_id)
+                new_worker_id = self._add_io_worker(cpu_id)
+                self.io_workers.append(IOWorker({"id": new_worker_id,
+                                                 "cpu": cpu_id}))
+                balance_changes = \
+                    self.balance_policy.balance_after_addition(self.io_workers,
+                                                               new_worker_id)
+                self._move_devices(balance_changes)
             return
 
         if self.throughput_policy.should_stop_shared_worker():
@@ -93,7 +107,6 @@ class IOWorkersManager:
                 self.balance_policy.balance_after_addition(self.io_workers,
                                                            new_worker_id)
             self._move_devices(balance_changes)
-
             return
 
         if not remove_io_core or not can_remove_io_core:

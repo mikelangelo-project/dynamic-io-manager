@@ -17,7 +17,7 @@ class ThroughputRegretPolicy:
     def should_regret(self):
         logging.info("should regret")
         vhost_inst = Vhost.INSTANCE
-        vhost = Vhost.INSTANCE.vhost
+        # vhost = Vhost.INSTANCE.vhost
         handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
             vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
@@ -29,11 +29,14 @@ class ThroughputRegretPolicy:
 
         time.sleep(self.interval)
         vhost_inst.update()
+
+        ratio_after = 0
         for _ in xrange(5):
             time.sleep(self.interval)
             vhost_inst.update()
 
-            handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+            handled_bytes = \
+                vhost_inst.per_queue_counters["notif_bytes"].delta + \
                 vhost_inst.per_queue_counters["poll_bytes"].delta
             cycles = vhost_inst.cycles.delta
             ratio_after = handled_bytes / float(cycles)
@@ -77,15 +80,16 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.io_cores = None
         self.shared_workers = False
 
+        self.effective_io_ratio = None
+
     def initialize(self):
         pass
 
     def calculate_load(self, shared_workers):
         vhost_inst = Vhost.INSTANCE
-        vhost = Vhost.INSTANCE.vhost
         workers = Vhost.INSTANCE.workers
 
-        cycles_this_epoch = vhost_inst.cycles.delta # vhost["cycles_this_epoch"]
+        cycles_this_epoch = vhost_inst.cycles.delta
 
         self.io_cores = len(workers) if shared_workers else 1
         self.shared_workers = shared_workers
@@ -144,13 +148,14 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.ratio = float(empty_cycles) / float(cycles_this_epoch) - \
             softirq_cpu_ratio
         # this the ratio of cycles used to handle virtual IO.
-        effective_io_ratio = \
-            float(vhost_inst.work_cycles.delta) / float(vhost_inst.cycles.delta) + \
+        self.effective_io_ratio = \
+            float(vhost_inst.work_cycles.delta) / \
+            float(vhost_inst.cycles.delta) + \
             softirq_cpu_ratio
 
         logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
         logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
-                     (effective_io_ratio,))
+                     (self.effective_io_ratio,))
 
         logging.info("----------------")
         for c in sorted(vhost_inst.per_worker_counters.values(),
@@ -162,18 +167,20 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         if self.overall_io_ratio == 0:
             self.overall_io_ratio = 0.0000001
         logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
-            (self.overall_io_ratio,))
+                     (self.overall_io_ratio,))
         logging.info("----------------")
-        for c in sorted(vhost_inst.per_queue_counters.values(), key=lambda x: x.name):
+        for c in sorted(vhost_inst.per_queue_counters.values(),
+                        key=lambda x: x.name):
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
         logging.info("----------------")
         if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
-            logging.info("empty_polls ratio: %.2f." %
-                         (float(vhost_inst.per_worker_counters["empty_polls"].delta) /
-                          float(vhost_inst.per_worker_counters["loops"].delta,)))
-            logging.info("empty_works ratio: %.2f." %
-                         (float(vhost_inst.per_worker_counters["empty_works"].delta) /
-                          float(vhost_inst.per_worker_counters["loops"].delta,)))
+            empty_polls = \
+                float(vhost_inst.per_worker_counters["empty_polls"].delta)
+            empty_works = \
+                float(vhost_inst.per_worker_counters["empty_works"].delta)
+            loops = float(vhost_inst.per_worker_counters["loops"].delta)
+            logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
+            logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
         else:
             logging.info("empty_polls ratio: 0.0.")
             logging.info("empty_works ratio: 0.0.")
@@ -186,7 +193,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
 
         logging.info("efficient io ratio: %.2f" %
-            (effective_io_ratio / self.overall_io_ratio,))
+                     (self.effective_io_ratio / self.overall_io_ratio,))
 
     def should_update_core_number(self):
         vhost_inst = Vhost.INSTANCE
@@ -200,7 +207,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
                          (cycles_this_epoch,))
 
             total_cycles_this_epoch = cycles_this_epoch * self.io_cores
-            empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
+            empty_cycles = \
+                total_cycles_this_epoch - vhost_inst.work_cycles.delta
             logging.info("\x1b[37mempty_cycles: %d.\x1b[39m" %
                          (empty_cycles,))
             logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
@@ -209,20 +217,21 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
     def should_start_shared_worker(self):
         if self.shared_workers:
-            return False
+            return False, 0
         full_ratio = self.overall_io_ratio  # 1 - self.ratio
         if self.start_shared_ratio >= full_ratio:
-            return False
+            return False, 0
         logging.info("\x1b[mstart_shared_ratio: %0.2f.\x1b[39m" %
                      (self.start_shared_ratio,))
 
         logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
-        return True
+        # suggested number of io cores
+        return True, int(self.effective_io_ratio + .5)
 
     def should_stop_shared_worker(self):
         if not self.shared_workers or self.io_cores > 1:
             return False
-        full_ratio = self.overall_io_ratio  #1 - self.ratio
+        full_ratio = self.overall_io_ratio  # 1 - self.ratio
         if self.stop_shared_ratio <= full_ratio:
             return False
 
