@@ -60,7 +60,7 @@ class IOWorkersManager:
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
 
-            cpu_ids = self.vm_manager.remove_core(number=suggested_io_cores)
+            cpu_ids = self.vm_manager.remove_cores(number=suggested_io_cores)
             for cpu_id in cpu_ids:
                 self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_ids)
@@ -85,7 +85,7 @@ class IOWorkersManager:
         if add_io_core and can_add_io_core:
             self.epochs_last_action = 0
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
-            cpu_id = self.vm_manager.remove_core()
+            cpu_id = self.vm_manager.remove_cores(number=1)[0]
             if self.regret_policy.should_regret():
                 self.vm_manager.add_core(cpu_id)
                 return
