@@ -30,8 +30,12 @@ class PreconfiguredAddPolicy:
     def add(self, cpu_id):
         self.cpus.append(int(cpu_id))
 
-    def remove(self):
-        return self.cpus.pop()
+    def remove(self, number=1):
+        if len(self.cpus) < number:
+            logging.error("PreconfiguredAddPolicy: tring to pop more cpus then "
+                          "available. has %s requested: %d" %
+                          (self.cpus, number))
+        return [self.cpus.pop() for _ in xrange(number)]
 
 
 class LastAddedPolicy:
@@ -61,8 +65,12 @@ class LastAddedPolicy:
     def add(self, cpu_id):
         self.cpus.append(int(cpu_id))
 
-    def remove(self):
-        return self.cpus.pop()
+    def remove(self, number=1):
+        if len(self.cpus) < number:
+            logging.error("LastAddedPolicy: tring to pop more cpus then "
+                          "available. has %s requested: %d" %
+                          (self.cpus, number))
+        return [self.cpus.pop() for _ in xrange(number)]
 
 
 class MinCPUUsagePolicy:
@@ -72,41 +80,51 @@ class MinCPUUsagePolicy:
     def add(self, cpu_id):
         self.cpus.add(int(cpu_id))
 
-    def remove(self):
-        cpu_id = CPUUsage.INSTANCE.get_min_used_cpu(self.cpus)
-        self.cpus.remove(cpu_id)
-        return cpu_id
+    def remove(self, number=1):
+        if len(self.cpus) < number:
+            logging.error("MinCPUUsagePolicy: tring to pop more cpus then "
+                          "available. has %s requested: %d" %
+                          (self.cpus, number))
+        sorted_cpus = CPUUsage.INSTANCE.get_cpus_by_usage(self.cpus)
+        removed_cpus = sorted_cpus[:number]
+        self.cpus = set(sorted_cpus[number:])
+        return removed_cpus
 
 
-class MinElementsServedPolicy:
-    def __init__(self):
-        self.cpus_ration = {}
-
-    def update_ratio(self, elements_to_cpus):
-        self.cpus_ration = {}
-        for _, cpus in elements_to_cpus.items():
-            for cpu in cpus:
-                if cpu in self.cpus_ration:
-                    self.cpus_ration[cpu] += 1/len(cpus)
-                else:
-                    self.cpus_ration[cpu] = 1/len(cpus)
-
-    def add(self, cpu_id):
-        pass
-
-    def remove(self):
-        return min(self.cpus_ration, key=lambda x: x[1])
-
-
-class MinDevicesServedPolicy(MinElementsServedPolicy):
-    def __init__(self, io_cores):
-        MinElementsServedPolicy.__init__(self)
-        self.io_cores = io_cores
-
-    def remove(self):
-        vhost = Vhost.INSTANCE
-        # mapping devices to io_cores
-        devices_to_cpus = {dev_id: vhost.workers[dev["worker"]]["cpu"]
-                           for dev_id, dev in vhost.devices.items()}
-        self.update_ratio(devices_to_cpus)
-        return MinElementsServedPolicy.remove(self)
+# class MinElementsServedPolicy:
+#     def __init__(self):
+#         self.cpus_ratios = {}
+#
+#     def update_ratio(self, elements_to_cpus):
+#         self.cpus_ratios = {}
+#         for _, cpus in elements_to_cpus.items():
+#             for cpu in cpus:
+#                 if cpu in self.cpus_ratios:
+#                     self.cpus_ratios[cpu] += 1 / len(cpus)
+#                 else:
+#                     self.cpus_ratios[cpu] = 1 / len(cpus)
+#
+#     def add(self, cpu_id):
+#         pass
+#
+#     def remove(self, number=1):
+#         if len(self.cpus) < number:
+#             logging.error(
+#                 "MinElementsServedPolicy: tring to pop more cpus then "
+#                 "available. has %s requested: %d" % (self.cpus, number))
+#
+#         return min(self.cpus_ratios, key=lambda x: x[1])
+#
+#
+# class MinDevicesServedPolicy(MinElementsServedPolicy):
+#     def __init__(self, io_cores):
+#         MinElementsServedPolicy.__init__(self)
+#         self.io_cores = io_cores
+#
+#     def remove(self):
+#         vhost = Vhost.INSTANCE
+#         # mapping devices to io_cores
+#         devices_to_cpus = {dev_id: vhost.workers[dev["worker"]]["cpu"]
+#                            for dev_id, dev in vhost.devices.items()}
+#         self.update_ratio(devices_to_cpus)
+#         return MinElementsServedPolicy.remove(self)

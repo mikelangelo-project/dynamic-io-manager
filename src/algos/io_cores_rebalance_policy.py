@@ -57,15 +57,15 @@ class IOCoresPreConfiguredBalancePolicy:
         # logging.info(balance_changes)
         return balance_changes
 
-    def balance_after_addition(self, io_workers, new_worker_id):
+    def balance_after_addition(self, io_workers, new_worker_ids):
         """
         Re-balance the system after adding a new io worker thread
         :param io_workers: The existing IO worker thread, including the newly
         added thread
-        :param new_worker_id: The newly added worker thread id
+        :param new_worker_ids: The newly added workers thread id
         """
-        logging.info("\x1b[37mbalance_after_addition:\x1b[39m worker_id %s" %
-                     (new_worker_id,))
+        logging.info("\x1b[37mbalance_after_addition:\x1b[39m worker_ids %s" %
+                     (new_worker_ids,))
         logging.info("io_workers %s" % (io_workers,))
         return self._balance(io_workers)
 
@@ -76,7 +76,7 @@ class IOCoresPreConfiguredBalancePolicy:
         thread for removal
         :param worker_id: The worker thread id for removal
         """
-        logging.info("\x1b[37mbalance_after_addition:\x1b[39m worker_id %s" %
+        logging.info("\x1b[37mbalance_after_removal:\x1b[39m worker_id %s" %
                      (worker_id,))
         logging.info("io_workers %s" % (io_workers,))
         remaining_workers = [w for w in io_workers if w.id != worker_id]
@@ -90,32 +90,41 @@ class IOCoresPreConfiguredBalancePolicy:
 
 class BalanceByDeviceNumberPolicy:
     def __init__(self):
+        # TODO: finish this class
         pass
 
     @staticmethod
-    def balance_after_addition(io_workers, worker_id):
-        logging.info("\x1b[37mbalance_after_addition:\x1b[39m worker_id %s" %
-                     (worker_id,))
+    def balance_after_addition(io_workers, worker_ids):
+        logging.info("\x1b[37mbalance_after_addition:\x1b[39m worker_ids %s" %
+                     (worker_ids,))
         balance_changes = {}
         vhost = Vhost.INSTANCE
         # get all devices located in the socket of the removed worker
         remaining_workers = [w for w_id, w in vhost.workers.items()
-                             if w_id != worker_id]
+                             if w_id not in worker_ids]
 
-        device_count = sum(len(w["dev_list"]) for w in remaining_workers)
+        device_count = sum(len(w["dev_list"]) for w in vhost.workers.values())
         max_devices_per_worker = divide_ceil(device_count,
-                                             len(remaining_workers) + 1)
+                                             len(vhost.workers.items()))
         logging.info("device_count: %d, max_devices_per_worker: %d" %
                      (device_count, max_devices_per_worker))
 
-        new_worker = vhost.workers[worker_id]
+        i = 0
+        new_worker = vhost.workers[worker_ids[i]]
+        devs = len(new_worker["dev_list"])
 
         for w in sorted(remaining_workers,
                         key=lambda _w: device_count - len(_w["dev_list"])):
             if len(w["dev_list"]) > max_devices_per_worker:
-                balance_changes.update({dev_id: (w, new_worker)
-                                        for dev_id in
-                                        w["dev_list"][max_devices_per_worker:]})
+                bc = {dev_id: (w, new_worker)
+                      for dev_id in w["dev_list"][max_devices_per_worker:]}
+                balance_changes.update(bc)
+
+                devs += len(bc)
+                if devs >= max_devices_per_worker:
+                    i += 1
+                    new_worker = vhost.workers[worker_ids[i]]
+                    devs = len(new_worker["dev_list"])
                 continue
 
         # logging.info(balance_changes)
@@ -156,6 +165,7 @@ class BalanceByDeviceNumberPolicy:
     def balance():
         return {}
 
+
 class BalanceByGroupingPolicy:
     """
     First we divide the devices into two groups: active and inactive devices
@@ -166,6 +176,7 @@ class BalanceByGroupingPolicy:
 
     """
     def __init__(self, devices, backing_devices_manager):
+        # TODO: finish this class
         self.backing_device_groups = \
             {bd_id: []
              for bd_id in backing_devices_manager.backing_devices.keys()}
@@ -285,7 +296,8 @@ class BalanceByGroupingPolicy:
     def balance_after_addition(self, io_workers, new_worker_id):
         logging.info("\x1b[37mbalance_after_addition:\x1b[39m worker_id %s" %
                      (new_worker_id,))
-        return self._balance_active_devices(io_workers).update(self._balance_inactive_devices(io_workers))
+        return self._balance_active_devices(io_workers).update(
+            self._balance_inactive_devices(io_workers))
 
     def balance_before_removal(self, io_workers, worker_id):
         logging.info("\x1b[37mbalance_before_removal:\x1b[39m worker_id %s" %
@@ -294,16 +306,13 @@ class BalanceByGroupingPolicy:
         remaining_workers = [w for w_id, w in io_workers
                              if w.id != worker_id]
 
-        return self._balance_active_devices(remaining_workers).update(self._balance_inactive_devices(remaining_workers))
+        return self._balance_active_devices(remaining_workers).update(
+            self._balance_inactive_devices(remaining_workers))
 
     @staticmethod
     def balance():
         return {}
 
-
-
-
 # TODO: add a balancer that balances each device type individually
-
 # TODO: add a balancer that balances by trying to give a throughput device that
 # needs more processing time

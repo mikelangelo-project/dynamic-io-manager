@@ -260,8 +260,9 @@ class VMCoreAdditionPolicy(AdditionPolicy):
     def add(self, cpu_id):
         self.cpus.append(int(cpu_id))
 
-    def remove(self, cpu_id):
-        self.cpus.remove(int(cpu_id))
+    def remove(self, cpu_ids):
+        for cpu_id in cpu_ids:
+            self.cpus.remove(int(cpu_id))
 
     def should_update_core_number(self):
         ratio = CPUUsage.INSTANCE.get_empty_cpu(self.cpus)

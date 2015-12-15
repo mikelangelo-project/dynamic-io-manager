@@ -60,20 +60,10 @@ class IOWorkersManager:
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
 
-            cpu_id = self.vm_manager.remove_core()
-            self.io_core_policy.add(cpu_id)
-            self.enable_shared_workers(cpu_id)
-
-            for _ in xrange(suggested_io_cores - 1):
-                cpu_id = self.vm_manager.remove_core()
+            cpu_ids = self.vm_manager.remove_core(number=suggested_io_cores)
+            for cpu_id in cpu_ids:
                 self.io_core_policy.add(cpu_id)
-                new_worker_id = self._add_io_worker(cpu_id)
-                self.io_workers.append(IOWorker({"id": new_worker_id,
-                                                 "cpu": cpu_id}))
-                balance_changes = \
-                    self.balance_policy.balance_after_addition(self.io_workers,
-                                                               new_worker_id)
-                self._move_devices(balance_changes)
+            self.enable_shared_workers(cpu_ids)
             return
 
         if self.throughput_policy.should_stop_shared_worker():
@@ -105,7 +95,7 @@ class IOWorkersManager:
                                              "cpu": cpu_id}))
             balance_changes = \
                 self.balance_policy.balance_after_addition(self.io_workers,
-                                                           new_worker_id)
+                                                           [new_worker_id])
             self._move_devices(balance_changes)
             return
 
@@ -178,22 +168,26 @@ class IOWorkersManager:
 
         self.backing_devices_manager.balance(self.io_workers)
 
-    def enable_shared_workers(self, io_core):
+    def enable_shared_workers(self, io_cores):
         vhost = Vhost.INSTANCE
-        worker_id = min(vhost.workers.keys(),
-                        key=lambda w_id: int(w_id.split(".")[1]))
+        worker_ids = \
+            sorted(vhost.workers.keys(),
+                   key=lambda w_id: int(w_id.split(".")[1]))[:len(io_cores)]
 
-        # initialize the io worker
-        logging.info("initialize the io worker")
-        self.io_workers = [IOWorker({"id": worker_id, "cpu": io_core}), ]
-        vhost_worker_set_cpu_mask(vhost.workers[worker_id], 1 << io_core)
-        vhost.workers[worker_id]["cpu"] = io_core
+        # initialize the io workers
+        logging.info("initialize the io workers")
+        self.io_workers = []
+        for worker_id, io_core in zip(worker_ids, io_cores):
+            worker_ids.add(worker_id)
+            self.io_workers.append(IOWorker({"id": worker_id, "cpu": io_core}))
+            vhost_worker_set_cpu_mask(vhost.workers[worker_id], 1 << io_core)
+            vhost.workers[worker_id]["cpu"] = io_core
 
-        # move all devices to the single worker
-        logging.info("move all devices to the single worker")
+        # move all devices to the workers
+        logging.info("move all devices to the workers")
         balance_changes = \
             self.balance_policy.balance_after_addition(self.io_workers,
-                                                       worker_id)
+                                                       worker_ids)
         self._move_devices(balance_changes)
 
         # notify poll policy that we moved to shared worker configuration
@@ -201,10 +195,10 @@ class IOWorkersManager:
                      "configuration")
         self.poll_policy.enable_shared_workers()
 
-        # remove all workers except one
-        logging.info("remove all workers except one")
+        # remove all workers except the ones in use
+        logging.info("remove all workers except the ones in use")
         for worker in vhost.workers.values():
-            if worker["id"] == worker_id:
+            if worker["id"] in worker_ids:
                 continue
             self._remove_io_worker(worker)
 

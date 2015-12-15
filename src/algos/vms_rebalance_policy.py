@@ -56,15 +56,16 @@ class VmsPreConfiguredBalancePolicy:
         self.cpus.append(new_cpu_id)
         self._balance(vms)
 
-    def balance_before_removal(self, vms, cpu_id):
+    def balance_before_removal(self, vms, cpu_ids):
         """
-        Re-balance the system after removing a cpu core from VMs
+        Re-balance the system after removing cpu cores from VMs
         :param vms: The vms in the system
-        :param cpu_id: The worker thread id for removal
+        :param cpu_ids: The cpu ids for removal
         """
-        logging.info("\x1b[mbalance_before_removal:\x1b[39m cpu_id %s" %
-                     (cpu_id,))
-        self.cpus.remove(cpu_id)
+        logging.info("\x1b[mbalance_before_removal:\x1b[39m cpu_ids %s" %
+                     (cpu_ids,))
+        for cpu_id in cpu_ids:
+            self.cpus.remove(cpu_id)
         self._balance(vms)
 
     @staticmethod
@@ -87,14 +88,15 @@ class VmsRunEverywhereBalancePolicy:
             vm.add_core(new_cpu_id)
 
     @staticmethod
-    def balance_before_removal(vms, cpu_id):
+    def balance_before_removal(vms, cpu_ids):
         """
-        Re-balance the system after removing a cpu core from VMs
+        Re-balance the system after removing cpu cores from VMs
         :param vms: The vms in the system
-        :param cpu_id: The worker thread id for removal
+        :param cpu_ids: The worker thread id for removal
         """
-        for vm in vms:
-            vm.remove_core(cpu_id)
+        for cpu_id in cpu_ids:
+            for vm in vms:
+                vm.remove_core(cpu_id)
 
     @staticmethod
     def balance():

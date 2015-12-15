@@ -150,8 +150,9 @@ class CPUUsage:
     INSTANCE = None
 
     @staticmethod
-    def initialize(hysteresis=0):
+    def initialize(historesis=0):
         """
+        historesis the rate of historesis
         initialize the CPU usage object if one is not running yet.
 
         return True if the CPU usage object was initialized successfully,
@@ -160,7 +161,7 @@ class CPUUsage:
         """
         if CPUUsage.INSTANCE is not None:
             return False
-        CPUUsage.INSTANCE = CPUUsage(hysteresis=hysteresis)
+        CPUUsage.INSTANCE = CPUUsage(historesis=historesis)
         return True
 
     def __init__(self, hysteresis=0.0):
@@ -207,6 +208,17 @@ class CPUUsage:
         return min({k: v for k, v in self.projected.items()
                     if k in requested_cpus},
                    cmp=lambda x, y: x[1] - y[1])[0]
+
+    def get_cpus_by_usage(self, requested_cpus):
+        if not requested_cpus:
+            return None
+
+        sorted_cpus = sorted({k: v for k, v in self.projected.items()
+                              if k in requested_cpus},
+                             cmp=lambda x, y: x[1] - y[1])
+        logging.info("CPUUsage.get_cpus_by_usage: requested_cpus: %s, "
+                     "sorted_cpus: %s" % (requested_cpus, sorted_cpus))
+        return sorted_cpus.keys()
 
     def get_empty_cpu(self, requested_cpus):
         if not requested_cpus:

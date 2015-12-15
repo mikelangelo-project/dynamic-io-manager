@@ -27,15 +27,16 @@ class VMManager:
     def should_update_core_number(self):
         return self.vm_core_addition_policy.should_update_core_number()
 
-    def remove_core(self):
-        logging.info("\x1b[33mVM Manager: remove an VM core\x1b[39m")
-        cpu_id = self.vm_policy.remove()
-        self.vm_core_addition_policy.remove(cpu_id)
-        logging.info("cpu_id = %s" % (str(cpu_id),))
-
-        self.vm_balance_policy.balance_before_removal(self.vms, cpu_id)
-        del self.cpus[self.cpus.index(cpu_id)]
-        return cpu_id
+    def remove_cores(self, number=1):
+        logging.info("\x1b[33mVM Manager: remove %d VM cores\x1b[39m" %
+                     (number,))
+        removed_cpus = self.vm_policy.remove(number=number)
+        self.vm_core_addition_policy.remove(removed_cpus)
+        logging.info("removed_cpus = %s" % (str(removed_cpus),))
+        self.vm_balance_policy.balance_before_removal(self.vms, removed_cpus)
+        for cpu_id in removed_cpus:
+            del self.cpus[self.cpus.index(cpu_id)]
+        return removed_cpus
 
     def add_core(self, cpu_id):
         logging.info("\x1b[33mVM Manager: add a VM core on core %s.\x1b["
