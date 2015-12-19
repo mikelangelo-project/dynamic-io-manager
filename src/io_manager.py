@@ -9,10 +9,10 @@ import getopt
 from io_workers_manager import IOWorkersManager
 from backing_device_manager import BackingDeviceManager
 from poll_policy import NullPollPolicy
-from algos.backing_devices_rebalance_policy import \
-    BackingDevicesPreConfiguredBalancePolicy, BackingDevicesPolicy
 from vm_manager import VMManager
 
+from algos.backing_devices_rebalance_policy import \
+    BackingDevicesPreConfiguredBalancePolicy, BackingDevicesPolicy
 from algos.io_cores_rebalance_policy import IOCoresPreConfiguredBalancePolicy
 from algos.vms_rebalance_policy import VmsPreConfiguredBalancePolicy
 from algos.removal_policy import LastAddedPolicy
@@ -23,7 +23,7 @@ from algos.vq_classifier import VirtualQueueClassifier
 
 from utils.cpuusage import CPUUsage
 from utils.vhost import Vhost
-from utils.aux import msg
+from utils.aux import msg, Timer
 from utils.daemon import Daemon
 
 IO_MANAGER_PID = "/tmp/io_manager_pid.txt"
@@ -59,6 +59,7 @@ class IOManagerDaemon(Daemon):
         CPUUsage.initialize()
 
     def run(self):
+        timer = Timer("Timer IOManager")
         Vhost.INSTANCE.update()
         CPUUsage.INSTANCE.update()
         # print_all(self.vhost)
@@ -70,9 +71,13 @@ class IOManagerDaemon(Daemon):
         while True:
             time.sleep(self.interval)
             logging.info("round %d" % (i,))
+            timer.checkpoint("round %d" % (i,))
             Vhost.INSTANCE.update()
+            timer.checkpoint("Vhost.INSTANCE.update()")
             CPUUsage.INSTANCE.update()
+            timer.checkpoint("CPUUsage.INSTANCE.update()")
             self.vm_manager.update()
+            timer.checkpoint("self.vm_manager.update()")
             # logging.info("cycles: %d" %
             #              (Vhost.INSTANCE.vhost["cycles"], ))
             # logging.info("cycles_last_epoch: %d" %
@@ -82,14 +87,19 @@ class IOManagerDaemon(Daemon):
 
             logging.info("vq_classifier update_classification")
             self.io_workers_manager.update_vq_classifications()
+            timer.checkpoint("vq_classifier update_classification")
             logging.info("io_workers_manager update_io_core_number")
             self.io_workers_manager.update_io_core_number()
+            timer.checkpoint("io_workers_manager update_io_core_number")
             logging.info("io_workers_manager update_balance")
             self.io_workers_manager.update_balance()
+            timer.checkpoint("io_workers_manager update_balance")
             logging.info("io_workers_manager update_polling")
             self.io_workers_manager.update_polling()
+            timer.checkpoint("io_workers_manager update_polling")
             logging.info("backing_device_manager update")
             self.backing_device_manager.update()
+            timer.checkpoint("backing_device_manager update")
             i += 1
 
         logging.info("*****Done****")

@@ -96,7 +96,7 @@ class IOWorkersManager:
             balance_changes = \
                 self.balance_policy.balance_after_addition(self.io_workers,
                                                            [new_worker_id])
-            self._move_devices(balance_changes)
+            self.move_devices(balance_changes)
             return
 
         if not remove_io_core or not can_remove_io_core:
@@ -113,13 +113,13 @@ class IOWorkersManager:
         balance_changes = \
             self.balance_policy.balance_before_removal(self.io_workers,
                                                        removed_worker_id)
-        self._move_devices(balance_changes)
+        self.move_devices(balance_changes)
         self.backing_devices_manager.update()
         if self.regret_policy.should_regret():
             undo_balance_changes = {}
             for dev_id, (old_worker, new_worker) in balance_changes.items():
                 undo_balance_changes[dev_id] = (new_worker, old_worker)
-            self._move_devices(undo_balance_changes)
+            self.move_devices(undo_balance_changes)
             return
 
         self._remove_io_worker(removed_worker)
@@ -137,7 +137,7 @@ class IOWorkersManager:
         balance_changes = self.balance_policy.balance()
         if not balance_changes:
             return
-        self._move_devices(balance_changes)
+        self.move_devices(balance_changes)
 
     def update_polling(self):
         if self.epochs_last_action <= self.cooling_off_period:
@@ -149,7 +149,7 @@ class IOWorkersManager:
         can_update = self.epochs_last_action > self.cooling_off_period
         self.vq_classifier.update_classifications(can_update)
 
-    def _move_devices(self, balance_changes):
+    def move_devices(self, balance_changes):
         logging.info("\x1b[37mMoving devices:\x1b[39m")
         if not balance_changes:
             logging.info("no balance changes")
@@ -187,7 +187,7 @@ class IOWorkersManager:
         balance_changes = \
             self.balance_policy.balance_after_addition(self.io_workers,
                                                        worker_ids)
-        self._move_devices(balance_changes)
+        self.move_devices(balance_changes)
 
         # notify poll policy that we moved to shared worker configuration
         logging.info("notify poll policy that we moved to shared worker "

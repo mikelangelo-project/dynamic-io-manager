@@ -5,6 +5,7 @@ import os
 import stat
 import re
 import logging
+import time
 from os import popen
 
 
@@ -102,3 +103,23 @@ def parse_user_list(user_list):
             step = 1
         for elem in xrange(int(start), int(end) + 1, int(step)):
             yield elem
+
+
+class Timer:
+    def __init__(self, tag):
+        self._tag = tag
+        self._checkpoint = self._start = time.time()
+
+        msg("%s(0, 0): START" % (self._tag, ))
+
+    def checkpoint(self, text):
+        now = time.time()
+        msg("%s(%.2f, %.2f): %s" % (self._tag, float(now - self._start),
+                                    float(now - self._checkpoint), text))
+        self._checkpoint = now
+
+    def done(self):
+        now = time.time()
+        msg("%s(%.2f, %.2f): DONE" % (self._tag, float(now - self._start),
+                                      float(now - self._checkpoint)))
+        self._start = self._checkpoint = now

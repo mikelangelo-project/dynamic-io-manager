@@ -4,7 +4,7 @@ import time
 
 from utils.vhost import Vhost
 from utils.cpuusage import CPUUsage
-from utils.aux import parse_user_list
+from utils.aux import parse_user_list, Timer
 
 
 class ThroughputRegretPolicy:
@@ -16,6 +16,7 @@ class ThroughputRegretPolicy:
 
     def should_regret(self):
         logging.info("should regret")
+        timer = Timer("Timer ThroughputRegretPolicy")
         vhost_inst = Vhost.INSTANCE
         # vhost = Vhost.INSTANCE.vhost
         handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
@@ -27,11 +28,15 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before: %.2f", ratio_before)
         logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
+        timer.checkpoint("before sleep")
         time.sleep(self.interval)
+        timer.checkpoint("after sleep")
         vhost_inst.update()
+        timer.checkpoint("vhost_inst.update()")
 
         ratio_after = 0
-        for _ in xrange(5):
+        # for _ in xrange(5):
+        for _ in xrange(1):
             time.sleep(self.interval)
             vhost_inst.update()
 
@@ -46,6 +51,7 @@ class ThroughputRegretPolicy:
             logging.info("ratio_after:  %.2f", ratio_after)
             logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
 
+        timer.done()
         return ratio_before > ratio_after
 
 
@@ -86,6 +92,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         pass
 
     def calculate_load(self, shared_workers):
+        timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
         vhost_inst = Vhost.INSTANCE
         workers = Vhost.INSTANCE.workers
 
@@ -194,6 +201,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         logging.info("efficient io ratio: %.2f" %
                      (self.effective_io_ratio / self.overall_io_ratio,))
+        timer.done()
 
     def should_update_core_number(self):
         vhost_inst = Vhost.INSTANCE

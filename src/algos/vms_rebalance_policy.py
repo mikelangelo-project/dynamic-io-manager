@@ -7,7 +7,7 @@ __author__ = 'eyalmo'
 class VmsPreConfiguredBalancePolicy:
     def __init__(self, balancer_info, initial_cpus):
         self.vms_configurations = {
-            int(conf["cores"]): {
+            conf["id"]: {
                 vm["id"]: list(parse_user_list(vm["cpu"]))
                 for vm in conf["vms"]
             }
@@ -28,9 +28,17 @@ class VmsPreConfiguredBalancePolicy:
         #              (pprint.pformat(self.cpus, indent=2, width=80,
         #                              depth=4),))
 
+        self.configuration_mapping = \
+            {len(conf["cores"]): conf["id"]
+             for conf in balancer_info["configurations"]}
+
     def _balance(self, vms):
-        vms_conf = self.vms_configurations[len(self.cpus)]
-        cpus_conf = self.cpu_configuration[len(self.cpus)]
+        conf_id = self.configuration_mapping[len(self.cpus)]
+        self.balance_by_configuration(conf_id, vms)
+
+    def balance_by_configuration(self, conf_id, vms):
+        vms_conf = self.vms_configurations[conf_id]
+        cpus_conf = self.cpu_configuration[conf_id]
         cpu_mapping = {cpu_conf: cpu
                        for cpu_conf, cpu in zip(cpus_conf, self.cpus)}
 

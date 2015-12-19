@@ -5,7 +5,7 @@ import os
 import getopt
 
 from cpus import CPU
-from aux import syscmd, ls, msg, print_stuff, print_selected_stuff
+from aux import syscmd, ls, msg, warn, print_stuff, print_selected_stuff
 from affinity_entity import parse_cpu_mask_from_pid, set_cpu_mask_to_pid
 
 
@@ -122,8 +122,9 @@ class Vhost:
     def initialize(path=MOUNT_POINT):
         """
         initialize the CPU usage object if one is not running yet.
+        :param path: vhost mount path
 
-        return True if the CPU usage object was initialized successfully,
+        :return True if the CPU usage object was initialized successfully,
         False otherwise
         Note; returns false if the CPU usage object is already running)
         """
@@ -159,7 +160,7 @@ class Vhost:
             ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
              "notif_wait", "notif_works", "poll_cycles", "poll_bytes",
              "poll_empty", "poll_empty_cycles", "poll_limited",
-             "poll_pending_cycles", "poll_wait"] # , "sendmsg_calls"]
+             "poll_pending_cycles", "poll_wait"]  # , "sendmsg_calls"]
         }
 
         self._initialize()
@@ -282,6 +283,7 @@ class Vhost:
             self._initialize()
         if update_epoch:
             vhost_write(self.vhost, "epoch", "1")
+
         Vhost.update_all_entries(self.vhost)
         cycles_this_epoch = self.vhost["cycles"] - \
             self.vhost["cycles_last_epoch"]
@@ -304,7 +306,6 @@ class Vhost:
             vq["notif_works_last_epoch"] = vq["notif_works"]
             vq["notif_works_this_epoch"] = notif_works_this_epoch
 
-
         self.cycles.update(self.vhost, [self.vhost])
         self.work_cycles.update(self.vhost, self.workers.values())
         self.softirq_interference.update(self.vhost, self.workers.values())
@@ -314,7 +315,8 @@ class Vhost:
         for c in self.per_queue_counters.values():
             c.update(self.vhost, self.queues.values())
 
-if __name__ == '__main__':
+
+def main(argv):
     workers = True
     devices = False
     queues = False
@@ -323,16 +325,16 @@ if __name__ == '__main__':
 
     opts = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "wdqvslh",
+        opts, args = getopt.getopt(argv[1:], "wdqvslh",
                                    ["workers", "devices", "queues",
                                     "short", "long", "help"])
     except getopt.GetoptError:
         msg("Error: unknown option")
-        usage(sys.argv[0])
+        usage(argv[0])
 
     for opt, _ in opts:
         if opt in ("-h", "--help"):
-            usage(sys.argv[0])
+            usage(argv[0])
         elif opt in ("-w", "--worker"):
             workers = True
         elif opt in ("-d", "--devices"):
@@ -368,3 +370,7 @@ if __name__ == '__main__':
             print_stuff("device", vhost.devices)
         if queues:
             print_stuff("queue", vhost.queues)
+
+
+if __name__ == '__main__':
+    main(sys.argv[0])

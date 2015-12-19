@@ -15,7 +15,7 @@ def divide_ceil(num1, num2):
 class IOCoresPreConfiguredBalancePolicy:
     def __init__(self, balancer_info, devices):
         vms_confs = {
-            len(conf["vhost_workers"]): {
+            conf["id"]: {
                 vm["id"]: vm["vhost_worker"]
                 for vm in conf["vms"]}
             for conf in balancer_info["configurations"]}
@@ -26,19 +26,29 @@ class IOCoresPreConfiguredBalancePolicy:
         }
 
         self.workers_configurations = {
-            len(conf["vhost_workers"]): [w["id"] for w in conf["vhost_workers"]]
+            conf["id"]: [w["id"] for w in conf["vhost_workers"]]
             for conf in balancer_info["configurations"]
         }
+
+        self.configuration_mapping = \
+            {len(conf["vhost_workers"]): conf["id"]
+             for conf in balancer_info["configurations"]}
+
         logging.info("workers_configurations: %s" %
                      (self.workers_configurations,))
 
     def _balance(self, io_workers):
+        # logging.info("Vhost.INSTANCE.devices: %s" % (devices,))
+        conf_id = self.configuration_mapping[len(io_workers)]
+        return self.balance_by_configuration(conf_id, io_workers)
+
+    def balance_by_configuration(self, conf_id, io_workers):
         devices = Vhost.INSTANCE.devices
         workers = Vhost.INSTANCE.workers
-        # logging.info("Vhost.INSTANCE.devices: %s" % (devices,))
-        workers_conf = self.workers_configurations[len(io_workers)]
+        workers_conf = self.workers_configurations[conf_id]
         logging.info("workers_conf: %s" % (workers_conf,))
-        devices_conf = self.devices_configurations[len(io_workers)]
+        devices_conf = self.devices_configurations[conf_id]
+
         logging.info("devices_conf: %s" % (devices_conf,))
         worker_mapping = {worker_conf: workers[worker.id]
                           for worker_conf, worker in zip(workers_conf,

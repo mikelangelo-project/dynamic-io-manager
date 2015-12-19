@@ -8,7 +8,7 @@ __author__ = 'eyalmo'
 class BackingDevicesPreConfiguredBalancePolicy:
     def __init__(self, balancer_info):
         self.backing_devices_configurations = {
-            int(conf["vhost_workers"]): {
+            conf["id"]: {
                 bd["id"]: list(parse_user_list(bd["cpu"]))
                 for bd in conf["backing_devices"]
             }
@@ -24,6 +24,11 @@ class BackingDevicesPreConfiguredBalancePolicy:
             c: list(set([cpu for cpus in bd.values() for cpu in cpus]))
             for c, bd in self.backing_devices_configurations.items()
         }
+
+        self.configuration_mapping = \
+            {len(conf["vhost_workers"]): conf["id"]
+             for conf in balancer_info["configurations"]}
+
         logging.info("cpu configurations:")
         for c, cl in self.cpu_configuration.items():
             logging.info("cpu %d: %s" % (c, cl))
@@ -38,11 +43,13 @@ class BackingDevicesPreConfiguredBalancePolicy:
 
     def balance(self, io_workers):
         logging.info("io_workers: %s" % (io_workers, ))
+        conf_id = self.configuration_mapping[len(io_workers)]
+        self.balance_by_configuration(conf_id, io_workers)
 
+    def balance_by_configuration(self, conf_id, io_workers):
         backing_devices_conf = \
-            self.backing_devices_configurations[len(io_workers)]
-        cpus_conf = self.cpu_configuration[len(io_workers)]
-
+            self.backing_devices_configurations[conf_id]
+        cpus_conf = self.cpu_configuration[conf_id]
         logging.info("backing devices configuration:")
         for bd_id, bd in backing_devices_conf.items():
             logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
