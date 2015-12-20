@@ -33,11 +33,9 @@ def usage(program_name, error):
     print('Reconfigures the environment to match each configuration every given'
           'interval')
     print('OPTIONS:')
-    print('-p/--param "<parameter name>:<value>"')
-    print('EXAMPLE: %s io_manager_configuration.json -p '
-          '\"intervalvm_core_addition_policy.add_ratio:0.45\" -p '
-          '\"vm_core_addition_policy.can_remove_ratio:1.0\"' %
-          (program_name, ))
+    print('-s/--setup <io manager configuration>: starts mover with '
+          'configuration.')
+    print('-k/--kill: kills the mover that runs in a daemon.')
     sys.exit()
 
 MOVER_PID = "/tmp/io_manager_pid.txt"
@@ -96,34 +94,31 @@ def main(argv):
         usage(argv[0], "Wrong number of arguments, expected at least 1 got %d"
               % (len(argv) - 1,))
 
-    config_filename = os.path.expanduser(argv[1])
-    if not os.path.exists(config_filename):
-        usage(argv[0], "configuration file %s not found " %
-              (config_filename,))
-
-    # load configuration
-    with open(config_filename, "r") as f:
-        config = json.load(f)
-
     opts = None
     try:
-        opts, args = getopt.getopt(sys.argv[2:], "p:h",
-                                   ["param=", "help"])
+        opts, args = getopt.getopt(argv[1:], "s:kh",
+                                   ["start=", "kill", "help"])
     except getopt.GetoptError:
         usage(argv[0], "Illegal Argument!")
 
+    configuration_filename = None
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            usage(sys.argv[0], "Help")
-        elif opt in ("-p", "--param"):
-            msg("parameter: %s" % (arg, ))
-            key, value = arg.split(":")
-            keys = [k.strip() for k in key.split(".")]
+            usage(argv[0], "Help")
+        elif opt in ("-s", "--start"):
+            msg("configuration file: %s" % (arg, ))
+            configuration_filename = arg
+            break
+        elif opt in ("-k", "--kill"):
+            msg("kills an mover that runs in a daemon.")
+            Daemon(MOVER_PID).stop()
+            sys.exit()
 
-            entry = config
-            for key in keys[:-1]:
-                entry = entry[key]
-            entry[keys[-1]] = value
+    if not os.path.exists(configuration_filename):
+        usage(argv[0], "Configuration file doesn't exists!")
+
+    with open(configuration_filename) as f:
+        config = json.load(f)
 
     # start the log file if exists
     if "log" in config and config["log"]:
