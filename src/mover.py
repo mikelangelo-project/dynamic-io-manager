@@ -210,5 +210,5 @@ def main(argv):
         logging.info("running without daemon")
         daemon.run()
 
-    if __name__ == '__main__':
-        main(sys.argv)
+if __name__ == '__main__':
+    main(sys.argv)
