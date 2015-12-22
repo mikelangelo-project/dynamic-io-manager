@@ -12,7 +12,7 @@ from poll_policy import NullPollPolicy
 from vm_manager import VMManager
 
 from algos.backing_devices_rebalance_policy import \
-    BackingDevicesPreConfiguredBalancePolicy, BackingDevicesPolicy
+    BackingDevicesPreConfiguredBalancePolicy
 from algos.io_cores_rebalance_policy import IOCoresPreConfiguredBalancePolicy
 from algos.vms_rebalance_policy import VmsPreConfiguredBalancePolicy
 from algos.removal_policy import LastAddedPolicy
@@ -146,12 +146,9 @@ def main(argv):
     Vhost.INSTANCE.update(True)
 
     # get backing devices info
-    if "preconfigured" in config["backing_devices_balance_policy"]["id"]:
-        backing_devices_policy = \
-            BackingDevicesPreConfiguredBalancePolicy(
-                config["backing_devices_balance_policy"])
-    else:
-        backing_devices_policy = BackingDevicesPolicy()
+    backing_devices_policy = \
+        BackingDevicesPreConfiguredBalancePolicy(
+            config["backing_devices_balance_policy"])
     bdm = BackingDeviceManager(config["backing_devices"],
                                backing_devices_policy)
 

@@ -15,8 +15,8 @@ class BackingDevicesPreConfiguredBalancePolicy:
             for conf in balancer_info["configurations"]
         }
         logging.info("backing devices configurations:")
-        for w, bds in self.backing_devices_configurations.items():
-            logging.info("vhost_workers %d:" % (w,))
+        for c_id, bds in self.backing_devices_configurations.items():
+            logging.info("vhost_workers %s:" % (c_id,))
             for bd_id, bd in bds.items():
                 logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
 
