@@ -26,7 +26,7 @@ class BackingDevicesPreConfiguredBalancePolicy:
         }
 
         self.configuration_mapping = \
-            {len(conf["vhost_workers"]): conf["id"]
+            {int(conf["vhost_workers"]): conf["id"]
              for conf in balancer_info["configurations"]}
 
         logging.info("cpu configurations:")
