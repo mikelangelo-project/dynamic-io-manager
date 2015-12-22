@@ -30,8 +30,8 @@ class BackingDevicesPreConfiguredBalancePolicy:
              for conf in balancer_info["configurations"]}
 
         logging.info("cpu configurations:")
-        for c, cl in self.cpu_configuration.items():
-            logging.info("cpu %d: %s" % (c, cl))
+        for c_id, cl in self.cpu_configuration.items():
+            logging.info("configuration %s: %s" % (c_id, cl))
 
         self.backing_devices = None
         self.vm_manager = None
