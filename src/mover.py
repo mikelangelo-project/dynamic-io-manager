@@ -91,6 +91,7 @@ class MoverDaemon(Daemon):
                     workers_balance_policy.balance_by_configuration(
                         conf_id, self.io_workers_manager.io_workers)
                 self.io_workers_manager.move_devices(balance_changes)
+                timer.checkpoint("end round %d" % (i,))
                 i += 1
 
         logging.info("*****Done****")
