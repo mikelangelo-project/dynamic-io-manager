@@ -48,7 +48,7 @@ class Cycles:
         Cycles._RDTSCLIB = ctypes.CDLL(lib_path)
         Cycles._RDTSCLIB.get_cycles.argtypes = []
         Cycles._RDTSCLIB.get_cycles.restype = ctypes.c_ulonglong
-        Cycles.cycles_per_second = Cycles.get_cycles_per_second()
+        Cycles.cycles_per_second, _, _ = Cycles.get_cycles_per_second()
         Cycles.resolution, _, _ = Cycles.get_resolution()
         return True
 
