@@ -94,7 +94,7 @@ class Cycles:
             diffs.append(end - start)
         # avg, min, max
         return sum(diffs, 0) / (len(diffs) * interval), \
-            min(diffs) * interval, max(diffs) * interval
+            min(diffs) / interval, max(diffs) / interval
 
 
 def main(argv):
