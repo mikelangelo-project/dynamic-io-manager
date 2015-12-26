@@ -5,3 +5,6 @@
 .pydevproject
 src.old/
 *.swp
+*.so
+*.o
+*.d

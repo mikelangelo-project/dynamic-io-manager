@@ -22,6 +22,7 @@ from algos.latency_policy import LatencyPolicy
 from algos.vq_classifier import VirtualQueueClassifier
 
 from utils.cpuusage import CPUUsage
+from utils.get_cycles.get_cycles import Cycles
 from utils.vhost import Vhost
 from utils.aux import msg, Timer
 from utils.daemon import Daemon
@@ -51,6 +52,9 @@ class MoverDaemon(Daemon):
         self.io_workers_manager = io_workers_manager
         self.backing_device_manager = backing_device_manager
         CPUUsage.initialize()
+        Cycles.initialize()
+        self.interval_in_cycles = self.interval * \
+                                  Cycles.INSTANCE.cycles_per_second
 
     def run(self):
         timer = Timer("Timer Mover")
@@ -72,7 +76,11 @@ class MoverDaemon(Daemon):
         # while i < 15:
         while True:
             for conf_id in configuration_ids:
-                time.sleep(self.interval)
+                if self.interval >= 0.1:
+                    time.sleep(self.interval)
+                else:
+                    # we don't sleep here just delay until its time
+                    Cycles.INSTANCE.delay(self.interval_in_cycles)
                 logging.info("round %d" % (i,))
                 timer.checkpoint("round %d" % (i,))
 

@@ -5,8 +5,9 @@ import os
 import stat
 import re
 import logging
-import time
 from os import popen
+
+from utils.get_cycles.get_cycles import Cycles
 
 
 def syscmd(s):
@@ -107,20 +108,23 @@ def parse_user_list(user_list):
 
 class Timer:
     def __init__(self, tag):
+        Cycles.initialize()
+
         self._tag = tag
-        self._checkpoint = self._start = time.time()
+        self._checkpoint = self._start = \
+            Cycles.INSTANCE.get_cycles()
 
         logging.info("%s(0, 0): START" % (self._tag, ))
 
     def checkpoint(self, text):
-        now = time.time()
+        now = Cycles.INSTANCE.get_cycles()  # time.time()
         logging.info("%s(%.2f, %.2f): %s" %
                      (self._tag, float(now - self._start),
                       float(now - self._checkpoint), text))
         self._checkpoint = now
 
     def done(self):
-        now = time.time()
+        now = Cycles.INSTANCE.get_cycles()
         logging.info("%s(%.2f, %.2f): DONE" %
                      (self._tag, float(now - self._start),
                       float(now - self._checkpoint)))
