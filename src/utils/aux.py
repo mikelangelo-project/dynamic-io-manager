@@ -117,15 +117,15 @@ class Timer:
         logging.info("%s(0, 0): START" % (self._tag, ))
 
     def checkpoint(self, text):
-        now = Cycles.get_cycles()  # time.time()
-        logging.info("%s(%.2f, %.2f): %s" %
+        now = Cycles.get_cycles()
+        logging.info("%s(%d, %d): %s" %
                      (self._tag, float(now - self._start),
                       float(now - self._checkpoint), text))
         self._checkpoint = now
 
     def done(self):
         now = Cycles.get_cycles()
-        logging.info("%s(%.2f, %.2f): DONE" %
+        logging.info("%s(%d, %d): DONE" %
                      (self._tag, float(now - self._start),
                       float(now - self._checkpoint)))
         self._start = self._checkpoint = now
