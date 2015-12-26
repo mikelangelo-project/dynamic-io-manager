@@ -85,16 +85,16 @@ class Cycles:
         return sum(diffs, 0) / len(diffs), min(diffs), max(diffs)
 
     @staticmethod
-    def get_cycles_per_second(count=100):
+    def get_cycles_per_second(interval=0.01, count=100):
         diffs = []
         for _ in xrange(count):
             start = Cycles.get_cycles()
-            time.sleep(0.01)
+            time.sleep(interval)
             end = Cycles.get_cycles()
             diffs.append(end - start)
         # avg, min, max
-        return sum(diffs, 0) / (len(diffs) / 100.0), \
-            min(diffs) / 100, max(diffs) / 100
+        return sum(diffs, 0) / (len(diffs) * interval), \
+            min(diffs) * interval, max(diffs) * interval
 
 
 def main(argv):
