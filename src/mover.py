@@ -81,15 +81,17 @@ class MoverDaemon(Daemon):
                     # we don't sleep here just delay until its time
                     Cycles.delay(self.interval_in_cycles)
                 logging.info("round %d" % (i,))
-                timer.checkpoint("round %d" % (i,))
-
+                timer.checkpoint("1 round %d" % (i,))
                 vm_balance_policy.balance_by_configuration(conf_id,
                                                            self.vm_manager.vms)
+                timer.checkpoint("2 round %d" % (i,))
                 backing_device_manager.balance_by_configuration(
                     conf_id, self.io_workers_manager.io_workers)
+                timer.checkpoint("3 round %d" % (i,))
                 balance_changes = \
                     workers_balance_policy.balance_by_configuration(
                         conf_id, self.io_workers_manager.io_workers)
+                timer.checkpoint("4 round %d" % (i,))
                 self.io_workers_manager.move_devices(balance_changes)
                 timer.checkpoint("end round %d" % (i,))
                 i += 1
