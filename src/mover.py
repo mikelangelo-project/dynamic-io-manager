@@ -53,8 +53,7 @@ class MoverDaemon(Daemon):
         self.backing_device_manager = backing_device_manager
         CPUUsage.initialize()
         Cycles.initialize()
-        self.interval_in_cycles = self.interval * \
-                                  Cycles.INSTANCE.cycles_per_second
+        self.interval_in_cycles = self.interval * Cycles.cycles_per_second
 
     def run(self):
         timer = Timer("Timer Mover")
@@ -80,7 +79,7 @@ class MoverDaemon(Daemon):
                     time.sleep(self.interval)
                 else:
                     # we don't sleep here just delay until its time
-                    Cycles.INSTANCE.delay(self.interval_in_cycles)
+                    Cycles.delay(self.interval_in_cycles)
                 logging.info("round %d" % (i,))
                 timer.checkpoint("round %d" % (i,))
 

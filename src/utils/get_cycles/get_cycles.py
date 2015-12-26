@@ -2,28 +2,34 @@ import ctypes
 import os
 import subprocess
 import time
+import logging
+
+
+def usage(program_name, error):
+    print("%s [<count>]" % (program_name, ))
+    print(error)
 
 
 class Cycles:
-    LIBRARY_PATH = 'librdtsc.so'
-    INSTANCE = None
+    _LIBRARY_PATH = 'librdtsc.so'
+    _RDTSCLIB = None
+
+    cycles_per_second = None
+    resolution = None
 
     @staticmethod
     def initialize():
         """
-        initialize the get cycles object if one is not running yet.
+        initialize the get cycles class if one is not running yet.
 
-        :return True if the object was initialized successfully,
+        :return True if the class was initialized successfully,
         False otherwise
-        Note; returns false if the object is already initialized)
+        Note; returns false if the class is already initialized)
         """
-        if Cycles.INSTANCE is not None:
+        if Cycles._RDTSCLIB is not None:
             return False
-        Cycles.INSTANCE = Cycles()
-        return True
 
-    def __init__(self):
-        lib_path = Cycles.LIBRARY_PATH
+        lib_path = Cycles._LIBRARY_PATH
 
         # Compile the library
         subprocess.call(['make', '-C', lib_path])
@@ -34,41 +40,49 @@ class Cycles:
                                     lib_path)
 
         if not os.path.exists(lib_path):
-            print("Error: couldn't locate %s, searched locations: %s" %
-                  (Cycles.LIBRARY_PATH, lib_path))
-            sys.exit(1)
+            logging.error("Error: couldn't locate %s, searched locations: %s" %
+                          (Cycles._LIBRARY_PATH, lib_path))
+            raise IOError
 
         print("found library at " + lib_path)
-        self.rdtsclib = ctypes.CDLL(lib_path)
-        self.rdtsclib.get_cycles.argtypes = []
-        self.rdtsclib.get_cycles.restype = ctypes.c_ulonglong
+        Cycles.RDTSCLIB = ctypes.CDLL(lib_path)
+        Cycles.RDTSCLIB.get_cycles.argtypes = []
+        Cycles.RDTSCLIB.get_cycles.restype = ctypes.c_ulonglong
+        Cycles.cycles_per_second = Cycles.get_cycles_per_second()
+        Cycles.resolution, _, _ = Cycles.get_resolution()
+        return True
 
+    def __init__(self):
         self.cycles_per_second = self.get_cycles_per_second()
         self.resolution, _, _ = self.get_resolution()
 
-    def get_cycles(self):
-        return self.rdtsclib.get_cycles()
+    @staticmethod
+    def get_cycles():
+        return Cycles._RDTSCLIB.get_cycles()
 
-    def delay(self, cycles):
-        start = self.get_cycles()
-        while self.get_cycles() - start < cycles:
+    @staticmethod
+    def delay(cycles):
+        start = Cycles.get_cycles()
+        while Cycles.get_cycles() - start < cycles:
             continue
         return
 
-    def get_resolution(self, count=1000):
+    @staticmethod
+    def get_resolution(count=1000):
         # TODO: add confidence interval
-        diffs = [0 - self.get_cycles() + self.get_cycles()
+        diffs = [0 - Cycles.get_cycles() + Cycles.get_cycles()
                  for _ in xrange(count)]
 
         # avg, min, max
         return sum(diffs, 0) / len(diffs), min(diffs), max(diffs)
 
-    def get_cycles_per_second(self, count=100):
+    @staticmethod
+    def get_cycles_per_second(count=100):
         diffs = []
         for _ in xrange(count):
-            start = self.get_cycles()
+            start = Cycles.get_cycles()
             time.sleep(0.01)
-            end = self.get_cycles()
+            end = Cycles.get_cycles()
             diffs.append(end - start)
         # avg, min, max
         return sum(diffs, 0) / (len(diffs) / 100.0), \
@@ -80,14 +94,14 @@ def main(argv):
     if len(argv) > 1:
         count = int(argv[1])
 
-    cycles = Cycles()
+    Cycles.initialize()
 
     avg, min, max = \
-        cycles.get_resolution(count)
+        Cycles.get_resolution(count)
     print("Resolution: Average: %lu, Min: %lu, Max: %lu" % (avg, min, max))
 
     avg, min, max = \
-        cycles.get_cycles_per_second(count)
+        Cycles.get_cycles_per_second(count)
     print("Cycles/Sec: Average: %lu, Min: %lu, Max: %lu" % (avg, min, max))
 
 if __name__ == '__main__':
