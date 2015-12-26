@@ -55,10 +55,9 @@ class Cycles:
         Cycles.resolution = avg
 
         avg, min, max = Cycles.get_cycles_per_second()
-        print("Cycles/Sec: Average: %lu, Min: %lu, Max: %lu" % (avg, min, max))
+        logging.info("Cycles/Sec: Average: %lu, Min: %lu, Max: %lu" %
+                     (avg, min, max))
         Cycles.cycles_per_second = avg
-
-
         return True
 
     def __init__(self):
