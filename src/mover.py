@@ -84,16 +84,16 @@ class MoverDaemon(Daemon):
                 timer.checkpoint("1 round %d" % (i,))
                 vm_balance_policy.balance_by_configuration(conf_id,
                                                            self.vm_manager.vms)
-                timer.checkpoint("2 round %d" % (i,))
+                timer.checkpoint("round %d: vm_balance_policy" % (i,))
                 backing_device_manager.balance_by_configuration(
                     conf_id, self.io_workers_manager.io_workers)
-                timer.checkpoint("3 round %d" % (i,))
+                timer.checkpoint("round %d: backing_device_manager" % (i,))
                 balance_changes = \
                     workers_balance_policy.balance_by_configuration(
                         conf_id, self.io_workers_manager.io_workers)
-                timer.checkpoint("4 round %d" % (i,))
+                timer.checkpoint("round %d: balance_by_configuration" % (i,))
                 self.io_workers_manager.move_devices(balance_changes)
-                timer.checkpoint("end round %d" % (i,))
+                timer.checkpoint("end round %d: move_devices" % (i,))
                 i += 1
 
         logging.info("*****Done****")
