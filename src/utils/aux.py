@@ -139,7 +139,9 @@ class Timer:
         # self._start = self._checkpoint = now
 
         start = prev = self.checkpoints[0][0]
+        output = "\n"
         for cp in self.checkpoints:
-            logging.info("%s(%d, %d): %s" %
-                         (self._tag, cp[0] - start, cp[0] - prev, cp[1]))
+            output += "%s(%d, %d): %s\n" % \
+                      (self._tag, cp[0] - start, cp[0] - prev, cp[1])
             prev = cp[0]
+        logging.info(output)
