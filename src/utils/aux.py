@@ -111,10 +111,11 @@ class Timer:
         Cycles.initialize()
 
         self._tag = tag
-        self._checkpoint = self._start = \
-            Cycles.get_cycles()
+        # self._checkpoint = self._start = \
+        #     Cycles.get_cycles()
+        # logging.info("%s(0, 0): START" % (self._tag, ))
 
-        logging.info("%s(0, 0): START" % (self._tag, ))
+        self.checkpoints = [(Cycles.get_cycles(), "START")]
 
     @staticmethod
     def check_resolution():
@@ -124,14 +125,21 @@ class Timer:
 
     def checkpoint(self, text):
         now = Cycles.get_cycles()
-        logging.info("%s(%d, %d): %s" %
-                     (self._tag, float(now - self._start),
-                      float(now - self._checkpoint), text))
-        self._checkpoint = now
+        self.checkpoints.append((now, text))
+        # logging.info("%s(%d, %d): %s" % (self._tag, now - self._start,
+        #                                  now - self._checkpoint, text))
+        # self._checkpoint = now
 
     def done(self):
         now = Cycles.get_cycles()
-        logging.info("%s(%d, %d): DONE" %
-                     (self._tag, float(now - self._start),
-                      float(now - self._checkpoint)))
-        self._start = self._checkpoint = now
+        self.checkpoints.append((now, "DONE"))
+        # logging.info("%s(%d, %d): DONE" %
+        #              (self._tag, float(now - self._start),
+        #               float(now - self._checkpoint)))
+        # self._start = self._checkpoint = now
+
+        start = prev = self.checkpoints[0][0]
+        for cp in self.checkpoints:
+            logging.info("%s(%d, %d): %s" %
+                         (self._tag, cp[0] - start, cp[0] - prev, cp[1]))
+            prev = cp[0]

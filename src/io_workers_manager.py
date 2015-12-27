@@ -150,7 +150,7 @@ class IOWorkersManager:
         can_update = self.epochs_last_action > self.cooling_off_period
         self.vq_classifier.update_classifications(can_update)
 
-    def move_devices(self, balance_changes):
+    def move_devices(self, balance_changes, balance_backing_device=True):
         timer = Timer("Timer move_devices")
         logging.info("\x1b[37mMoving devices:\x1b[39m")
         if not balance_changes:
@@ -171,7 +171,8 @@ class IOWorkersManager:
             old_worker["dev_list"].remove(dev_id)
             timer.checkpoint("dev %s end" % (dev_id,))
 
-        self.backing_devices_manager.balance(self.io_workers)
+        if balance_backing_device:
+            self.backing_devices_manager.balance(self.io_workers)
 
     def enable_shared_workers(self, io_cores):
         vhost = Vhost.INSTANCE
