@@ -152,15 +152,15 @@ class IOWorkersManager:
 
     def move_devices(self, balance_changes, balance_backing_device=True):
         timer = Timer("Timer move_devices")
-        logging.info("\x1b[37mMoving devices:\x1b[39m")
+        # logging.info("\x1b[37mMoving devices:\x1b[39m")
         if not balance_changes:
-            logging.info("no balance changes")
+            # logging.info("no balance changes")
             return
 
         for dev_id, (old_worker, new_worker) in balance_changes.items():
-            logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
-                         "\x1b[39m\n" %
-                         (dev_id, old_worker["id"], new_worker["id"]))
+            # logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
+            #              "\x1b[39m\n" %
+            #              (dev_id, old_worker["id"], new_worker["id"]))
             timer.checkpoint("dev %s" % (dev_id,))
             vhost_write(Vhost.INSTANCE.devices[dev_id], "worker",
                         new_worker["id"])

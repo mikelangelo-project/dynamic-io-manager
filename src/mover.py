@@ -72,7 +72,7 @@ class MoverDaemon(Daemon):
         configuration_ids = vm_balance_policy.vms_configurations.keys()
 
         i = li = 0
-        lis = int(1.0 / self.interval) + 1
+        lis = 20  # int(1.0 / self.interval) + 1
         # while i < 15:
         while True:
             for conf_id in configuration_ids:
@@ -81,7 +81,7 @@ class MoverDaemon(Daemon):
                 else:
                     # we don't sleep here just delay until its time
                     Cycles.delay(self.interval_in_cycles)
-                logging.info("round %d" % (i,))
+                # logging.info("round %d" % (i,))
                 timer.checkpoint("1 round %d" % (i,))
                 vm_balance_policy.balance_by_configuration(conf_id,
                                                            self.vm_manager.vms)

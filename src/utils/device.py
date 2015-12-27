@@ -31,7 +31,7 @@ class IRQ(AffinityEntity):
             self.apply_cpu_mask()
 
     def add_cpu(self, cpu):
-        logging.info("IRQ %d add CPU %d" % (self.id, cpu))
+        # logging.info("IRQ %d add CPU %d" % (self.id, cpu))
         AffinityEntity.add_cpu(self, cpu)
 
         if self.cpu_mask == 0:
@@ -40,8 +40,8 @@ class IRQ(AffinityEntity):
     def apply_cpu_mask(self):
         if self.current_cpu == -1:
             self.current_cpu = self.first_cpu()
-        logging.info("apply_cpu_mask: assigning IRQ %s to CPU %d" %
-                     (self, self.current_cpu))
+        # logging.info("apply_cpu_mask: assigning IRQ %s to CPU %d" %
+        #              (self, self.current_cpu))
         with open(os.path.join(IRQ_DIRECTORY, str(self.id),
                                "smp_affinity_list"), "w") as affinity_file:
             affinity_file.write(str(self.current_cpu))
@@ -62,11 +62,11 @@ class IRQ(AffinityEntity):
     def set_cpu_mask(self, cpu_mask=None, cpu_sequence=None):
         AffinityEntity.set_cpu_mask(self, cpu_mask=cpu_mask,
                                     cpu_sequence=cpu_sequence)
-        logging.info("set_cpu_mask: %s" % (self,))
+        # logging.info("set_cpu_mask: %s" % (self,))
 
     def merge_cpu_mask(self, cpu_mask):
         AffinityEntity.merge_cpu_mask(self, cpu_mask)
-        logging.info("merge_cpu_mask: %s" % (self,))
+        # logging.info("merge_cpu_mask: %s" % (self,))
 
 
 class Device:
@@ -79,11 +79,11 @@ class Device:
         if "backing_device" in dev_info:
             self.backing_device = backing_devices[dev_info["backing_device"]]
             self.backing_device.add_device(self.id)
-            logging.info("backing device: %s" % (dev_info["backing_device"],))
+            # logging.info("backing device: %s" % (dev_info["backing_device"],))
 
     def set_affinity_to_backing_devices(self, cpu_mask):
-        logging.info("set affinity to backing device of Device %s, vm: %s" %
-                     (self.id, self.vm.idx))
+        # logging.info("set affinity to backing device of Device %s, vm: %s" %
+        #              (self.id, self.vm.idx))
         vhost_worker_id = Vhost.INSTANCE.devices[self.id]["worker"]
         vhost_worker = Vhost.INSTANCE.workers[vhost_worker_id]
         vhost_worker_set_cpu_mask(vhost_worker, cpu_mask)
