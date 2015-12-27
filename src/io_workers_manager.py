@@ -171,8 +171,10 @@ class IOWorkersManager:
             old_worker["dev_list"].remove(dev_id)
             timer.checkpoint("dev %s end" % (dev_id,))
 
+        timer.checkpoint("before backing_devices_manager.balance")
         if balance_backing_device:
             self.backing_devices_manager.balance(self.io_workers)
+        timer.done()
 
     def enable_shared_workers(self, io_cores):
         vhost = Vhost.INSTANCE
