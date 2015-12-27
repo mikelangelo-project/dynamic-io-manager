@@ -58,6 +58,7 @@ class VmsPreConfiguredBalancePolicy:
             timer.checkpoint("vm %s before set_cpu_mask" % (vm.idx,))
             vm.set_cpu_mask(cpu_mask)
             timer.checkpoint("vm %s after set_cpu_mask" % (vm.idx,))
+            timer.done()
 
     def balance_after_addition(self, vms, new_cpu_id):
         """
