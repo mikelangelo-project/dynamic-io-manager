@@ -44,12 +44,12 @@ class VmsPreConfiguredBalancePolicy:
                        for cpu_conf, cpu in zip(cpus_conf, self.cpus)}
 
         # moving vms to the correct cpu cores
-        logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
+        # logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
         for vm in vms:
             timer.checkpoint("vm %s" % (vm.idx,))
-            new_cpu_sequence = [cpu_mapping[c] for c in vms_conf[vm.idx]]
-            logging.info("\x1b[37mvm %s: %s\x1b[39m" % (vm.idx,
-                                                        new_cpu_sequence))
+            # new_cpu_sequence = [cpu_mapping[c] for c in vms_conf[vm.idx]]
+            # logging.info("\x1b[37mvm %s: %s\x1b[39m" % (vm.idx,
+            #                                             new_cpu_sequence))
             cpu_mask = 0
             for c in vms_conf[vm.idx]:
                 cpu_mask += (1 << cpu_mapping[c])
@@ -58,7 +58,7 @@ class VmsPreConfiguredBalancePolicy:
             timer.checkpoint("vm %s before set_cpu_mask" % (vm.idx,))
             vm.set_cpu_mask(cpu_mask)
             timer.checkpoint("vm %s after set_cpu_mask" % (vm.idx,))
-            timer.done()
+        timer.done()
 
     def balance_after_addition(self, vms, new_cpu_id):
         """
@@ -66,8 +66,8 @@ class VmsPreConfiguredBalancePolicy:
         :param vms: The vms in the system
         :param new_cpu_id: The newly added cpu id
         """
-        logging.info("\x1b[37mbalance_after_addition:\x1b[39m new_cpu_id %s" %
-                     (new_cpu_id,))
+        # logging.info("\x1b[37mbalance_after_addition:\x1b[39m new_cpu_id %s" %
+        #              (new_cpu_id,))
         self.cpus.append(new_cpu_id)
         self._balance(vms)
 
@@ -77,8 +77,8 @@ class VmsPreConfiguredBalancePolicy:
         :param vms: The vms in the system
         :param cpu_ids: The cpu ids for removal
         """
-        logging.info("\x1b[mbalance_before_removal:\x1b[39m cpu_ids %s" %
-                     (cpu_ids,))
+        # logging.info("\x1b[mbalance_before_removal:\x1b[39m cpu_ids %s" %
+        #              (cpu_ids,))
         for cpu_id in cpu_ids:
             self.cpus.remove(cpu_id)
         self._balance(vms)
