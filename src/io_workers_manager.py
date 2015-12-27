@@ -3,6 +3,7 @@ import logging
 from utils.vhost import Vhost, vhost_write, vhost_read, \
     vhost_worker_set_cpu_mask, get_cpu_usage
 from utils.io_worker import IOWorker
+from utils.aux import Timer
 
 __author__ = 'eyalmo'
 
@@ -150,6 +151,7 @@ class IOWorkersManager:
         self.vq_classifier.update_classifications(can_update)
 
     def move_devices(self, balance_changes):
+        timer = Timer("Timer move_devices")
         logging.info("\x1b[37mMoving devices:\x1b[39m")
         if not balance_changes:
             logging.info("no balance changes")
@@ -159,12 +161,15 @@ class IOWorkersManager:
             logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
                          "\x1b[39m\n" %
                          (dev_id, old_worker["id"], new_worker["id"]))
+            timer.checkpoint("dev %s" % (dev_id,))
             vhost_write(Vhost.INSTANCE.devices[dev_id], "worker",
                         new_worker["id"])
+            timer.checkpoint("dev %s vhost_write" % (dev_id,))
             Vhost.INSTANCE.devices[dev_id]["worker"] = new_worker["id"]
 
             new_worker["dev_list"].append(dev_id)
             old_worker["dev_list"].remove(dev_id)
+            timer.checkpoint("dev %s end" % (dev_id,))
 
         self.backing_devices_manager.balance(self.io_workers)
 

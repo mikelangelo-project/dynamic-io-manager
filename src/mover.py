@@ -189,6 +189,9 @@ def main(argv):
     latency_policy = LatencyPolicy(config["latency_policy"])
     regret_policy = ThroughputRegretPolicy(config["throughput_regret_policy"])
 
+    # log the resolution of the timer
+    Timer.check_resolution()
+
     # setup the io core controller
     io_workers_manager = IOWorkersManager(devices, vm_manager, bdm,
                                           config["workers"],

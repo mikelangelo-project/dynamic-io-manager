@@ -1,5 +1,5 @@
 import logging
-from utils.aux import parse_user_list
+from utils.aux import parse_user_list, Timer
 
 __author__ = 'eyalmo'
 
@@ -37,6 +37,7 @@ class VmsPreConfiguredBalancePolicy:
         self.balance_by_configuration(conf_id, vms)
 
     def balance_by_configuration(self, conf_id, vms):
+        timer = Timer("Timer VmsPreConfiguredBalancePolicy")
         vms_conf = self.vms_configurations[conf_id]
         cpus_conf = self.cpu_configuration[conf_id]
         cpu_mapping = {cpu_conf: cpu
@@ -45,13 +46,18 @@ class VmsPreConfiguredBalancePolicy:
         # moving vms to the correct cpu cores
         logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
         for vm in vms:
+            timer.checkpoint("vm %s" % (vm.idx,))
             new_cpu_sequence = [cpu_mapping[c] for c in vms_conf[vm.idx]]
             logging.info("\x1b[37mvm %s: %s\x1b[39m" % (vm.idx,
                                                         new_cpu_sequence))
             cpu_mask = 0
             for c in vms_conf[vm.idx]:
                 cpu_mask += (1 << cpu_mapping[c])
+            if cpu_mask == vm.cpu_mask:
+                continue
+            timer.checkpoint("vm %s before set_cpu_mask" % (vm.idx,))
             vm.set_cpu_mask(cpu_mask)
+            timer.checkpoint("vm %s after set_cpu_mask" % (vm.idx,))
 
     def balance_after_addition(self, vms, new_cpu_id):
         """

@@ -116,6 +116,12 @@ class Timer:
 
         logging.info("%s(0, 0): START" % (self._tag, ))
 
+    @staticmethod
+    def check_resolution():
+        timer = Timer("Timer resolution check")
+        timer.checkpoint("check point")
+        timer.done()
+
     def checkpoint(self, text):
         now = Cycles.get_cycles()
         logging.info("%s(%d, %d): %s" %
