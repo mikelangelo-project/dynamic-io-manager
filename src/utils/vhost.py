@@ -182,9 +182,33 @@ class Vhost:
         return Vhost.queuePattern.match(key)
 
     @staticmethod
+    def parse_value(key, value):
+        value = value.strip()
+        # msg("value: %s" % (value,))
+        if key.endswith("_list"):
+            if value:
+                value = value.split("\t")
+            else:
+                value = []
+        elif value.isdigit():
+            value = int(value)
+
+        # msg("end")
+        return value
+
+    @staticmethod
     def update_all_entries(dictionary):
         dir_path = dictionary["path"]
         # msg("dir_path: %s" % (dir_path,))
+        if "status" in dictionary["keys"]:
+            file_path = os.path.join(dir_path, "status")
+            # msg("file_path: %s" % (file_path,))
+            with open(file_path, "r") as f:
+                for line in f:
+                    key, value = line.split(":")
+                    dictionary[key] = Vhost.parse_value(key, value)
+            return
+
         for key in dictionary["keys"]:
             # msg("key: %s" % (key,))
             file_path = os.path.join(dir_path, key)
@@ -192,18 +216,7 @@ class Vhost:
             with open(file_path, "r") as f:
                 # msg("file opened successfully")
                 value = f.read().strip()
-
-            # msg("value: %s" % (value,))
-            if key.endswith("_list"):
-                if value:
-                    value = value.split("\t")
-                else:
-                    value = []
-            elif value.isdigit():
-                value = int(value)
-
-            # msg("end")
-            dictionary[key] = value
+            dictionary[key] = Vhost.parse_value(key, value)
 
     def update_all_entries_with_id(self, elem_id):
         directory = ""

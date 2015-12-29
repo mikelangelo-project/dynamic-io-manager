@@ -63,6 +63,29 @@ class MoverDaemon(Daemon):
         self.io_workers_manager.initialize()
         self.vm_manager.update()
 
+        i = 0
+        while i < 15:
+            time.sleep(self.interval)
+            timer.checkpoint("round %d" % (i,))
+            Vhost.INSTANCE.update()
+            timer.checkpoint("Vhost.INSTANCE.update()")
+            CPUUsage.INSTANCE.update()
+            timer.checkpoint("CPUUsage.INSTANCE.update()")
+            self.vm_manager.update()
+            timer.checkpoint("self.vm_manager.update()")
+            self.io_workers_manager.update_vq_classifications()
+            timer.checkpoint("vq_classifier update_classification")
+            self.io_workers_manager.update_io_core_number()
+            timer.checkpoint("io_workers_manager update_io_core_number")
+            self.io_workers_manager.update_balance()
+            timer.checkpoint("io_workers_manager update_balance")
+            self.io_workers_manager.update_polling()
+            timer.checkpoint("io_workers_manager update_polling")
+            self.backing_device_manager.update()
+            timer.checkpoint("backing_device_manager update")
+            i += 1
+        timer.done()
+
         vm_balance_policy = \
             self.vm_manager.vm_balance_policy
         workers_balance_policy = \
@@ -82,7 +105,7 @@ class MoverDaemon(Daemon):
                     # we don't sleep here just delay until its time
                     Cycles.delay(self.interval_in_cycles)
                 # logging.info("round %d" % (i,))
-                timer.checkpoint("1 round %d" % (i,))
+                timer.checkpoint("round %d" % (i,))
                 vm_balance_policy.balance_by_configuration(conf_id,
                                                            self.vm_manager.vms)
                 timer.checkpoint("round %d: vm_balance_policy" % (i,))

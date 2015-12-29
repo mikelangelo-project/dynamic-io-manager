@@ -104,38 +104,38 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
         empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
-        logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
-                     (vhost_inst.cycles.delta,))
-        logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
-                     (vhost_inst.work_cycles.delta,))
-        logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-                     (self.io_cores,))
-        logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
-                     (cycles_this_epoch,))
-        logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
-                     (empty_cycles,))
+        # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
+        #              (vhost_inst.cycles.delta,))
+        # logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
+        #              (vhost_inst.work_cycles.delta,))
+        # logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
+        #              (self.io_cores,))
+        # logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
+        #              (cycles_this_epoch,))
+        # logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
+        #              (empty_cycles,))
 
-        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
-            vhost_inst.per_queue_counters["poll_bytes"].delta
-        cycles = vhost_inst.cycles.delta
-        ratio_before = handled_bytes / float(cycles)
-        logging.info("cycles:       %d", cycles)
-        logging.info("handled_bytes:%d", handled_bytes)
-        logging.info("ratio_before: %.2f", ratio_before)
-        logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
+        # handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+        #     vhost_inst.per_queue_counters["poll_bytes"].delta
+        # cycles = vhost_inst.cycles.delta
+        # ratio_before = handled_bytes / float(cycles)
+        # logging.info("cycles:       %d", cycles)
+        # logging.info("handled_bytes:%d", handled_bytes)
+        # logging.info("ratio_before: %.2f", ratio_before)
+        # logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
         softirq_cpu_ratio = 0
         if shared_workers:
             io_cores_cpus = [w["cpu"] for w in workers.values()]
-            logging.info("\x1b[37mio_cores_cpus %s.\x1b[39m" %
-                         (str(io_cores_cpus),))
+            # logging.info("\x1b[37mio_cores_cpus %s.\x1b[39m" %
+            #              (str(io_cores_cpus),))
             softirq_cpu = CPUUsage.INSTANCE.get_softirq_cpu(io_cores_cpus)
-            logging.info("\x1b[37msoftirq_cpu %.2f.\x1b[39m" % (softirq_cpu,))
+            # logging.info("\x1b[37msoftirq_cpu %.2f.\x1b[39m" % (softirq_cpu,))
             total_interrupts = CPUUsage.INSTANCE.get_interrupts(io_cores_cpus)
-            logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
-                         (total_interrupts,))
-            logging.info("\x1b[37msoftirq_interference_this_epoch %d.\x1b[39m" %
-                         (vhost_inst.softirq_interference.delta,))
+            # logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
+            #              (total_interrupts,))
+            # logging.info("\x1b[37msoftirq_interference_this_epoch %d.\x1b[39m" %
+            #              (vhost_inst.softirq_interference.delta,))
             # ksoftirq thread is scheduled on our iocores, and worse yet it
             # preempts the iocores thread. We measure the iocores activity and
             # CPU usage using rdtsc assuming it is never preempts. softirq_cpu_
@@ -147,8 +147,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
                     float(softirq_cpu) - float(softirq_cpu) * \
                     float(vhost_inst.softirq_interference.delta) / \
                     float(total_interrupts)
-            logging.info("\x1b[37msoftirq cpu %.2f.\x1b[39m" %
-                         (softirq_cpu_ratio,))
+            # logging.info("\x1b[37msoftirq cpu %.2f.\x1b[39m" %
+            #              (softirq_cpu_ratio,))
 
         # the idle cycles ratio in the iocores not including the ksoftirq
         # activity (which is a useful work). 1 means a full core was wasted.
@@ -160,37 +160,37 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             float(vhost_inst.cycles.delta) + \
             softirq_cpu_ratio
 
-        logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
-        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
-                     (self.effective_io_ratio,))
+        # logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
+        # logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
+        #              (self.effective_io_ratio,))
 
-        logging.info("----------------")
-        for c in sorted(vhost_inst.per_worker_counters.values(),
-                        key=lambda x: x.name):
-            logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
+        # logging.info("----------------")
+        # for c in sorted(vhost_inst.per_worker_counters.values(),
+        #                 key=lambda x: x.name):
+        #     logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
         self.overall_io_ratio = \
             vhost_inst.per_worker_counters["cpu_usage_counter"].delta / \
             float(CPUUsage.INSTANCE.get_ticks())
         if self.overall_io_ratio == 0:
             self.overall_io_ratio = 0.0000001
-        logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
-                     (self.overall_io_ratio,))
-        logging.info("----------------")
-        for c in sorted(vhost_inst.per_queue_counters.values(),
-                        key=lambda x: x.name):
-            logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
-        logging.info("----------------")
-        if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
-            empty_polls = \
-                float(vhost_inst.per_worker_counters["empty_polls"].delta)
-            empty_works = \
-                float(vhost_inst.per_worker_counters["empty_works"].delta)
-            loops = float(vhost_inst.per_worker_counters["loops"].delta)
-            logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
-            logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
-        else:
-            logging.info("empty_polls ratio: 0.0.")
-            logging.info("empty_works ratio: 0.0.")
+        # logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
+        #              (self.overall_io_ratio,))
+        # logging.info("----------------")
+        # for c in sorted(vhost_inst.per_queue_counters.values(),
+        #                 key=lambda x: x.name):
+        #     logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
+        # logging.info("----------------")
+        # if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
+        #     empty_polls = \
+        #         float(vhost_inst.per_worker_counters["empty_polls"].delta)
+        #     empty_works = \
+        #         float(vhost_inst.per_worker_counters["empty_works"].delta)
+        #     loops = float(vhost_inst.per_worker_counters["loops"].delta)
+        #     logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
+        #     logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
+        # else:
+        #     logging.info("empty_polls ratio: 0.0.")
+        #     logging.info("empty_works ratio: 0.0.")
 
         self.average_bytes_per_packet = 0
         # if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
@@ -199,8 +199,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         #               vhost_inst.per_queue_counters["poll_cycles"].delta) / \
         #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
 
-        logging.info("efficient io ratio: %.2f" %
-                     (self.effective_io_ratio / self.overall_io_ratio,))
+        # logging.info("efficient io ratio: %.2f" %
+        #              (self.effective_io_ratio / self.overall_io_ratio,))
         timer.done()
 
     def should_update_core_number(self):

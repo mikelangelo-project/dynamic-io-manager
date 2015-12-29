@@ -66,7 +66,8 @@ class IOManagerDaemon(Daemon):
         self.io_workers_manager.initialize()
         self.vm_manager.update()
 
-        i = 0
+        i = li = 0
+        lis = 20  # int(1.0 / self.interval) + 1
         # while i < 15:
         while True:
             time.sleep(self.interval)
@@ -85,22 +86,25 @@ class IOManagerDaemon(Daemon):
             # logging.info("cycles_this_epoch: %d" %
             #              (Vhost.INSTANCE.vhost["cycles_this_epoch"], ))
 
-            logging.info("vq_classifier update_classification")
+            # logging.info("vq_classifier update_classification")
             self.io_workers_manager.update_vq_classifications()
             timer.checkpoint("vq_classifier update_classification")
-            logging.info("io_workers_manager update_io_core_number")
+            # logging.info("io_workers_manager update_io_core_number")
             self.io_workers_manager.update_io_core_number()
             timer.checkpoint("io_workers_manager update_io_core_number")
-            logging.info("io_workers_manager update_balance")
+            # logging.info("io_workers_manager update_balance")
             self.io_workers_manager.update_balance()
             timer.checkpoint("io_workers_manager update_balance")
-            logging.info("io_workers_manager update_polling")
+            # logging.info("io_workers_manager update_polling")
             self.io_workers_manager.update_polling()
             timer.checkpoint("io_workers_manager update_polling")
-            logging.info("backing_device_manager update")
+            # logging.info("backing_device_manager update")
             self.backing_device_manager.update()
             timer.checkpoint("backing_device_manager update")
             i += 1
+            if i - li > lis:
+                timer.done()
+                li = i
 
         logging.info("*****Done****")
 
