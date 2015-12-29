@@ -180,7 +180,7 @@ class CPUUsage:
         self.current = CPUStatCounter(syscmd(CPUUsage.cmd))
 
         h = self.historesis
-        t_diff = 100.0 * float(self.uptime.up_time_diff)
+        t_diff = 100.0 * float(self.uptime.up_time_diff) + 0.000001
         logging.info(self.uptime.up_time_diff)
         for c in self.current.diff(old).per_cpu_counters:
             # logging.info(str(c))
