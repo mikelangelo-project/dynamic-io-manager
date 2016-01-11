@@ -4,8 +4,10 @@ import sys
 import os
 import getopt
 
+
 from cpus import CPU
 from aux import syscmd, ls, msg, warn, print_stuff, print_selected_stuff, Timer
+from vhost_light import VhostLight, ProcessCPUUsageCounterBase
 from affinity_entity import parse_cpu_mask_from_pid, set_cpu_mask_to_pid
 
 
@@ -50,41 +52,39 @@ def vhost_worker_get_cpu_mask(worker):
 
 
 def get_cpu_usage(pid):
-    cmd = "/bin/cat /proc/%s/stat" % (pid,)
-    res = syscmd(cmd).split()
-    # msg({i: n for i, n in enumerate(res)})
-    if not res:
-        warn("%s failed, a process with that pid was not found.")
+    path = "/proc/%s/stat" % (pid,)
+    if not os.path.exists(path):
+        warn("A process with that pid %d was not found." % (pid,))
         return 0
-    return int(res[13]) + int(res[14])
+
+    with open(path, "r") as f:
+        for line in f:
+            res = line.split()
+            return int(res[13]) + int(res[14])
 
 
-class ProcessCPUUsageCounter:
+class ProcessCPUUsageCounter(ProcessCPUUsageCounterBase):
     def __init__(self, pid):
+        ProcessCPUUsageCounterBase.__init__(self, pid)
         # gets both user and kernel cpu ticks.
-        self.cmd = "/bin/cat /proc/%s/stat" % (pid,)
-        self.pid = pid
-
+        self.path = "/proc/%s/stat" % (pid,)
         self.current = self._parse_output()
-        self.delta = 0
 
     def _parse_output(self):
-        res = syscmd(self.cmd).split()
-        # msg({i: n for i, n in enumerate(res)})
-        if not res:
-            warn("%s failed, a process with that pid was not found. update "
-                 "vm pids file and run again" % (self.cmd,))
+        if not os.path.exists(self.path):
+            warn("A process with that pid %d was not found. update "
+                 "vm pids file and run again" % (self.pid,))
             return 0
-        return int(res[13]) + int(res[14])
+
+        with open(self.path, "r") as f:
+            for line in f:
+                res = line.split()
+                return int(res[13]) + int(res[14])
 
     def update(self):
         value = self._parse_output()
         self.delta = value - self.current
         self.current = value
-
-    def __str__(self):
-        return "%s(pid=%s, current=%d, delta=%d)" % \
-                (self.__class__, self.pid, self.current, self.delta)
 
 
 class VhostCounter:
@@ -151,19 +151,28 @@ class Vhost:
         self.softirq_interference = VhostCounter("softirq_interference",
                                                  "ksoftirqs")
 
+        # self.per_worker_counters = {
+        #     n: VhostCounter(n)
+        #     for n in ["empty_polls", "empty_works", "loops",
+        # "cpu_usage_counter"]
+        # }
         self.per_worker_counters = {
-            n: VhostCounter(n) for n in ["empty_polls", "empty_works", "loops",
-                                         "cpu_usage_counter"]
+            n: VhostCounter(n) for n in ["cpu_usage_counter"]
         }
+        # self.per_queue_counters = {
+        #     n: VhostCounter(n) for n in
+        #     ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
+        #      "notif_wait", "notif_works", "poll_cycles", "poll_bytes",
+        #      "poll_empty", "poll_empty_cycles", "poll_limited",
+        #      "poll_pending_cycles", "poll_wait"]  # , "sendmsg_calls"]
+        # }
         self.per_queue_counters = {
-            n: VhostCounter(n) for n in
-            ["handled_bytes", "notif_bytes", "notif_cycles", "notif_limited",
-             "notif_wait", "notif_works", "poll_cycles", "poll_bytes",
-             "poll_empty", "poll_empty_cycles", "poll_limited",
-             "poll_pending_cycles", "poll_wait"]  # , "sendmsg_calls"]
+            n: VhostCounter(n) for n in ["handled_bytes"]
         }
 
         self._initialize()
+
+        self.vhost_light = VhostLight(self)
 
     @staticmethod
     def is_workers_global(key, value):
@@ -301,8 +310,13 @@ class Vhost:
         timer.checkpoint("per_queue_counters")
         timer.checkpoint("done")
 
-    def update(self, update_epoch=True, rescan_files=False):
+    def update(self, light_update=True, update_epoch=False, rescan_files=False):
         timer = Timer("Timer vhost update")
+        self.vhost_light.update()
+        timer.checkpoint("vhost_light")
+        if light_update:
+            timer.done()
+            return
         if rescan_files:
             self._initialize()
             timer.checkpoint("_initialize")
@@ -348,6 +362,7 @@ class Vhost:
         for c in self.per_queue_counters.values():
             c.update(self.vhost, self.queues.values())
         timer.checkpoint("per_queue_counters")
+        self.vhost_light.update(rescan=True)
         timer.done()
 
 

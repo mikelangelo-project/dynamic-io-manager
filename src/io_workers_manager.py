@@ -208,6 +208,7 @@ class IOWorkersManager:
             if worker["id"] in worker_ids:
                 continue
             self._remove_io_worker(worker)
+        vhost.vhost_light.update(rescan=True)
 
     def disable_shared_workers(self):
         self.poll_policy.disable_shared_workers()
@@ -217,6 +218,7 @@ class IOWorkersManager:
         for dev in self.devices[1:]:
             worker_id = self._add_io_worker()
             vhost_write(vhost.devices[dev.id], "worker", worker_id)
+        vhost.vhost_light.update(rescan=True)
 
     @staticmethod
     def _add_io_worker(new_io_core=0):
@@ -234,6 +236,7 @@ class IOWorkersManager:
                                   1 << new_io_core)
         # logging.info("Added Worker: {id: %s, cpu: %d}" % (new_worker_id,
         #                                                   new_io_core))
+        vhost.vhost_light.update(rescan=True)
         return new_worker_id
 
     @staticmethod
@@ -255,3 +258,4 @@ class IOWorkersManager:
 
         del workers[removed_worker["id"]]
         vhost_write(vhost.workersGlobal, "remove", removed_worker["id"])
+        vhost.vhost_light.update(rescan=True)

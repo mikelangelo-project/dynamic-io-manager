@@ -60,7 +60,7 @@ class IOManagerDaemon(Daemon):
 
     def run(self):
         timer = Timer("Timer IOManager")
-        Vhost.INSTANCE.update()
+        Vhost.INSTANCE.update(light_update=False, update_epoch=True)
         CPUUsage.INSTANCE.update()
         # print_all(self.vhost)
         self.io_workers_manager.initialize()
@@ -166,7 +166,8 @@ def main(argv):
 
     # initialize vhost
     Vhost.initialize()
-    Vhost.INSTANCE.update(True)
+    Vhost.INSTANCE.update(light_update=False, update_epoch=True,
+                          rescan_files=False)
 
     # get backing devices info
     if "preconfigured" in conf["backing_devices_balance_policy"]["id"]:

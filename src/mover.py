@@ -57,7 +57,8 @@ class MoverDaemon(Daemon):
 
     def run(self):
         timer = Timer("Timer Mover")
-        Vhost.INSTANCE.update()
+        Vhost.INSTANCE.update(light_update=False, update_epoch=True,
+                              rescan_files=False)
         CPUUsage.INSTANCE.update()
         # print_all(self.vhost)
         self.io_workers_manager.initialize()
@@ -181,7 +182,8 @@ def main(argv):
 
     # initialize vhost
     Vhost.initialize()
-    Vhost.INSTANCE.update(True)
+    Vhost.INSTANCE.update(light_update=False, update_epoch=True,
+                          rescan_files=False)
 
     # get backing devices info
     backing_devices_policy = \

@@ -17,10 +17,8 @@ class ThroughputRegretPolicy:
     def should_regret(self):
         logging.info("should regret")
         timer = Timer("Timer ThroughputRegretPolicy")
-        vhost_inst = Vhost.INSTANCE
-        # vhost = Vhost.INSTANCE.vhost
-        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
-            vhost_inst.per_queue_counters["poll_bytes"].delta
+        vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
+        handled_bytes = vhost_inst.per_queue_counters["handled_bytes"].delta
         cycles = vhost_inst.cycles.delta
         ratio_before = handled_bytes / float(cycles)
         logging.info("cycles:       %d", cycles)
@@ -40,9 +38,7 @@ class ThroughputRegretPolicy:
             time.sleep(self.interval)
             vhost_inst.update()
 
-            handled_bytes = \
-                vhost_inst.per_queue_counters["notif_bytes"].delta + \
-                vhost_inst.per_queue_counters["poll_bytes"].delta
+            handled_bytes = vhost_inst.per_queue_counters["handled_bytes"].delta
             cycles = vhost_inst.cycles.delta
             ratio_after = handled_bytes / float(cycles)
 
@@ -93,7 +89,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
     def calculate_load(self, shared_workers):
         timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
-        vhost_inst = Vhost.INSTANCE
+        vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         workers = Vhost.INSTANCE.workers
 
         cycles_this_epoch = vhost_inst.cycles.delta
@@ -204,7 +200,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         timer.done()
 
     def should_update_core_number(self):
-        vhost_inst = Vhost.INSTANCE
+        vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         add, can_remove = self._should_update_core_number(self.ratio)
         if add:
             logging.info("\x1b[37mshould add IO workers, empty cycles "
@@ -288,109 +284,3 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         logging.info("\x1b[37VM cores are %s.\x1b[39m" % (self.cpus, ))
         return add, can_remove
 
-# class ThroughputPolicyOld():
-#     def __init__(self, policy_info):
-#         # The threshold where we stop handling multiple devices in a single
-#         # worker.
-#         self.stop_shared_ratio = float(policy_info["stop_shared_ratio"]) # 0.3
-#         # The threshold where we stop handling multiple devices in a single
-#         # worker. 0.45
-#         self.start_shared_ratio = float(policy_info["start_shared_ratio"])
-#
-#         # the ratio between the total work cycles available and the amount
-#         # spent performing work.
-#         self.add_ratio = float(policy_info["add_ratio"])  # 0.9
-#         # the ratio between total empty cycles in the vhost workers, and the
-#         # amount of cycles available to one worker.
-#         self.remove_ratio = float(policy_info["remove_ratio"])  # 1.5
-#
-#         self.cooling_off_period = 30  # 6
-#         self.epochs_last_action = 0
-#
-#     @staticmethod
-#     def initialize():
-#         Vhost.INSTANCE.vhost["total_work_cycles"] = \
-#             Vhost.INSTANCE.vhost["cycles"]
-#
-#     @staticmethod
-#     def calculate_load(vhost, devices, queues):
-#         total_work_cycles = 0
-#         for dev in devices.values():
-#             dev["total_work_cycles"] = 0
-#             for vq in [queues[vq_id] for vq_id in dev["vq_list"]]:
-#                 dev["total_work_cycles"] += vq["poll_cycles"] + \
-#                     vq["notif_cycles"]
-#             total_work_cycles += dev["total_work_cycles"]
-#         vhost["total_work_cycles_last_epoch"] = vhost["total_work_cycles"]
-#         vhost["total_work_cycles"] = total_work_cycles
-#
-#     def update_io_core_number(self, shared_workers):
-#         vhost = Vhost.INSTANCE
-#         cycles_this_epoch = vhost.vhost["cycles_this_epoch"]
-#         ThroughputPolicyOld.calculate_load(vhost.vhost, vhost.devices,
-#                                            vhost.queues)
-#
-#         self.epochs_last_action += 1
-#         if self.epochs_last_action <= self.cooling_off_period:
-#             return "stay"
-#
-#         io_cores = len(vhost.workers) if shared_workers else 0
-#         total_work_cycles_delta = vhost.vhost["total_work_cycles"] - \
-#             vhost.vhost["total_work_cycles_last_epoch"]
-#
-#         total_cycles_this_epoch = cycles_this_epoch * max(io_cores, 1)
-#         empty_cycles = total_cycles_this_epoch - total_work_cycles_delta
-#
-#         if total_cycles_this_epoch * self.add_ratio < \
-#                 total_work_cycles_delta:
-#             logging.info("\x1b[33mthroughtput: should add I/O core\x1b[39m")
-#             logging.info("io_cores: %d" %
-#                          (io_cores, ))
-#             logging.info("cycles_this_epoch: %d" %
-#                          (cycles_this_epoch, ))
-#             logging.info("total_cycles_this_epoch: %d" %
-#                          (total_cycles_this_epoch, ))
-#             logging.info("total_work_cycles_delta: %d" %
-#                          (total_work_cycles_delta, ))
-#             logging.info("ratio: %f" %
-#                          (total_work_cycles_delta /
-#                           float(total_cycles_this_epoch), ))
-#             self.epochs_last_action = 0
-#             return "add"
-#
-#         if (io_cores == 0) and \
-#                 (total_cycles_this_epoch * self.start_shared_ratio <
-#                     total_work_cycles_delta):
-#             logging.info("\x1b[33mthroughtput: start shared workers\x1b[39m")
-#             logging.info("total_cycles_this_epoch: %d" %
-#                          (total_cycles_this_epoch, ))
-#             logging.info("total_work_cycles_delta: %d" %
-#                          (total_work_cycles_delta, ))
-#             logging.info("ratio: %f" %
-#                          (total_work_cycles_delta /
-#                           float(total_cycles_this_epoch), ))
-#             self.epochs_last_action = 0
-#             return "add"
-#
-#         if (cycles_this_epoch * self.remove_ratio < empty_cycles) and \
-#                 (io_cores > 1):
-#             logging.info("\x1b[33mthroughtput: should remove an I/O core"
-#                          "\x1b[39m")
-#             logging.info("empty_cycles: %d, cycles_this_epoch: %d" %
-#                          (empty_cycles, cycles_this_epoch))
-#             logging.info("ratio: %f" %
-#                          (empty_cycles / float(cycles_this_epoch), ))
-#             self.epochs_last_action = 0
-#             return "remove"
-#
-#         if (cycles_this_epoch * self.stop_shared_ratio < empty_cycles) and \
-#                 (io_cores == 1):
-#             logging.info("\x1b[33mthroughtput: stop shared workers\x1b[39m")
-#             logging.info("empty_cycles: %d, cycles_this_epoch: %d" %
-#                          (empty_cycles, cycles_this_epoch))
-#             logging.info("ratio: %f" %
-#                          (empty_cycles / float(cycles_this_epoch), ))
-#             self.epochs_last_action = 0
-#             return "remove"
-#
-#         return "stay"
