@@ -16,7 +16,7 @@ static void *__vhost_remap(const char * const fname)
     u64 kernel_address = 0UL;
 
     printf("%s:%d\n", __func__, __LINE__);
-    if((file = fopen(fname, O_RDONLY)) == NULL) {
+    if((file = fopen(fname, "r")) == NULL) {
         fprintf(stderr, "Couldn't open file: %s, error: %s\n", fname, strerror(errno));
         return NULL;
     }

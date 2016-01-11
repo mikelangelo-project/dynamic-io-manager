@@ -21,7 +21,7 @@ void *kernel_remap(u64 kernel_address){
     }
 
     printf("%s:%d\n", __func__, __LINE__);
-    if((file = fopen("/dev/kmem", O_RDONLY)) == NULL) {
+    if((file = fopen("/dev/kmem", "r")) == NULL) {
 	    fprintf(stderr, "failed open()ing /dev/kmem: %s\n", strerror(errno));
 	    return NULL;
     }
