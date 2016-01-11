@@ -15,19 +15,20 @@ static void *__vhost_remap(const char * const fname)
     ssize_t read;
     u64 kernel_address = 0UL;
 
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     if((file = fopen(fname, O_RDONLY)) == NULL) {
         fprintf(stderr, "Couldn't open file: %s, error: %s\n", fname, strerror(errno));
         return NULL;
     }
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     if ((read = fscanf(file, "%llx\n", &kernel_address)) <= 0) {
         fprintf(stderr, "Couldn't read file: %s, error: %s\n", fname, strerror(errno));
         return NULL;
     }
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     fclose(file);
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
+
     return kernel_remap(kernel_address);
 }
 
@@ -35,24 +36,24 @@ static void *vhost_remap(const char * const dir, const char * const id)
 {
     char buf[256] = {0};
 
-    printf("%s:%d", __func__, __LINE__);
-    if (snprintf(buf, 256, stats_file_path, dir, id) < 0){
+    printf("%s:%d\n", __func__, __LINE__);
+    if (snprintf(buf, 255, stats_file_path, dir, id) < 0){
        fprintf(stderr, "failed creating the file name.\n");
        return NULL;
     }
 
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     if(access(buf, F_OK) == -1) {
         fprintf(stderr, "file not found: %s\n", buf);
         return NULL;
     }
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     return __vhost_remap(buf);
 }
 
 struct vhost_worker_stats *remap_vhost_worker(const char * const id)
 {
-    printf("%s:%d", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     return (struct vhost_worker_stats *)vhost_remap("worker", id);
 }
 
