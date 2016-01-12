@@ -77,9 +77,10 @@ struct vhost_worker_stats {
     u64 ixgbe_poll_loops;
 };
 
-struct vhost_worker_stats *remap_vhost_worker(const char * const id);
-struct vhost_device_stats *remap_vhost_device(const char * const id);
-struct vhost_virtqueue_stats *remap_vhost_virtqueue(const char * const id);
+u64 vhost_worker_stats_kernel(const char * const id);
+u64 vhost_device_stats_kernel(const char * const id);
+u64 vhost_virtqueue_stats_kernel(const char * const id);
+
 
 #endif /* _VHOST_STATS_H */
 
