@@ -34,10 +34,8 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
             for line in f:
                 kernel_addresses = line.strip().split()
         logging.info("kernel_address: %lx" % (kernel_addresses[0],))
-        address = kernel_mapper.map(kernel_addresses[0])
-        logging.info("address: %lx" % (address,))
-        self.readers = [kernel_mapper.Counter(address),
-                        kernel_mapper.Counter(address + RAW_FIELD_SIZE)]
+        self.readers = [kernel_mapper.Counter(kernel_addresses[0]),
+                        kernel_mapper.Counter(kernel_addresses[1])]
 
         self.current = self.readers[0].read() + self.readers[1].read()
 

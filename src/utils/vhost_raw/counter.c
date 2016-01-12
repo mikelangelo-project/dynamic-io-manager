@@ -1,12 +1,12 @@
 #include <Python.h>
 
 #include "structmember.h"
-#include "kernel_mapper.h"
+#include "copy_to_user.h"
 
 typedef struct {
     PyObject_HEAD
-    u64 *ptr;
-
+    u64 kernel_address;
+    u64 value;
 } Counter;
 
 static void Counter_dealloc(Counter* self)
@@ -21,7 +21,7 @@ Counter_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (Counter *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->ptr = NULL;
+        self->kernel_address = 0UL;
     }
     return (PyObject *)self;
 }
@@ -33,14 +33,20 @@ Counter_init(Counter *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"address", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "K", kwlist, &address))
         return -1;
-    self->ptr = (u64 *)address;
+    self->kernel_address = address;
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->value, self->kernel_address, sizeof(self->value));
+    }
     return 0;
 }
 
 static PyObject *
 Counter_read(Counter *self, PyObject *args)
 {
-    return Py_BuildValue("K", *self->ptr);
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->value, self->kernel_address, sizeof(self->value));
+    }
+    return Py_BuildValue("K", self->value);
 }
 
 static PyMethodDef Counter_methods[] = {
@@ -90,22 +96,7 @@ static PyTypeObject CounterType = {
     Counter_new,                              /* tp_new */
 };
 
-static PyObject *
-map(PyObject *self, PyObject *args)
-{
-    u64 kernel_address;
-    void *user_address;
-
-    if (!PyArg_ParseTuple(args, "K", &kernel_address))
-        return NULL;
-    if ((user_address = kernel_remap(kernel_address)) == NULL)
-        return NULL;
-
-    return Py_BuildValue("K", (u64)user_address);
-}
-
 static PyMethodDef kernel_mapper_methods[] = {
-    {"map", (PyCFunction) map, METH_VARARGS, "map a kernel address"},
     {NULL}  /* Sentinel */
 };
 
