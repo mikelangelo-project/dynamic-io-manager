@@ -2,7 +2,7 @@ import logging
 
 from algos.throughput_policy import VMCoreAdditionPolicy
 from utils.vm import VM
-from utils.vhost import ProcessCPUUsageCounterRaw
+from utils.vhost_light import ProcessCPUUsageCounterRaw
 
 
 class VMManager:
