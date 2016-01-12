@@ -32,10 +32,13 @@ VhostWorker_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     VhostWorker *self;
 
     self = (VhostWorker *)type->tp_alloc(type, 0);
+    printf("%s:%d\n", __func__, __LINE__);
     if (self != NULL) {
         self->id = "";
         self->kernel_address = 0;
+        printf("%s:%d\n", __func__, __LINE__);
     }
+    printf("%s:%d\n", __func__, __LINE__);
     return (PyObject *)self;
 }
 
@@ -43,12 +46,18 @@ static int
 VhostWorker_init(VhostWorker *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"id", NULL};
+    printf("%s:%d\n", __func__, __LINE__);
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &self->id))
         return -1;
+    printf("%s:%d\n", __func__, __LINE__);
     self->kernel_address = vhost_worker_stats_kernel(self->id);
+    printf("%s:%d\n", __func__, __LINE__);
     if (self->kernel_address != 0UL){
+        printf("%s:%d\n", __func__, __LINE__);
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+        printf("%s:%d\n", __func__, __LINE__);
     }
+    printf("%s:%d\n", __func__, __LINE__);
     return 0;
 }
 
@@ -418,24 +427,36 @@ PyMODINIT_FUNC
 initvhost_raw(void)
 {
     PyObject* m;
+    printf("%s:%d\n", __func__, __LINE__);
 
     if (PyType_Ready(&VhostWorkerType) < 0)
         return;
+    printf("%s:%d\n", __func__, __LINE__);
+
     if (PyType_Ready(&VhostDeviceType) < 0)
         return;
+    printf("%s:%d\n", __func__, __LINE__);
+
     if (PyType_Ready(&VhostVirtqueueType) < 0)
         return;
+    printf("%s:%d\n", __func__, __LINE__);
 
     m = Py_InitModule3("vhost_raw", vhost_raw_methods,
                        "vhost raw module, remapped kernel memory.");
-
+    printf("%s:%d\n", __func__, __LINE__);
     if (m == NULL)
       return;
+    printf("%s:%d\n", __func__, __LINE__);
 
     Py_INCREF(&VhostWorkerType);
+    printf("%s:%d\n", __func__, __LINE__);
     PyModule_AddObject(m, "VhostWorker", (PyObject *)&VhostWorkerType);
+    printf("%s:%d\n", __func__, __LINE__);
     Py_INCREF(&VhostDeviceType);
+    printf("%s:%d\n", __func__, __LINE__);
     PyModule_AddObject(m, "VhostDevice", (PyObject *)&VhostDeviceType);
+    printf("%s:%d\n", __func__, __LINE__);
     Py_INCREF(&VhostVirtqueueType);
+    printf("%s:%d\n", __func__, __LINE__);
     PyModule_AddObject(m, "VhostVirtqueue", (PyObject *)&VhostVirtqueueType);
 }

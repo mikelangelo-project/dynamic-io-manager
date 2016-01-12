@@ -57,7 +57,7 @@ static PyMethodDef Counter_methods[] = {
 static PyTypeObject CounterType = {
     PyObject_HEAD_INIT(NULL)
     0,                                        /*ob_size*/
-    "uptime.Counter",                         /*tp_name*/
+    "kernel_mapper.Counter",                  /*tp_name*/
     sizeof(Counter),                          /*tp_basicsize*/
     0,                                        /*tp_itemsize*/
     (destructor)Counter_dealloc,              /*tp_dealloc*/

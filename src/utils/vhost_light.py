@@ -8,7 +8,7 @@ from aux import Timer
 from vhost_raw import VhostWorker, VhostDevice, VhostVirtqueue
 from uptime import UpTimeCounterRaw
 
-RAW_FIELD_SIZE = 8
+# RAW_FIELD_SIZE = 8
 
 
 class ProcessCPUUsageCounterBase:
