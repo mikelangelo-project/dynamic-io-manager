@@ -9,8 +9,8 @@
 
 void *kernel_remap(u64 kernel_address){
     FILE *file;
-    u64 mmap_offset = kernel_address & ~(PAGE_SIZE-1);
-    u64 mmap_size = PAGE_SIZE;
+    long page_size = sysconf(_SC_PAGESIZE);
+    u64 mmap_offset = kernel_address & ~(page_size-1);
     char *mapped;
     void *ret;
 
@@ -26,7 +26,7 @@ void *kernel_remap(u64 kernel_address){
 	    return NULL;
     }
     printf("%s:%d\n", __func__, __LINE__);
-    if((mapped = mmap(NULL, mmap_size, PROT_READ, MAP_SHARED, fileno(file),
+    if((mapped = mmap(NULL, PAGE_SIZE, PROT_READ, MAP_SHARED, fileno(file),
         mmap_offset)) ==  MAP_FAILED ) {
 	    fprintf(stderr, "user-kernel map failed: %s\n", strerror(errno));
 	    return NULL;
@@ -38,4 +38,9 @@ void *kernel_remap(u64 kernel_address){
     ret = (void *)(mapped + (kernel_address - mmap_offset));
     printf("%s:%d\n", __func__, __LINE__);
     return ret;
+}
+
+void unmap(void *addr){
+    long page_size = sysconf(_SC_PAGESIZE);
+    munmap(addr, page_size);
 }

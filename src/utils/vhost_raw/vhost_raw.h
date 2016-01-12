@@ -1,6 +1,6 @@
 #ifndef _VHOST_STATS_H
 #define _VHOST_STATS_H
-typedef unsigned long long  u64;
+#include "kernel_mapper.h"
 
 struct vhost_virtqueue_stats {
     u64 poll_kicks; /* number of kicks in poll mode */

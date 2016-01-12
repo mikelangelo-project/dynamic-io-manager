@@ -2,6 +2,7 @@
 #include "structmember.h"
 
 #include "vhost_raw.h"
+#include "kernel_mapper.h"
 
 #define VHOST_STAT_GETTER_FUNC(elem, stat) \
 static u64 elem##_get_##stat(elem *self) \
@@ -21,7 +22,7 @@ typedef struct {
 
 static void VhostWorker_dealloc(VhostWorker* self)
 {
-    free(self->stats);
+    unmap(self->stats);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -144,7 +145,7 @@ typedef struct {
 
 static void VhostDevice_dealloc(VhostDevice* self)
 {
-    free(self->stats);
+    unmap(self->stats);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -244,7 +245,7 @@ typedef struct {
 
 static void VhostVirtqueue_dealloc(VhostWorker* self)
 {
-    free(self->stats);
+    unmap(self->stats);
     self->ob_type->tp_free((PyObject*)self);
 }
 
