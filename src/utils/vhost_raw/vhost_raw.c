@@ -1,13 +1,13 @@
 #include <Python.h>
 #include "structmember.h"
 
+#include "copy_to_user.h"
 #include "vhost_raw.h"
-#include "kernel_mapper.h"
 
 #define VHOST_STAT_GETTER_FUNC(elem, stat) \
 static u64 elem##_get_##stat(elem *self) \
 {                                       \
-    return self->stats->stat;           \
+    return self->stats.stat;           \
 }
 
 #define VHOST_STAT(elem, stat, disc) \
@@ -17,12 +17,12 @@ static u64 elem##_get_##stat(elem *self) \
 typedef struct {
     PyObject_HEAD
     char *id;
-    struct vhost_worker_stats *stats;
+    u64 kernel_address;
+    struct vhost_worker_stats stats;
 } VhostWorker;
 
 static void VhostWorker_dealloc(VhostWorker* self)
 {
-    unmap(self->stats);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -34,7 +34,7 @@ VhostWorker_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (VhostWorker *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->id = "";
-        self->stats = NULL;
+        self->kernel_address = 0;
     }
     return (PyObject *)self;
 }
@@ -45,8 +45,19 @@ VhostWorker_init(VhostWorker *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"id", NULL};
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &self->id))
         return -1;
-    self->stats = remap_vhost_worker(self->id);
+    self->kernel_address = vhost_worker_stats_kernel(self->id);
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+    }
     return 0;
+}
+
+static PyObject *
+VhostWorker_update(VhostWorker *self){
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+    }
+    return (PyObject*)self;
 }
 
 VHOST_STAT_GETTER_FUNC(VhostWorker, loops)
@@ -85,6 +96,7 @@ static PyMethodDef VhostWorker_methods[] = {
     VHOST_STAT(VhostWorker, ksoftirq_occurrences, "number of times a softirq occured during worker work"),
     VHOST_STAT(VhostWorker, ksoftirq_time, "time (ns) that softirq process took while worker processed its work"),
     VHOST_STAT(VhostWorker, ksoftirqs, "the number of softirq interruts handled during worker processed its work"),
+    {"update", (PyCFunction) VhostWorker_update, METH_NOARGS, "update stats"},
     {NULL}
 };
 
@@ -140,12 +152,12 @@ static PyTypeObject VhostWorkerType = {
 typedef struct {
     PyObject_HEAD
     char *id;
-    struct vhost_device_stats *stats;
+    u64 kernel_address;
+    struct vhost_device_stats stats;
 } VhostDevice;
 
 static void VhostDevice_dealloc(VhostDevice* self)
 {
-    unmap(self->stats);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -157,7 +169,7 @@ VhostDevice_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (VhostDevice *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->id = "";
-        self->stats = NULL;
+        self->kernel_address = 0UL;
     }
     return (PyObject *)self;
 }
@@ -168,8 +180,19 @@ VhostDevice_init(VhostDevice *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"id", NULL};
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &self->id))
         return -1;
-    self->stats = remap_vhost_device(self->id);
+    self->kernel_address = vhost_device_stats_kernel(self->id);
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+    }
     return 0;
+}
+
+static PyObject *
+VhostDevice_update(VhostDevice *self){
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+    }
+    return (PyObject*)self;
 }
 
 VHOST_STAT_GETTER_FUNC(VhostDevice, delay_per_work)
@@ -186,6 +209,7 @@ static PyMethodDef VhostDevice_methods[] = {
     VHOST_STAT(VhostDevice, device_move_count, ""),
     VHOST_STAT(VhostDevice, device_detach, ""),
     VHOST_STAT(VhostDevice, device_attach, ""),
+    {"update", (PyCFunction) VhostDevice_update, METH_NOARGS, "update stats"},
     {NULL}
 };
 
@@ -240,12 +264,12 @@ static PyTypeObject VhostDeviceType = {
 typedef struct {
     PyObject_HEAD
     char *id;
-    struct vhost_virtqueue_stats *stats;
+    u64 kernel_address;
+    struct vhost_virtqueue_stats stats;
 } VhostVirtqueue;
 
 static void VhostVirtqueue_dealloc(VhostWorker* self)
 {
-    unmap(self->stats);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -257,7 +281,7 @@ VhostVirtqueue_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (VhostVirtqueue *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->id = "";
-        self->stats = NULL;
+        self->kernel_address = 0UL;
     }
     return (PyObject *)self;
 }
@@ -268,8 +292,19 @@ VhostVirtqueue_init(VhostVirtqueue *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"vq_id", NULL};
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &self->id))
         return -1;
-    self->stats = remap_vhost_virtqueue(self->id);
+    self->kernel_address = vhost_virtqueue_stats_kernel(self->id);
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+    }
     return 0;
+}
+
+static PyObject *
+VhostVirtqueue_update(VhostVirtqueue *self){
+    if (self->kernel_address != 0UL){
+        copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+    }
+    return (PyObject *)self;
 }
 
 VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_kicks)
@@ -318,6 +353,7 @@ static PyMethodDef VhostVirtqueue_methods[] = {
     VHOST_STAT(VhostVirtqueue, last_poll_empty_tsc, "tsc when the queue was detected empty for the first time"),
     VHOST_STAT(VhostVirtqueue, handled_bytes, "number of bytes handled by this queue in the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)"),
     VHOST_STAT(VhostVirtqueue, was_limited, "flag indicating if the queue was limited by net-weight during the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)"),
+    {"update", (PyCFunction) VhostVirtqueue_update, METH_NOARGS, "update stats"},
     {NULL}
 };
 

@@ -6,6 +6,7 @@
 typedef struct {
     PyObject_HEAD
     u64 *ptr;
+
 } Counter;
 
 static void Counter_dealloc(Counter* self)
