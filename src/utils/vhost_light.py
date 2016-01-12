@@ -64,15 +64,15 @@ class VhostLight:
 
         self._initialize()
 
-        self.work_cycles.initialize(self.vhost, self.vhost["cycles"])
-        self.cycles.initialize(self.vhost, self.vhost["cycles"])
-        self.softirq_interference.initialize(self.vhost, self.vhost["cycles"])
+        self.work_cycles.initialize(self.vhost, self.vhost.vhost["cycles"])
+        self.cycles.initialize(self.vhost, self.vhost.vhost["cycles"])
+        self.softirq_interference.initialize(self.vhost, self.vhost.vhost["cycles"])
 
         for c in self.per_worker_counters.values():
-            c.initialize(self.vhost)
+            c.initialize(self.vhost.vhost)
 
         for c in self.per_queue_counters.values():
-            c.initialize(self.vhost)
+            c.initialize(self.vhost.vhost)
 
     def _initialize(self):
         timer = Timer("Timer vhost light _initialize")
@@ -99,16 +99,16 @@ class VhostLight:
             self._initialize()
             timer.checkpoint("rescan")
 
-        self.cycles.update(self.vhost, [self.vhost])
-        self.work_cycles.update(self.vhost, self.workers.values())
-        self.softirq_interference.update(self.vhost, self.workers.values())
+        self.cycles.update(self.vhost.vhost, [self.vhost.vhost])
+        self.work_cycles.update(self.vhost.vhost, self.workers.values())
+        self.softirq_interference.update(self.vhost.vhost, self.workers.values())
         timer.checkpoint("misc")
 
         for c in self.per_worker_counters.values():
-            c.update(self.vhost, self.workers.values())
+            c.update(self.vhost.vhost, self.workers.values())
         timer.checkpoint("per_worker_counters")
         for c in self.per_queue_counters.values():
-            c.update(self.vhost, self.queues.values())
+            c.update(self.vhost.vhost, self.queues.values())
         timer.checkpoint("per_queue_counters")
         timer.done()
 
