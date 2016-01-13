@@ -43,6 +43,7 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
         value = self.readers[0].read() + self.readers[1].read()
         self.delta = value - self.current
         self.current = value
+        return self.delta
 
 
 class VhostLight:
@@ -57,8 +58,9 @@ class VhostLight:
         self.softirq_interference = \
             VhostSoftirqInterferenceCounter("softirq_interference")
 
-        self.per_worker_counters = \
-            {"cpu_usage_counter": VhostCPUUsageCounter("cpu_usage_counter")}
+        self.per_worker_counters = {
+            "cpu_usage_counter": VhostCPUUsageCounter("cpu_usage_counter")
+        }
         self.per_queue_counters = \
             {"handled_bytes": VhostHandledBytesCounter("handled_bytes")}
 
@@ -168,9 +170,17 @@ class VhostSoftirqInterferenceCounter(VhostCounterBase):
 class VhostCPUUsageCounter(VhostCounterBase):
     def __init__(self, name):
         VhostCounterBase.__init__(self, name, "cpu_usage_counter")
+        self.workers_cpu_usage = {}
+
+    def update_workers(self, vhost, workers):
+        self.workers_cpu_usage = {
+            ProcessCPUUsageCounterRaw(w["pid"]) for w in workers
+        }
+        for c in self.workers_cpu_usage:
+            c.update()
 
     def update(self, vhost, elements):
-        total = sum(e.cpu_usage_counter for e in elements)
+        total = sum(c.update() for c in self.workers_cpu_usage)
         return VhostCounterBase.update(self, vhost, total)
 
 

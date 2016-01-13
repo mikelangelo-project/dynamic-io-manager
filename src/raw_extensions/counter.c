@@ -54,6 +54,11 @@ static PyMethodDef Counter_methods[] = {
     {NULL} /* Sentinel */
 };
 
+static PyMemberDef VhostWorker_members[] = {
+    {"value", T_LONGLONG, offsetof(Counter, value), 0, "counter last read value"},
+    {NULL} /* Sentinel */
+};
+
 static PyTypeObject CounterType = {
     PyObject_HEAD_INIT(NULL)
     0,                                        /*ob_size*/
