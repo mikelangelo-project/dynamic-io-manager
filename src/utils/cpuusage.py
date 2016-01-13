@@ -117,7 +117,7 @@ class CPUStatCounterBase:
     def __init__(self, read_fn):
         self.read_fn = read_fn
         self.per_cpu_counters_start, self.global_cpu_counters_start = \
-            self.read_fn
+            self.read_fn()
 
         self.per_cpu_counters = [[l[0]] + [0 for _ in l[1:]]
                                  for l in self.per_cpu_counters_start]
