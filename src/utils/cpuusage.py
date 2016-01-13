@@ -159,6 +159,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         logging.info("kernel_address: %lx" % (kernel_addresses[0],))
 
         # self.counters = [kernel_mapper.Counter(address + RAW_FIELD_SIZE * cpu)
+        self.per_cpu_counters_reader = []
         for cpu, a in enumerate(kernel_addresses):
             cur = []
             self.per_cpu_counters_reader.append(cur)
