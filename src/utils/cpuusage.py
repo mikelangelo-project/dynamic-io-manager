@@ -65,11 +65,10 @@ class IRQCounterRaw(IRQCounterBase):
 
         with open(IRQCounterRaw.file_path, "r") as f:
             for line in f:
-                kernel_address = line.strip()
-        logging.info("kernel_address: %lx" % (kernel_address,))
-        address = kernel_mapper.map(kernel_address)
-        logging.info("address: %lx" % (address,))
-        self.readers = [kernel_mapper.Counter(address + RAW_FIELD_SIZE * cpu)
+                kernel_addresses = [long(a, 16) for a in line.strip().split()]
+        logging.info("kernel_address: %lx" % (kernel_addresses[0],))
+        self.readers = [kernel_mapper.Counter(kernel_addresses[cpu] +
+                                              RAW_FIELD_SIZE * cpu)
                          for cpu in xrange(cpus)]
         self.interrupts = [c.read() for c in self.counters]
 
@@ -156,15 +155,15 @@ class CPUStatCounterRaw(CPUStatCounterBase):
     def __init__(self):
         with open(CPUStatCounterRaw.file_path, "r") as f:
             for line in f:
-                kernel_address = long(line.strip(), 16)
-        logging.info("kernel_address: %lx" % (kernel_address,))
+                kernel_addresses = [long(a, 16) for a in line.strip().split()]
+        logging.info("kernel_address: %lx" % (kernel_addresses[0],))
 
         # self.counters = [kernel_mapper.Counter(address + RAW_FIELD_SIZE * cpu)
         for cpu in xrange(cpus):
             cur = []
             self.per_cpu_counters_reader.append(cur)
             fields_len = len(CPUStatCounter.per_cpu_fields)
-            base_ptr = kernel_address + fields_len * RAW_FIELD_SIZE * cpu
+            base_ptr = kernel_addresses[cpu] + fields_len * RAW_FIELD_SIZE * cpu
             for i in xrange(fields_len):
                 ptr = base_ptr + i * RAW_FIELD_SIZE
                 cur.append(kernel_mapper.Counter(ptr))
