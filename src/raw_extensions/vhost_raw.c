@@ -4,14 +4,8 @@
 #include "copy_to_user.h"
 #include "vhost_raw.h"
 
-#define VHOST_STAT_GETTER_FUNC(elem, stat) \
-static u64 elem##_get_##stat(elem *self) \
-{                                       \
-    return self->stats.stat;           \
-}
-
-#define VHOST_STAT(elem, stat, disc) \
-    {#stat, (PyCFunction) elem##_get_##stat, METH_NOARGS, disc}
+#define VHOST_STAT(elem, stats_type, stat, disc) \
+    {#stat, T_LONGLONG, offsetof(elem, stats) + offsetof(stats_type, stat), 0, disc}
 
 // ------------------ vhost worker ---------------------------------------------
 typedef struct {
@@ -69,49 +63,34 @@ VhostWorker_update(VhostWorker *self){
     return (PyObject*)self;
 }
 
-VHOST_STAT_GETTER_FUNC(VhostWorker, loops)
-VHOST_STAT_GETTER_FUNC(VhostWorker, enabled_interrupts)
-VHOST_STAT_GETTER_FUNC(VhostWorker, cycles)
-VHOST_STAT_GETTER_FUNC(VhostWorker, mm_switches)
-VHOST_STAT_GETTER_FUNC(VhostWorker, wait)
-VHOST_STAT_GETTER_FUNC(VhostWorker, empty_works)
-VHOST_STAT_GETTER_FUNC(VhostWorker, empty_polls)
-VHOST_STAT_GETTER_FUNC(VhostWorker, stuck_works)
-VHOST_STAT_GETTER_FUNC(VhostWorker, noqueue_works)
-VHOST_STAT_GETTER_FUNC(VhostWorker, pending_works)
-VHOST_STAT_GETTER_FUNC(VhostWorker, last_loop_tsc_end)
-VHOST_STAT_GETTER_FUNC(VhostWorker, poll_cycles)
-VHOST_STAT_GETTER_FUNC(VhostWorker, notif_cycles)
-VHOST_STAT_GETTER_FUNC(VhostWorker, total_work_cycles)
-VHOST_STAT_GETTER_FUNC(VhostWorker, ksoftirq_occurrences)
-VHOST_STAT_GETTER_FUNC(VhostWorker, ksoftirq_time)
-VHOST_STAT_GETTER_FUNC(VhostWorker, ksoftirqs)
-
 static PyMethodDef VhostWorker_methods[] = {
-    VHOST_STAT(VhostWorker, loops, "number of loops performed"),
-    VHOST_STAT(VhostWorker, enabled_interrupts, "number of times interrupts were re-enabled"),
-    VHOST_STAT(VhostWorker, cycles, "cycles spent in the worker, excluding cycles doing queue work"),
-    VHOST_STAT(VhostWorker, mm_switches, "number of times the mm was switched"),
-    VHOST_STAT(VhostWorker, wait, "number of cycles the worker thread was not running after schedule"),
-    VHOST_STAT(VhostWorker, empty_works, "number of times there were no works in the queue -- ignoring poll kicks"),
-    VHOST_STAT(VhostWorker, empty_polls, "number of times there were no queues to poll and the polling queue was not empty"),
-    VHOST_STAT(VhostWorker, stuck_works, "number of times were detected stuck and limited queues"),
-    VHOST_STAT(VhostWorker, noqueue_works, "number of works which have no queue related to them (e.g. vhost-net rx)"),
-    VHOST_STAT(VhostWorker, pending_works, "number of pending works"),
-    VHOST_STAT(VhostWorker, last_loop_tsc_end, "tsc when the last loop was performed"),
-    VHOST_STAT(VhostWorker, poll_cycles, "cycles spent handling kicks in poll mode"),
-    VHOST_STAT(VhostWorker, notif_cycles, "cycles spent handling works in notif mode"),
-    VHOST_STAT(VhostWorker, total_work_cycles, "total cycles spent handling works"),
-    VHOST_STAT(VhostWorker, ksoftirq_occurrences, "number of times a softirq occured during worker work"),
-    VHOST_STAT(VhostWorker, ksoftirq_time, "time (ns) that softirq process took while worker processed its work"),
-    VHOST_STAT(VhostWorker, ksoftirqs, "the number of softirq interruts handled during worker processed its work"),
     {"update", (PyCFunction) VhostWorker_update, METH_NOARGS, "update stats"},
     {NULL}
 };
 
+#define VHOST_WORKER_STAT(stat, disc) \
+    VHOST_STAT(VhostWorker, struct vhost_worker_stats, stat, disc)
+
 static PyMemberDef VhostWorker_members[] = {
     {"worker_id", T_STRING, offsetof(VhostWorker, id), 0, "worker id"},
-    {NULL}  /* Sentinel */
+    VHOST_WORKER_STAT(loops, "number of loops performed"),
+    VHOST_WORKER_STAT(enabled_interrupts, "number of times interrupts were re-enabled"),
+    VHOST_WORKER_STAT(cycles, "cycles spent in the worker, excluding cycles doing queue work"),
+    VHOST_WORKER_STAT(mm_switches, "number of times the mm was switched"),
+    VHOST_WORKER_STAT(wait, "number of cycles the worker thread was not running after schedule"),
+    VHOST_WORKER_STAT(empty_works, "number of times there were no works in the queue -- ignoring poll kicks"),
+    VHOST_WORKER_STAT(empty_polls, "number of times there were no queues to poll and the polling queue was not empty"),
+    VHOST_WORKER_STAT(stuck_works, "number of times were detected stuck and limited queues"),
+    VHOST_WORKER_STAT(noqueue_works, "number of works which have no queue related to them (e.g. vhost-net rx)"),
+    VHOST_WORKER_STAT(pending_works, "number of pending works"),
+    VHOST_WORKER_STAT(last_loop_tsc_end, "tsc when the last loop was performed"),
+    VHOST_WORKER_STAT(poll_cycles, "cycles spent handling kicks in poll mode"),
+    VHOST_WORKER_STAT(notif_cycles, "cycles spent handling works in notif mode"),
+    VHOST_WORKER_STAT(total_work_cycles, "total cycles spent handling works"),
+    VHOST_WORKER_STAT(ksoftirq_occurrences, "number of times a softirq occured during worker work"),
+    VHOST_WORKER_STAT(ksoftirq_time, "time (ns) that softirq process took while worker processed its work"),
+    VHOST_WORKER_STAT(ksoftirqs, "the number of softirq interruts handled during worker processed its work"),
+    {NULL}
 };
 
 static PyTypeObject VhostWorkerType = {
@@ -204,26 +183,22 @@ VhostDevice_update(VhostDevice *self){
     return (PyObject*)self;
 }
 
-VHOST_STAT_GETTER_FUNC(VhostDevice, delay_per_work)
-VHOST_STAT_GETTER_FUNC(VhostDevice, delay_per_kbyte)
-VHOST_STAT_GETTER_FUNC(VhostDevice, device_move_total)
-VHOST_STAT_GETTER_FUNC(VhostDevice, device_move_count)
-VHOST_STAT_GETTER_FUNC(VhostDevice, device_detach)
-VHOST_STAT_GETTER_FUNC(VhostDevice, device_attach)
-
 static PyMethodDef VhostDevice_methods[] = {
-    VHOST_STAT(VhostDevice, delay_per_work, "the number of loops per work we have to delay the calculation."),
-    VHOST_STAT(VhostDevice, delay_per_kbyte, "the number of loops per kbyte we have to delay the calculation."),
-    VHOST_STAT(VhostDevice, device_move_total, ""),
-    VHOST_STAT(VhostDevice, device_move_count, ""),
-    VHOST_STAT(VhostDevice, device_detach, ""),
-    VHOST_STAT(VhostDevice, device_attach, ""),
     {"update", (PyCFunction) VhostDevice_update, METH_NOARGS, "update stats"},
     {NULL}
 };
 
+#define VHOST_DEVICE_STAT(stat, disc) \
+    VHOST_STAT(VhostDevice, struct vhost_device_stats, stat, disc)
+
 static PyMemberDef VhostDevice_members[] = {
     {"dev_id", T_STRING, offsetof(VhostDevice, id), 0, "device id"},
+    VHOST_DEVICE_STAT(delay_per_work, "the number of loops per work we have to delay the calculation."),
+    VHOST_DEVICE_STAT(delay_per_kbyte, "the number of loops per kbyte we have to delay the calculation."),
+    VHOST_DEVICE_STAT(device_move_total, ""),
+    VHOST_DEVICE_STAT(device_move_count, ""),
+    VHOST_DEVICE_STAT(device_detach, ""),
+    VHOST_DEVICE_STAT(device_attach, ""),
     {NULL}  /* Sentinel */
 };
 
@@ -316,58 +291,38 @@ VhostVirtqueue_update(VhostVirtqueue *self){
     return (PyObject *)self;
 }
 
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_kicks)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_cycles)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_bytes)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_wait)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_empty)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_empty_cycles)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_coalesced)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_limited)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, poll_pending_cycles)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, notif_works)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, notif_cycles)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, notif_bytes)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, notif_wait)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, notif_limited)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, ring_full)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, stuck_times)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, stuck_cycles)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, last_poll_tsc_end)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, last_notif_tsc_end)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, last_poll_empty_tsc)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, handled_bytes)
-VHOST_STAT_GETTER_FUNC(VhostVirtqueue, was_limited)
-
 static PyMethodDef VhostVirtqueue_methods[] = {
-    VHOST_STAT(VhostVirtqueue, poll_kicks, "number of kicks in poll mode"),
-    VHOST_STAT(VhostVirtqueue, poll_cycles, "cycles spent handling kicks in poll mode"),
-    VHOST_STAT(VhostVirtqueue, poll_bytes, "bytes sent/received by kicks in poll mode"),
-    VHOST_STAT(VhostVirtqueue, poll_wait, "cycles elapsed between poll kicks"),
-    VHOST_STAT(VhostVirtqueue, poll_empty, "number of times the queue was empty during poll"),
-    VHOST_STAT(VhostVirtqueue, poll_empty_cycles, "number of cycles elapsed while the queue was empty"),
-    VHOST_STAT(VhostVirtqueue, poll_coalesced, "number of times this queue was coalesced"),
-    VHOST_STAT(VhostVirtqueue, poll_limited, "number of times the queue was limited by netweight during poll kicks"),
-    VHOST_STAT(VhostVirtqueue, poll_pending_cycles, "cycles elapsed between item arrival and poll"),
-    VHOST_STAT(VhostVirtqueue, notif_works, "cycles spent handling works in notif mode"),
-    VHOST_STAT(VhostVirtqueue, notif_cycles, "cycles spent handling works in notif mode"),
-    VHOST_STAT(VhostVirtqueue, notif_bytes, "bytes sent/received by works in notif mode"),
-    VHOST_STAT(VhostVirtqueue, notif_wait, "cycles elapsed between work arrival and handling in notif mode"),
-    VHOST_STAT(VhostVirtqueue, notif_limited, "number of times the queue was limited by netweight in notif mode"),
-    VHOST_STAT(VhostVirtqueue, ring_full, "number of times the ring was full"),
-    VHOST_STAT(VhostVirtqueue, stuck_times, "how many times this queue was stuck and limited other queues"),
-    VHOST_STAT(VhostVirtqueue, stuck_cycles, "total amount of cycles the queue was stuck"),
-    VHOST_STAT(VhostVirtqueue, last_poll_tsc_end, "tsc when the last poll finished"),
-    VHOST_STAT(VhostVirtqueue, last_notif_tsc_end, "tsc when the last notif finished"),
-    VHOST_STAT(VhostVirtqueue, last_poll_empty_tsc, "tsc when the queue was detected empty for the first time"),
-    VHOST_STAT(VhostVirtqueue, handled_bytes, "number of bytes handled by this queue in the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)"),
-    VHOST_STAT(VhostVirtqueue, was_limited, "flag indicating if the queue was limited by net-weight during the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)"),
     {"update", (PyCFunction) VhostVirtqueue_update, METH_NOARGS, "update stats"},
     {NULL}
 };
 
+#define VHOST_VQ_STAT(stat, disc) \
+    VHOST_STAT(VhostVirtqueue, struct vhost_virtqueue_stats, stat, disc)
+
 static PyMemberDef VhostVirtqueue_members[] = {
     {"vq_id", T_STRING, offsetof(VhostVirtqueue, id), 0, "virtual queue id"},
+    VHOST_VQ_STAT(poll_kicks, "number of kicks in poll mode"),
+    VHOST_VQ_STAT(poll_cycles, "cycles spent handling kicks in poll mode"),
+    VHOST_VQ_STAT(poll_bytes, "bytes sent/received by kicks in poll mode"),
+    VHOST_VQ_STAT(poll_wait, "cycles elapsed between poll kicks"),
+    VHOST_VQ_STAT(poll_empty, "number of times the queue was empty during poll"),
+    VHOST_VQ_STAT(poll_empty_cycles, "number of cycles elapsed while the queue was empty"),
+    VHOST_VQ_STAT(poll_coalesced, "number of times this queue was coalesced"),
+    VHOST_VQ_STAT(poll_limited, "number of times the queue was limited by netweight during poll kicks"),
+    VHOST_VQ_STAT(poll_pending_cycles, "cycles elapsed between item arrival and poll"),
+    VHOST_VQ_STAT(notif_works, "cycles spent handling works in notif mode"),
+    VHOST_VQ_STAT(notif_cycles, "cycles spent handling works in notif mode"),
+    VHOST_VQ_STAT(notif_bytes, "bytes sent/received by works in notif mode"),
+    VHOST_VQ_STAT(notif_wait, "cycles elapsed between work arrival and handling in notif mode"),
+    VHOST_VQ_STAT(notif_limited, "number of times the queue was limited by netweight in notif mode"),
+    VHOST_VQ_STAT(ring_full, "number of times the ring was full"),
+    VHOST_VQ_STAT(stuck_times, "how many times this queue was stuck and limited other queues"),
+    VHOST_VQ_STAT(stuck_cycles, "total amount of cycles the queue was stuck"),
+    VHOST_VQ_STAT(last_poll_tsc_end, "tsc when the last poll finished"),
+    VHOST_VQ_STAT(last_notif_tsc_end, "tsc when the last notif finished"),
+    VHOST_VQ_STAT(last_poll_empty_tsc, "tsc when the queue was detected empty for the first time"),
+    VHOST_VQ_STAT(handled_bytes, "number of bytes handled by this queue in the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)"),
+    VHOST_VQ_STAT(was_limited, "flag indicating if the queue was limited by net-weight during the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)"),
     {NULL}  /* Sentinel */
 };
 
