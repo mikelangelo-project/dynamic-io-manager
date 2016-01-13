@@ -104,6 +104,8 @@ class VhostLight:
             self.devices = {}
             self.queues = {}
             self._initialize()
+            for c in self.per_worker_counters.values():
+                c.update_workers(self.vhost.workers.values())
             timer.checkpoint("rescan")
 
         self.cycles.update(self.vhost.vhost, [self.vhost.vhost])
@@ -175,7 +177,7 @@ class VhostCPUUsageCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "cpu_usage_counter")
         self.workers_cpu_usage = {}
 
-    def update_workers(self, vhost, workers):
+    def update_workers(self, workers):
         self.workers_cpu_usage = {
             ProcessCPUUsageCounterRaw(w["pid"]) for w in workers
         }

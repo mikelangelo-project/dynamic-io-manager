@@ -179,7 +179,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
                             for l in self.per_cpu_counters_reader]
         global_cpu_counters = \
             [sum([c[i + 1] for c in self.per_cpu_counters], 0)
-             for i in xrange(len(global_cpu_fields))]
+             for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
         return per_cpu_counters, global_cpu_counters
 
 
