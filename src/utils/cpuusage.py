@@ -178,7 +178,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         per_cpu_counters = [[l[0]] + [reader.read() for reader in l[1:]]
                             for l in self.per_cpu_counters_reader]
         global_cpu_counters = \
-            [sum([c[i + 1] for c in self.per_cpu_counters], 0)
+            [sum([c[i + 1] for c in per_cpu_counters], 0)
              for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
         return per_cpu_counters, global_cpu_counters
 
