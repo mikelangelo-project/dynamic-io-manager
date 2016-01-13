@@ -42,7 +42,7 @@ class UpTimeCounter:
 class IRQCounterBase:
     def __init__(self, cpus):
         self.cpus = cpus
-        self.interrupts_diff = [0 for _ in self.cpus]
+        self.interrupts_diff = [0 for _ in xrange(self.cpus)]
 
     def update(self):
         pass
