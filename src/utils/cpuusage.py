@@ -172,7 +172,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         self.per_cpu_counters_start, self.global_cpu_counters_start = \
             self._read()
 
-        CPUStatCounterBase.__init__(self, self.read)
+        CPUStatCounterBase.__init__(self, self._read)
 
     def _read(self):
         per_cpu_counters = [[l[0]] + [reader.read() for reader in l[1:]]
