@@ -30,13 +30,14 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
         ProcessCPUUsageCounterBase.__init__(self, pid)
         with open(ProcessCPUUsageCounterRaw.file_path, "w") as f:
             f.write("%d\n" % (pid,))
-        kernel_addresses = None
+        utime_addr, stime_addr = None, None
         with open(ProcessCPUUsageCounterRaw.file_path, "r") as f:
             for line in f:
-                kernel_addresses = long(line.strip().split())
-        logging.info("kernel_address: %lx" % (kernel_addresses[0],))
-        self.readers = [kernel_mapper.Counter(kernel_addresses[0]),
-                        kernel_mapper.Counter(kernel_addresses[1])]
+                utime_addr, stime_addr = line.strip().split()
+                utime_addr, stime_addr = long(utime_addr), long(stime_addr)
+        logging.info("kernel_address: %lx" % (utime_addr,))
+        self.readers = [kernel_mapper.Counter(utime_addr),
+                        kernel_mapper.Counter(stime_addr)]
 
         self.current = self.readers[0].read() + self.readers[1].read()
 
