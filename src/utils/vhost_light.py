@@ -152,7 +152,7 @@ class VhostWorkCyclesCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "total_work_cycles")
 
     def update(self, vhost, elements):
-        total = sum(e.total_work_cycles() for e in elements)
+        total = sum(e.total_work_cycles for e in elements)
         return VhostCounterBase.update(self, vhost, total)
 
 
@@ -161,7 +161,7 @@ class VhostSoftirqInterferenceCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "ksoftirqs")
 
     def update(self, vhost, elements):
-        total = sum(e.ksoftirqs() for e in elements)
+        total = sum(e.ksoftirqs for e in elements)
         return VhostCounterBase.update(self, vhost, total)
 
 
@@ -170,7 +170,7 @@ class VhostCPUUsageCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "cpu_usage_counter")
 
     def update(self, vhost, elements):
-        total = sum(e.cpu_usage_counter() for e in elements)
+        total = sum(e.cpu_usage_counter for e in elements)
         return VhostCounterBase.update(self, vhost, total)
 
 
@@ -179,5 +179,5 @@ class VhostHandledBytesCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "handled_bytes")
 
     def update(self, vhost, elements):
-        total = sum(e.handled_bytes() for e in elements)
+        total = sum(e.handled_bytes for e in elements)
         return VhostCounterBase.update(self, vhost, total)
