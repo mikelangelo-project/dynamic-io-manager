@@ -164,7 +164,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
             cur = []
             self.per_cpu_counters_reader.append(cur)
             fields_len = len(CPUStatCounter.per_cpu_fields)
-            base_ptr = a[cpu] + fields_len * RAW_FIELD_SIZE * cpu
+            base_ptr = a + fields_len * RAW_FIELD_SIZE * cpu
             for i in xrange(fields_len):
                 ptr = base_ptr + i * RAW_FIELD_SIZE
                 cur.append(kernel_mapper.Counter(ptr))
