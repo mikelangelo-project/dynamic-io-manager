@@ -34,7 +34,7 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
         with open(ProcessCPUUsageCounterRaw.file_path, "r") as f:
             for line in f:
                 utime_addr, stime_addr = line.strip().split()
-                utime_addr, stime_addr = long(utime_addr), long(stime_addr)
+                utime_addr, stime_addr = long(utime_addr, 16), long(stime_addr, 16)
         logging.info("kernel_address: %lx" % (utime_addr,))
         self.readers = [kernel_mapper.Counter(utime_addr),
                         kernel_mapper.Counter(stime_addr)]
