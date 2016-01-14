@@ -142,7 +142,7 @@ class CPUStatCounterBase:
         per_cpu_counters = \
             [[a_list[0]] + [a - b for a, b in zip(a_list[1:], b_list[1:])]
              for a_list, b_list in zip(per_cpu_counters1, per_cpu_counters2)]
-        return global_cpu_counters, per_cpu_counters
+        return per_cpu_counters, global_cpu_counters
 
     def __str__(self):
         return "{global_cpu_counters: %s, per_cpu_counters: %s}" % \
