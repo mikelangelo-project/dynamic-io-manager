@@ -136,8 +136,8 @@ class CPUStatCounterBase:
 
     @staticmethod
     def _diff(s_new, s_old):
-        global_cpu_counters1, per_cpu_counters1 = s_new
-        global_cpu_counters2, per_cpu_counters2 = s_old
+        per_cpu_counters1, global_cpu_counters1 = s_new
+        per_cpu_counters2, global_cpu_counters2 = s_old
         global_cpu_counters = \
             [a - b for a, b in zip(global_cpu_counters1, global_cpu_counters2)]
 
