@@ -54,7 +54,7 @@ static PyMethodDef Counter_methods[] = {
     {NULL} /* Sentinel */
 };
 
-static PyMemberDef VhostWorker_members[] = {
+static PyMemberDef Counter_members[] = {
     {"value", T_LONGLONG, offsetof(Counter, value), 0, "counter last read value"},
     {NULL} /* Sentinel */
 };
@@ -89,7 +89,7 @@ static PyTypeObject CounterType = {
     0,                                        /* tp_iter */
     0,                                        /* tp_iternext */
     Counter_methods,                          /* tp_methods */
-    0,                                        /* tp_members */
+    Counter_members,                          /* tp_members */
     0,                                        /* tp_getset */
     0,                                        /* tp_base */
     0,                                        /* tp_dict */

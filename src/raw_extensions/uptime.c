@@ -10,6 +10,7 @@ typedef struct {
     PyObject_HEAD
     struct timespec ts;
     unsigned long long up_time;
+    unsigned long long up_time_diff;
 } UpTimeCounterRaw;
 
 static void UpTimeCounterRaw_dealloc(UpTimeCounterRaw* self)
@@ -25,6 +26,7 @@ UpTimeCounterRaw_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (UpTimeCounterRaw *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->up_time = 0ULL;
+        self->up_time_diff = 0ULL;
     }
     return (PyObject *)self;
 }
@@ -36,13 +38,16 @@ UpTimeCounterRaw_init(UpTimeCounterRaw *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return -1;
     self->up_time = time_ns(&self->ts);
+    self->up_time_diff = 0ULL;
     return 0;
 }
 
 static PyObject *
 UpTimeCounterRaw_update(UpTimeCounterRaw *self)
 {
+    unsigned long long old = self->up_time;
     self->up_time = time_ns(&self->ts);
+    self->up_time_diff = self->up_time - old;
     return (PyObject *)self;
 }
 
@@ -54,6 +59,8 @@ static PyMethodDef UpTimeCounterRaw_methods[] = {
 
 static PyMemberDef UpTimeCounterRaw_members[] = {
     {"up_time", T_ULONGLONG, offsetof(UpTimeCounterRaw, up_time), 0, "up time"},
+    {"up_time_diff", T_ULONGLONG, offsetof(UpTimeCounterRaw, up_time_diff), 0,
+        "up time difference"},
     {NULL}  /* Sentinel */
 };
 

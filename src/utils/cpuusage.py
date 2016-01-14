@@ -14,8 +14,11 @@ class UpTimeCounter:
     regex = re.compile("\s*(\d+.?\d*)\s+(\d+.?\d*)\s*")
     file_path = "/proc/uptime"
 
-    @staticmethod
-    def _parse():
+    def __init__(self):
+        self.up_time = self.read()
+        self.up_time_diff = 0
+
+    def read(self):
         with open(UpTimeCounter.file_path, "r") as up_time_file:
             for row in spilt_output_into_rows(up_time_file):
                 # logging.info(row)
@@ -23,20 +26,14 @@ class UpTimeCounter:
                 if r:
                     # logging.info("found up time!")
                     g = r.groups()
-                    return float(g[0]), float(g[1])
+                    return float(g[0])  # , float(g[1])
 
         err("failed to find up time!")
 
-    def __init__(self):
-        self.up_time, self.idle = UpTimeCounter._parse()
-        self.up_time_diff = 0
-        self.idle_diff = 0
-
     def update(self):
-        old_up_time, old_idle = self.up_time, self.idle
-        self.up_time, self.idle = UpTimeCounter._parse()
+        old_up_time = self.up_time
+        self.up_time = self.read()
         self.up_time_diff = self.up_time - old_up_time
-        self.idle_diff = self.idle - old_idle
 
 
 class IRQCounterBase:
