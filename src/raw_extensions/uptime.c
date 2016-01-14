@@ -50,8 +50,11 @@ static PyObject *
 UpTimeCounterRaw_update(UpTimeCounterRaw *self)
 {
     unsigned long long old = self->up_time;
+    printf("%s:%d\n", __func__, __LINE__);
     self->up_time = time_ns(&self->ts);
+    printf("%s:%d self->up_time: %llu\n", __func__, __LINE__, self->up_time);
     self->up_time_diff = self->up_time - old;
+    printf("%s:%d self->up_time_diff: %llu\n", __func__, __LINE__, self->up_time_diff);
     return (PyObject *)self;
 }
 
