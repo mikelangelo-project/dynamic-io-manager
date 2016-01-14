@@ -72,7 +72,7 @@ class IOWorkersManager:
             logging.info("\x1b[33mdisable shared IO workers.\x1b[39m")
             logging.info("\x1b[33mremove IOcore\x1b[39m")
             # remove the IO core
-            cpu_id = self.io_core_policy.remove()
+            cpu_id = self.io_core_policy.remove()[0]
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
             self.vm_manager.disable_shared_workers()

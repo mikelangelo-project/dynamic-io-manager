@@ -64,28 +64,28 @@ class MoverDaemon(Daemon):
         self.io_workers_manager.initialize()
         self.vm_manager.update()
 
-        i = 0
-        while i < 15:
-            time.sleep(self.interval)
-            timer.checkpoint("round %d" % (i,))
-            Vhost.INSTANCE.update()
-            timer.checkpoint("Vhost.INSTANCE.update()")
-            CPUUsage.INSTANCE.update()
-            timer.checkpoint("CPUUsage.INSTANCE.update()")
-            self.vm_manager.update()
-            timer.checkpoint("self.vm_manager.update()")
-            self.io_workers_manager.update_vq_classifications()
-            timer.checkpoint("vq_classifier update_classification")
-            self.io_workers_manager.update_io_core_number()
-            timer.checkpoint("io_workers_manager update_io_core_number")
-            self.io_workers_manager.update_balance()
-            timer.checkpoint("io_workers_manager update_balance")
-            self.io_workers_manager.update_polling()
-            timer.checkpoint("io_workers_manager update_polling")
-            self.backing_device_manager.update()
-            timer.checkpoint("backing_device_manager update")
-            i += 1
-        timer.done()
+        # i = 0
+        # while i < 15:
+        #     time.sleep(self.interval)
+        #     timer.checkpoint("round %d" % (i,))
+        #     Vhost.INSTANCE.update()
+        #     timer.checkpoint("Vhost.INSTANCE.update()")
+        #     CPUUsage.INSTANCE.update()
+        #     timer.checkpoint("CPUUsage.INSTANCE.update()")
+        #     self.vm_manager.update()
+        #     timer.checkpoint("self.vm_manager.update()")
+        #     self.io_workers_manager.update_vq_classifications()
+        #     timer.checkpoint("vq_classifier update_classification")
+        #     self.io_workers_manager.update_io_core_number()
+        #     timer.checkpoint("io_workers_manager update_io_core_number")
+        #     self.io_workers_manager.update_balance()
+        #     timer.checkpoint("io_workers_manager update_balance")
+        #     self.io_workers_manager.update_polling()
+        #     timer.checkpoint("io_workers_manager update_polling")
+        #     self.backing_device_manager.update()
+        #     timer.checkpoint("backing_device_manager update")
+        #     i += 1
+        # timer.done()
 
         vm_balance_policy = \
             self.vm_manager.vm_balance_policy

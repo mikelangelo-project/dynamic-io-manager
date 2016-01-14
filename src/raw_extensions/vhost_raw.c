@@ -60,7 +60,7 @@ VhostWorker_update(VhostWorker *self){
     if (self->kernel_address != 0UL){
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
     }
-    return (PyObject*)self;
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef VhostWorker_methods[] = {
@@ -180,7 +180,7 @@ VhostDevice_update(VhostDevice *self){
     if (self->kernel_address != 0UL){
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
     }
-    return (PyObject*)self;
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef VhostDevice_methods[] = {
@@ -288,7 +288,7 @@ VhostVirtqueue_update(VhostVirtqueue *self){
     if (self->kernel_address != 0UL){
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
     }
-    return (PyObject *)self;
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef VhostVirtqueue_methods[] = {
