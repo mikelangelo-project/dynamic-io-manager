@@ -55,7 +55,8 @@ UpTimeCounterRaw_update(UpTimeCounterRaw *self)
     printf("%s:%d self->up_time: %llu\n", __func__, __LINE__, self->up_time);
     self->up_time_diff = self->up_time - old;
     printf("%s:%d self->up_time_diff: %llu\n", __func__, __LINE__, self->up_time_diff);
-    return (PyObject *)self;
+//    return (PyObject *)self;
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef UpTimeCounterRaw_methods[] = {
