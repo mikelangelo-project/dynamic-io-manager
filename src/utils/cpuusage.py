@@ -280,8 +280,8 @@ class CPUUsage:
         self.current.update()
 
         h = self.historesis
-        t_diff = 100.0 * float(self.uptime.up_time_diff) + 0.000001
         logging.info(self.uptime.up_time_diff)
+        t_diff = 100.0 * float(self.uptime.up_time_diff) + 0.000001
         for c in self.current.per_cpu_counters:
             # logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
