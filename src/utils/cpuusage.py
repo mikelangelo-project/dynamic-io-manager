@@ -279,6 +279,8 @@ class CPUUsage:
 
     def update(self):
         self.uptime.update()
+        logging.info(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+        logging.info(self.uptime)
         self.current.update()
 
         h = self.historesis
