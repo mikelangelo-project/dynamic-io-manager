@@ -1,6 +1,7 @@
 import re
 import logging
 import time
+import sys
 
 import kernel_mapper
 from uptime import UpTimeCounterRaw
