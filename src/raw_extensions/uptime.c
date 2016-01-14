@@ -67,10 +67,10 @@ static PyMemberDef UpTimeCounterRaw_members[] = {
 static PyTypeObject UpTimeCounterRawType = {
     PyObject_HEAD_INIT(NULL)
     0,                                        /*ob_size*/
-    "uptime.UpTimeCounterRaw",                   /*tp_name*/
-    sizeof(UpTimeCounterRaw),                    /*tp_basicsize*/
+    "uptime.UpTimeCounterRaw",                /*tp_name*/
+    sizeof(UpTimeCounterRaw),                 /*tp_basicsize*/
     0,                                        /*tp_itemsize*/
-    (destructor)UpTimeCounterRaw_dealloc,        /*tp_dealloc*/
+    (destructor)UpTimeCounterRaw_dealloc,     /*tp_dealloc*/
     0,                                        /*tp_print*/
     0,                                        /*tp_getattr*/
     0,                                        /*tp_setattr*/

@@ -273,13 +273,13 @@ class CPUUsage:
         self.interrups_counters = IRQCounter(len(self.current.per_cpu_counters))
 
         self.uptime = UpTimeCounterRaw()  # UpTimeCounter()
-        logging.info(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-        logging.info(self.uptime)
+        print(self.uptime)
         self.historesis = historesis
 
     def update(self):
+        print(self.uptime)
         self.uptime.update()
-        logging.info(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+        print(self.uptime)
         logging.info(self.uptime)
         self.current.update()
 
@@ -352,7 +352,7 @@ class CPUUsage:
         return self.uptime.up_time_diff * 100
 
 
-def main(argv):
+def main():
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
     log_format = "[%(filename)s:%(lineno)s] %(message)s"
     logging.basicConfig(stream=sys.stdout, format=log_format,
@@ -372,4 +372,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    main(sys.argv[0])
+    main()
