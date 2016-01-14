@@ -114,19 +114,21 @@ class CPUStatCounterBase:
     per_cpu_fields = ["id"] + common_fields
     global_cpu_fields = common_fields
 
-    def __init__(self, read_fn):
-        self.read_fn = read_fn
+    def __init__(self):
         self.per_cpu_counters_start, self.global_cpu_counters_start = \
-            self.read_fn()
+            self.read()
 
         self.per_cpu_counters = [[l[0]] + [0 for _ in l[1:]]
                                  for l in self.per_cpu_counters_start]
         self.global_cpu_counters = [0 for _ in self.global_cpu_counters_start]
 
+    def read(self):
+        pass
+
     def update(self):
         s_old = (self.per_cpu_counters_start, self.global_cpu_counters_start)
         self.per_cpu_counters_start, self.global_cpu_counters_start = \
-            self.read_fn()
+            self.read()
         s_new = (self.per_cpu_counters_start, self.global_cpu_counters_start)
 
         self.per_cpu_counters, self.global_cpu_counters = \
@@ -169,12 +171,9 @@ class CPUStatCounterRaw(CPUStatCounterBase):
                 ptr = base_ptr + i * RAW_FIELD_SIZE
                 cur.append(kernel_mapper.Counter(ptr))
 
-        self.per_cpu_counters_start, self.global_cpu_counters_start = \
-            self._read()
+        CPUStatCounterBase.__init__(self)
 
-        CPUStatCounterBase.__init__(self, self._read)
-
-    def _read(self):
+    def read(self):
         logging.info("CPUStatCounterRaw._read()")
         per_cpu_counters = [[l[0]] + [reader.read() for reader in l[1:]]
                             for l in self.per_cpu_counters_reader]
@@ -203,10 +202,9 @@ class CPUStatCounter(CPUStatCounterBase):
         re.compile("ctxt\s+(\d+)")
 
     def __init__(self):
-        CPUStatCounterBase.__init__(self, CPUStatCounter._parse)
+        CPUStatCounterBase.__init__(self)
 
-    @staticmethod
-    def _parse():
+    def read(self):
         logging.info("CPUStatCounter._parse()")
         per_cpu_counters = []
         global_cpu_counters = \
