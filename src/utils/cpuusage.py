@@ -178,13 +178,13 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         global_cpu_counters = \
             [sum([c[i + 1] for c in per_cpu_counters], 0)
              for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
-        logging.info("global_cpu_fields")
-        logging.info(CPUStatCounterBase.global_cpu_fields)
-        logging.info("per_cpu_counters")
-        for c in per_cpu_counters:
-            logging.info(c)
-        logging.info("global_cpu_counters")
-        logging.info(global_cpu_counters)
+        # logging.info("global_cpu_fields")
+        # logging.info(CPUStatCounterBase.global_cpu_fields)
+        # logging.info("per_cpu_counters")
+        # for c in per_cpu_counters:
+        #     logging.info(c)
+        # logging.info("global_cpu_counters")
+        # logging.info(global_cpu_counters)
         return per_cpu_counters, global_cpu_counters
 
 
@@ -278,32 +278,36 @@ class CPUUsage:
         self.historesis = historesis
 
     def update(self):
-        print(self.uptime)
+        logging.info(self.uptime)
         self.uptime.update()
-        print(self.uptime)
         logging.info(self.uptime)
         self.current.update()
 
         h = self.historesis
+        logging.info("1")
         logging.info(self.uptime.up_time_diff)
+        logging.info("2")
         t_diff = 100.0 * float(self.uptime.up_time_diff) + 0.000001
+        logging.info("3")
         for c in self.current.per_cpu_counters:
-            # logging.info(str(c))
+            logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
                 (1.0 - h) * (1.0 - float(c[4]) / t_diff)
             self.softirqs[c[0]] = float(c[7]) / float(t_diff)
 
-            # cpu_usage_str = "%s: " % (c[0],)
-            # for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
-            #     cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
-            # logging.info(cpu_usage_str)
+            cpu_usage_str = "%s: " % (c[0],)
+            for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
+                cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
+            logging.info(cpu_usage_str)
 
-            # logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
-            #        (c[0], c[4], c[7]))
-            # logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
-            #        (c[0], self.projected[c[0]], self.softirqs[c[0]]))
+            logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
+                         (c[0], c[4], c[7]))
+            logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
+                         (c[0], self.projected[c[0]], self.softirqs[c[0]]))
 
+        logging.info("4")
         self.interrups_counters.update()
+        logging.info("5")
 
     def get_min_used_cpu(self, requested_cpus):
         if not requested_cpus:

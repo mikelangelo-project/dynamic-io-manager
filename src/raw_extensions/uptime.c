@@ -35,10 +35,14 @@ static int
 UpTimeCounterRaw_init(UpTimeCounterRaw *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {NULL};
+    printf("%s:%d\n", __func__, __LINE__);
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return -1;
+    printf("%s:%d\n", __func__, __LINE__);
     self->up_time = time_ns(&self->ts);
+    printf("%s:%d self->up_time: %llu\n", __func__, __LINE__, self->up_time);
     self->up_time_diff = 0ULL;
+    printf("%s:%d self->up_time_diff: %llu\n", __func__, __LINE__, self->up_time_diff);
     return 0;
 }
 
