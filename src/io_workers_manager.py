@@ -151,7 +151,7 @@ class IOWorkersManager:
         self.vq_classifier.update_classifications(can_update)
 
     def move_devices(self, balance_changes, balance_backing_device=True):
-        timer = Timer("Timer move_devices")
+        # timer = Timer("Timer move_devices")
         # logging.info("\x1b[37mMoving devices:\x1b[39m")
         if not balance_changes:
             # logging.info("no balance changes")
@@ -161,20 +161,20 @@ class IOWorkersManager:
             # logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
             #              "\x1b[39m\n" %
             #              (dev_id, old_worker["id"], new_worker["id"]))
-            timer.checkpoint("dev %s" % (dev_id,))
+            # timer.checkpoint("dev %s" % (dev_id,))
             vhost_write(Vhost.INSTANCE.devices[dev_id], "worker",
                         new_worker["id"])
-            timer.checkpoint("dev %s vhost_write" % (dev_id,))
+            # timer.checkpoint("dev %s vhost_write" % (dev_id,))
             Vhost.INSTANCE.devices[dev_id]["worker"] = new_worker["id"]
 
             new_worker["dev_list"].append(dev_id)
             old_worker["dev_list"].remove(dev_id)
-            timer.checkpoint("dev %s end" % (dev_id,))
+            # timer.checkpoint("dev %s end" % (dev_id,))
 
-        timer.checkpoint("before backing_devices_manager.balance")
+        # timer.checkpoint("before backing_devices_manager.balance")
         if balance_backing_device:
             self.backing_devices_manager.balance(self.io_workers)
-        timer.done()
+        # timer.done()
 
     def enable_shared_workers(self, io_cores):
         vhost = Vhost.INSTANCE

@@ -56,36 +56,13 @@ class MoverDaemon(Daemon):
         self.interval_in_cycles = self.interval * Cycles.cycles_per_second
 
     def run(self):
-        timer = Timer("Timer Mover")
+        # timer = Timer("Timer Mover")
         Vhost.INSTANCE.update(light_update=False, update_epoch=True,
                               rescan_files=False)
         CPUUsage.INSTANCE.update()
         # print_all(self.vhost)
         self.io_workers_manager.initialize()
         self.vm_manager.update()
-
-        # i = 0
-        # while i < 15:
-        #     time.sleep(self.interval)
-        #     timer.checkpoint("round %d" % (i,))
-        #     Vhost.INSTANCE.update()
-        #     timer.checkpoint("Vhost.INSTANCE.update()")
-        #     CPUUsage.INSTANCE.update()
-        #     timer.checkpoint("CPUUsage.INSTANCE.update()")
-        #     self.vm_manager.update()
-        #     timer.checkpoint("self.vm_manager.update()")
-        #     self.io_workers_manager.update_vq_classifications()
-        #     timer.checkpoint("vq_classifier update_classification")
-        #     self.io_workers_manager.update_io_core_number()
-        #     timer.checkpoint("io_workers_manager update_io_core_number")
-        #     self.io_workers_manager.update_balance()
-        #     timer.checkpoint("io_workers_manager update_balance")
-        #     self.io_workers_manager.update_polling()
-        #     timer.checkpoint("io_workers_manager update_polling")
-        #     self.backing_device_manager.update()
-        #     timer.checkpoint("backing_device_manager update")
-        #     i += 1
-        # timer.done()
 
         vm_balance_policy = \
             self.vm_manager.vm_balance_policy
@@ -95,9 +72,9 @@ class MoverDaemon(Daemon):
             self.backing_device_manager.backing_devices_policy
         configuration_ids = vm_balance_policy.vms_configurations.keys()
 
-        i = li = 0
-        lis = 20  # int(1.0 / self.interval) + 1
-        # while i < 15:
+        # i = li = 0
+        # lis = 20  # int(1.0 / self.interval) + 1
+
         while True:
             for conf_id in configuration_ids:
                 if self.interval >= 0.1:
@@ -106,24 +83,24 @@ class MoverDaemon(Daemon):
                     # we don't sleep here just delay until its time
                     Cycles.delay(self.interval_in_cycles)
                 # logging.info("round %d" % (i,))
-                timer.checkpoint("round %d" % (i,))
+                # timer.checkpoint("round %d" % (i,))
                 vm_balance_policy.balance_by_configuration(conf_id,
                                                            self.vm_manager.vms)
-                timer.checkpoint("round %d: vm_balance_policy" % (i,))
+                # timer.checkpoint("round %d: vm_balance_policy" % (i,))
                 backing_device_manager.balance_by_configuration(
                     conf_id, self.io_workers_manager.io_workers)
-                timer.checkpoint("round %d: backing_device_manager" % (i,))
+                # timer.checkpoint("round %d: backing_device_manager" % (i,))
                 balance_changes = \
                     workers_balance_policy.balance_by_configuration(
                         conf_id, self.io_workers_manager.io_workers)
-                timer.checkpoint("round %d: balance_by_configuration" % (i,))
+                # timer.checkpoint("round %d: balance_by_configuration" % (i,))
                 self.io_workers_manager.move_devices(balance_changes, False)
-                timer.checkpoint("end round %d: move_devices" % (i,))
+                # timer.checkpoint("end round %d: move_devices" % (i,))
                 i += 1
 
-            if i - li > lis:
-                timer.done()
-                li = i
+            # if i - li > lis:
+            #     timer.done()
+            #     li = i
 
         logging.info("*****Done****")
 

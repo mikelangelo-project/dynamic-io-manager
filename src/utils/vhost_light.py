@@ -82,23 +82,23 @@ class VhostLight:
             c.initialize(self.vhost.vhost)
 
     def _initialize(self):
-        timer = Timer("Timer vhost light _initialize")
+        # timer = Timer("Timer vhost light _initialize")
 
         for w_id in self.vhost.workers.keys():
             self.workers[w_id] = VhostWorker(w_id)
-        timer.checkpoint("initialize workers")
+        # timer.checkpoint("initialize workers")
 
         for d_id in self.vhost.devices.keys():
             self.devices[d_id] = VhostDevice(d_id)
-        timer.checkpoint("initialize devices")
+        # timer.checkpoint("initialize devices")
 
         for vq_id in self.vhost.queues.keys():
             self.queues[vq_id] = VhostVirtqueue(vq_id)
-        timer.checkpoint("initialize queues")
-        timer.checkpoint("done")
+        # timer.checkpoint("initialize queues")
+        # timer.checkpoint("done")
 
     def update(self, rescan=False):
-        timer = Timer("Timer vhost light update")
+        # timer = Timer("Timer vhost light update")
         if rescan:
             self.workers = {}
             self.devices = {}
@@ -106,21 +106,21 @@ class VhostLight:
             self._initialize()
             for c in self.per_worker_counters.values():
                 c.update_workers(self.vhost.workers.values())
-            timer.checkpoint("rescan")
+            # timer.checkpoint("rescan")
 
         self.cycles.update(self.vhost.vhost, [self.vhost.vhost])
         self.work_cycles.update(self.vhost.vhost, self.workers.values())
         self.softirq_interference.update(self.vhost.vhost,
                                          self.workers.values())
-        timer.checkpoint("misc")
+        # timer.checkpoint("misc")
 
         for c in self.per_worker_counters.values():
             c.update(self.vhost.vhost, self.workers.values())
-        timer.checkpoint("per_worker_counters")
+        # timer.checkpoint("per_worker_counters")
         for c in self.per_queue_counters.values():
             c.update(self.vhost.vhost, self.queues.values())
-        timer.checkpoint("per_queue_counters")
-        timer.done()
+        # timer.checkpoint("per_queue_counters")
+        # timer.done()
 
 
 class VhostCounterBase:

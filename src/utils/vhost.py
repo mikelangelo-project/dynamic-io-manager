@@ -247,19 +247,19 @@ class Vhost:
         Vhost.update_all_entries(elem)
 
     def _initialize(self):
-        timer = Timer("Timer vhost _initialize")
+        # timer = Timer("Timer vhost _initialize")
         self.vhost["path"] = self.path
         self.vhost["keys"] = ls(self.path, show_dirs=False, show_files=True,
                                 show_only_readable=True)
         Vhost.update_all_entries(self.vhost)
-        timer.checkpoint("vhost")
+        # timer.checkpoint("vhost")
 
         self.workersGlobal["path"] = os.path.join(self.path, "worker")
         self.workersGlobal["keys"] = ls(self.workersGlobal["path"],
                                         show_dirs=False, show_files=True,
                                         show_only_readable=True)
         Vhost.update_all_entries(self.workersGlobal)
-        timer.checkpoint("workersGlobal")
+        # timer.checkpoint("workersGlobal")
 
         for w_id in ls(os.path.join(self.path, "worker")):
             w_id = w_id.strip()
@@ -272,7 +272,7 @@ class Vhost:
             Vhost.update_all_entries(w)
             w["cpu_usage_counter"] = get_cpu_usage(w["pid"])
             # w["cpu_usage_counter"] = ProcessCPUUsageCounter(w["pid"])
-        timer.checkpoint("worker")
+        # timer.checkpoint("worker")
 
         for d_id in ls(os.path.join(self.path, "dev")):
             d_id = d_id.strip()
@@ -282,7 +282,7 @@ class Vhost:
                  "keys": ls(dir_path, show_dirs=False, show_files=True,
                             show_only_readable=True)}
             Vhost.update_all_entries(dev)
-        timer.checkpoint("dev")
+        # timer.checkpoint("dev")
 
         for vq_id in ls(os.path.join(self.path, "vq")):
             vq_id = vq_id.strip()
@@ -293,55 +293,55 @@ class Vhost:
                             show_only_readable=True)}
             Vhost.update_all_entries(queue)
             queue["notif_works_last_epoch"] = queue["notif_works"]
-        timer.checkpoint("vq")
+        # timer.checkpoint("vq")
 
         self.vhost["cycles_last_epoch"] = self.vhost["cycles"]
 
         self.work_cycles.initialize(self.vhost, self.vhost["cycles"])
         self.cycles.initialize(self.vhost, self.vhost["cycles"])
         self.softirq_interference.initialize(self.vhost, self.vhost["cycles"])
-        timer.checkpoint("misc")
+        # timer.checkpoint("misc")
 
         for c in self.per_worker_counters.values():
             c.initialize(self.vhost)
-        timer.checkpoint("per_worker_counters")
+        # timer.checkpoint("per_worker_counters")
         for c in self.per_queue_counters.values():
             c.initialize(self.vhost)
-        timer.checkpoint("per_queue_counters")
-        timer.checkpoint("done")
+        # timer.checkpoint("per_queue_counters")
+        # timer.checkpoint("done")
 
     def update(self, light_update=True, update_epoch=False, rescan_files=False):
-        timer = Timer("Timer vhost update")
+        # timer = Timer("Timer vhost update")
         self.vhost_light.update()
-        timer.checkpoint("vhost_light")
+        # timer.checkpoint("vhost_light")
         if light_update:
-            timer.done()
+            # timer.done()
             return
         if rescan_files:
             self._initialize()
-            timer.checkpoint("_initialize")
+            # timer.checkpoint("_initialize")
         if update_epoch:
             vhost_write(self.vhost, "epoch", "1")
-            timer.checkpoint("update_epoch")
+            # timer.checkpoint("update_epoch")
 
         Vhost.update_all_entries(self.vhost)
         cycles_this_epoch = self.vhost["cycles"] - \
             self.vhost["cycles_last_epoch"]
         self.vhost["cycles_last_epoch"] = self.vhost["cycles"]
         self.vhost["cycles_this_epoch"] = cycles_this_epoch
-        timer.checkpoint("vhost")
+        # timer.checkpoint("vhost")
         Vhost.update_all_entries(self.workersGlobal)
-        timer.checkpoint("workersGlobal")
+        # timer.checkpoint("workersGlobal")
 
         for w in self.workers.values():
             Vhost.update_all_entries(w)
             w["cpu_usage_counter"] = get_cpu_usage(w["pid"])
             # w["cpu_usage_counter"].update()
-        timer.checkpoint("workers")
+        # timer.checkpoint("workers")
 
         for dev in self.devices.values():
             Vhost.update_all_entries(dev)
-        timer.checkpoint("devices")
+        # timer.checkpoint("devices")
 
         for vq in self.queues.values():
             Vhost.update_all_entries(vq)
@@ -349,21 +349,21 @@ class Vhost:
                 vq["notif_works_last_epoch"]
             vq["notif_works_last_epoch"] = vq["notif_works"]
             vq["notif_works_this_epoch"] = notif_works_this_epoch
-        timer.checkpoint("queues")
+        # timer.checkpoint("queues")
 
         self.cycles.update(self.vhost, [self.vhost])
         self.work_cycles.update(self.vhost, self.workers.values())
         self.softirq_interference.update(self.vhost, self.workers.values())
-        timer.checkpoint("misc")
+        # timer.checkpoint("misc")
 
         for c in self.per_worker_counters.values():
             c.update(self.vhost, self.workers.values())
-        timer.checkpoint("per_worker_counters")
+        # timer.checkpoint("per_worker_counters")
         for c in self.per_queue_counters.values():
             c.update(self.vhost, self.queues.values())
-        timer.checkpoint("per_queue_counters")
+        # timer.checkpoint("per_queue_counters")
         self.vhost_light.update(rescan=True)
-        timer.done()
+        # timer.done()
 
 
 def main(argv):
