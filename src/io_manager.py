@@ -66,7 +66,7 @@ class IOManagerDaemon(Daemon):
         self.io_workers_manager.initialize()
         self.vm_manager.update()
 
-        # i = li = 0
+        i = li = 0
         # lis = 20  # int(1.0 / self.interval) + 1
 
         while True:

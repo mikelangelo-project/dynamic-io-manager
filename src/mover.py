@@ -96,7 +96,7 @@ class MoverDaemon(Daemon):
                 # timer.checkpoint("round %d: balance_by_configuration" % (i,))
                 self.io_workers_manager.move_devices(balance_changes, False)
                 # timer.checkpoint("end round %d: move_devices" % (i,))
-                i += 1
+                # i += 1
 
             # if i - li > lis:
             #     timer.done()
