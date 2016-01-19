@@ -412,6 +412,6 @@ initvhost_raw(void)
     PyModule_AddObject(m, "VhostDevice", (PyObject *)&VhostDeviceType);
 //    printf("%s:%d\n", __func__, __LINE__);
     Py_INCREF(&VhostVirtqueueType);
-    printf("%s:%d\n", __func__, __LINE__);
-//    PyModule_AddObject(m, "VhostVirtqueue", (PyObject *)&VhostVirtqueueType);
+//    printf("%s:%d\n", __func__, __LINE__);
+    PyModule_AddObject(m, "VhostVirtqueue", (PyObject *)&VhostVirtqueueType);
 }
