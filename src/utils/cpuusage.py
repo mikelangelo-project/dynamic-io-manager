@@ -273,18 +273,16 @@ class CPUUsage:
         self.interrups_counters = IRQCounter(len(self.current.per_cpu_counters))
 
         self.uptime = UpTimeCounterRaw()  # UpTimeCounter()
-        print(self.uptime)
         self.historesis = historesis
 
     def update(self):
-        logging.info(self.uptime)
         self.uptime.update()
-        logging.info(self.uptime)
         self.current.update()
 
         h = self.historesis
         logging.info(self.uptime.up_time_diff)
         t_diff = float(self.uptime.up_time_diff) / 10 ** 7  # convert to HZ
+        logging.info(t_diff)
 
         for c in self.current.per_cpu_counters:
             logging.info(str(c))
