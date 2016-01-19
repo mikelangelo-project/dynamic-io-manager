@@ -129,7 +129,7 @@ class CPUStatCounterBase:
         s_new = (self.per_cpu_counters_start, self.global_cpu_counters_start)
 
         self.per_cpu_counters, self.global_cpu_counters = \
-            CPUStatCounterBase._diff(s_old, s_new)
+            CPUStatCounterBase._diff(s_new, s_old)
 
     @staticmethod
     def _diff(s_new, s_old):
@@ -155,8 +155,8 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         with open(CPUStatCounterRaw.file_path, "r") as f:
             for line in f:
                 kernel_addresses = [long(a, 16) for a in line.strip().split()]
-        logging.info("kernel_addresses: [%s]" %
-                     (",".join("%lx" % (ka,) for ka in kernel_addresses,)))
+        # logging.info("kernel_addresses: [%s]" %
+        #              (",".join("%lx" % (ka,) for ka in kernel_addresses,)))
 
         # self.counters = [kernel_mapper.Counter(address + RAW_FIELD_SIZE * cpu)
         self.per_cpu_counters_reader = []
@@ -166,7 +166,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
             fields_len = len(CPUStatCounter.per_cpu_fields) - 1
             for i in xrange(fields_len):
                 ptr = a + i * RAW_FIELD_SIZE
-                logging.info("kernel_address: %lx" % (ptr,))
+                # logging.info("kernel_address: %lx" % (ptr,))
                 cur.append(kernel_mapper.Counter(ptr))
 
         CPUStatCounterBase.__init__(self)
@@ -178,13 +178,13 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         global_cpu_counters = \
             [sum([c[i + 1] for c in per_cpu_counters], 0)
              for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
-        logging.info("global_cpu_fields")
-        logging.info(CPUStatCounterBase.global_cpu_fields)
-        logging.info("per_cpu_counters")
-        for c in per_cpu_counters:
-            logging.info(c)
-        logging.info("global_cpu_counters")
-        logging.info(global_cpu_counters)
+        # logging.info("global_cpu_fields")
+        # logging.info(CPUStatCounterBase.global_cpu_fields)
+        # logging.info("per_cpu_counters")
+        # for c in per_cpu_counters:
+        #     logging.info(c)
+        # logging.info("global_cpu_counters")
+        # logging.info(global_cpu_counters)
         return per_cpu_counters, global_cpu_counters
 
 
