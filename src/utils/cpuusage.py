@@ -13,7 +13,8 @@ RAW_FIELD_SIZE = 8
 
 class UpTimeCounter:
     regex = re.compile("\s*(\d+.?\d*)\s+(\d+.?\d*)\s*")
-    file_path = "/proc/uptime"
+    file_path = "/proc/uptime"  # returns in TICK or HZ about 100 every second,
+    # we want uptime in nsecs so we multiply by 10 ** 7
 
     def __init__(self):
         self.up_time = self.read()
@@ -22,12 +23,10 @@ class UpTimeCounter:
     def read(self):
         with open(UpTimeCounter.file_path, "r") as up_time_file:
             for row in spilt_output_into_rows(up_time_file):
-                # logging.info(row)
                 r = UpTimeCounter.regex.match(row)
                 if r:
-                    # logging.info("found up time!")
                     g = r.groups()
-                    return float(g[0])  # , float(g[1])
+                    return float(g[0]) * 10 ** 7  # converting jiffies to nsecs
 
         err("failed to find up time!")
 
@@ -285,7 +284,7 @@ class CPUUsage:
 
         h = self.historesis
         logging.info(self.uptime.up_time_diff)
-        t_diff = 100.0 * float(self.uptime.up_time_diff) + 0.000001
+        t_diff = float(self.uptime.up_time_diff) / 10 ** 7  # convert to HZ
 
         for c in self.current.per_cpu_counters:
             logging.info(str(c))
@@ -350,9 +349,9 @@ class CPUUsage:
         return sum(self.interrups_counters[k] for k in requested_cpus)
 
     def get_ticks(self):
-        # in jiffies rather then seconds
+        # in jiffies rather then nano-seconds
         logging.info(self.uptime.up_time_diff)
-        return self.uptime.up_time_diff * 100
+        return self.uptime.up_time_diff / 10 ** 7
 
 
 def main():

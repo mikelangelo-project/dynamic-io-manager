@@ -6,7 +6,6 @@ from get_cycles.get_cycles import Cycles
 from aux import Timer
 
 from vhost_raw import VhostWorker, VhostDevice, VhostVirtqueue
-from uptime import UpTimeCounterRaw
 
 # RAW_FIELD_SIZE = 8
 
