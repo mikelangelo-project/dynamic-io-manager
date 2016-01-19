@@ -112,8 +112,8 @@ def main(argv):
 
     opts = None
     try:
-        opts, args = getopt.getopt(argv[1:], "s:kh",
-                                   ["start=", "kill", "help"])
+        opts, args = getopt.getopt(argv[1:], "s:kph",
+                                   ["start=", "kill", "process", "help"])
     except getopt.GetoptError:
         usage(argv[0], "Illegal Argument!")
 
