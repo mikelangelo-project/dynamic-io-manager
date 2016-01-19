@@ -162,7 +162,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         for cpu, a in enumerate(kernel_addresses):
             cur = []
             self.per_cpu_counters_reader.append(cur)
-            fields_len = len(CPUStatCounter.per_cpu_fields)
+            fields_len = len(CPUStatCounter.per_cpu_fields) - 1
             base_ptr = a + fields_len * RAW_FIELD_SIZE * cpu
             for i in xrange(fields_len):
                 ptr = base_ptr + i * RAW_FIELD_SIZE
@@ -285,7 +285,7 @@ class CPUUsage:
         logging.info(t_diff)
 
         for c in self.current.per_cpu_counters:
-            logging.info(str(c))
+            # logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
                 (1.0 - h) * (1.0 - float(c[4]) / t_diff)
             self.softirqs[c[0]] = float(c[7]) / float(t_diff)
