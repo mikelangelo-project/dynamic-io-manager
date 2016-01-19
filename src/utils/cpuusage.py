@@ -135,11 +135,12 @@ class CPUStatCounterBase:
     def _diff(s_new, s_old):
         per_cpu_counters1, global_cpu_counters1 = s_new
         per_cpu_counters2, global_cpu_counters2 = s_old
+        # / 2.5 convert CLOCK TICKS(HZ) to TICK
         global_cpu_counters = \
-            [a - b for a, b in zip(global_cpu_counters1, global_cpu_counters2)]
+            [(a - b) / 2.5 for a, b in zip(global_cpu_counters1, global_cpu_counters2)]
 
         per_cpu_counters = \
-            [[a_list[0]] + [a - b for a, b in zip(a_list[1:], b_list[1:])]
+            [[a_list[0]] + [(a - b) / 2.5 for a, b in zip(a_list[1:], b_list[1:])]
              for a_list, b_list in zip(per_cpu_counters1, per_cpu_counters2)]
         return per_cpu_counters, global_cpu_counters
 
