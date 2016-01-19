@@ -284,10 +284,10 @@ class CPUUsage:
         h = self.historesis
         logging.info(self.uptime.up_time_diff)
         t_diff = float(self.uptime.up_time_diff) / 10 ** 7  # convert to HZ
-        logging.info(t_diff)
+        # logging.info(t_diff)
 
         for c in self.current.per_cpu_counters:
-            logging.info(str(c))
+            # logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
                 (1.0 - h) * (1.0 - float(c[4]) / t_diff)
             self.softirqs[c[0]] = float(c[7]) / float(t_diff)
