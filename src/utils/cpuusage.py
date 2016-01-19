@@ -155,7 +155,8 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         with open(CPUStatCounterRaw.file_path, "r") as f:
             for line in f:
                 kernel_addresses = [long(a, 16) for a in line.strip().split()]
-        logging.info("kernel_address: %lx" % (kernel_addresses[0],))
+        logging.info("kernel_addresses: [%s]" %
+                     (",".join("%lx" % (ka,) for ka in kernel_addresses,)))
 
         # self.counters = [kernel_mapper.Counter(address + RAW_FIELD_SIZE * cpu)
         self.per_cpu_counters_reader = []
@@ -166,6 +167,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
             base_ptr = a + fields_len * RAW_FIELD_SIZE * cpu
             for i in xrange(fields_len):
                 ptr = base_ptr + i * RAW_FIELD_SIZE
+                logging.info("kernel_address: %lx" % (ptr,))
                 cur.append(kernel_mapper.Counter(ptr))
 
         CPUStatCounterBase.__init__(self)
