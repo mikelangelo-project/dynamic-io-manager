@@ -132,3 +132,15 @@ class Timer:
                       (self._tag, cp[0] - start, cp[0] - prev, cp[1])
             prev = cp[0]
         logging.info(output)
+
+
+class LoggerWriter:
+    def __init__(self, level):
+        self.level = level
+
+    def write(self, message):
+        if message != '\n':
+            logging.log(self.level, message)
+
+    def flush(self):
+        self.level(sys.stderr)

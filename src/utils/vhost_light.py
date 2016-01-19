@@ -28,6 +28,7 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
 
     def __init__(self, pid):
         ProcessCPUUsageCounterBase.__init__(self, pid)
+        logging.info("pid: %s" % (pid,))
         with open(ProcessCPUUsageCounterRaw.file_path, "w") as f:
             f.write("%d\n" % (pid,))
         utime_addr, stime_addr = None, None

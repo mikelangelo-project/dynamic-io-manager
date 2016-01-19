@@ -24,7 +24,7 @@ from algos.vq_classifier import VirtualQueueClassifier
 from utils.cpuusage import CPUUsage
 from utils.get_cycles.get_cycles import Cycles
 from utils.vhost import Vhost
-from utils.aux import msg, Timer
+from utils.aux import msg, Timer, LoggerWriter
 from utils.daemon import Daemon
 
 
@@ -37,6 +37,7 @@ def usage(program_name, error):
     print('-s/--setup <io manager configuration>: starts mover with '
           'configuration.')
     print('-k/--kill: kills the mover that runs in a daemon.')
+    print('-p/process: run as a process and direct all output to stdout+stderr.')
     sys.exit()
 
 MOVER_PID = "/tmp/io_manager_pid.txt"
@@ -118,17 +119,20 @@ def main(argv):
         usage(argv[0], "Illegal Argument!")
 
     configuration_filename = None
+    no_daemon = False
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             usage(argv[0], "Help")
         elif opt in ("-s", "--start"):
             msg("configuration file: %s" % (arg, ))
             configuration_filename = arg
-            break
         elif opt in ("-k", "--kill"):
             msg("kills an mover that runs in a daemon.")
             Daemon(MOVER_PID).stop()
             sys.exit()
+        elif opt in ("-p", "--process"):
+            msg("run io manager with all output to stdout and stderr.")
+            no_daemon = True
 
     if not os.path.exists(configuration_filename):
         usage(argv[0], "Configuration file doesn't exists!")
@@ -136,21 +140,27 @@ def main(argv):
     with open(configuration_filename) as f:
         config = json.load(f)
 
+    # a way to run the manager not as daemon regardless of configuration file
+    if no_daemon:
+        config["daemon"] = "no"
+
     # start the log file if exists
-    if "log" in config and config["log"]:
-        timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    log_format = "[%(filename)s:%(lineno)s] %(message)s"
+    if "log" in config and config["log"] and not no_daemon:
         log_file = os.path.expanduser(config["log"])
         timestamp_log_file = log_file + ".%s.txt" % (timestamp,)
-        log_format = "[%(filename)s:%(lineno)s] %(message)s"
         logging.basicConfig(filename=timestamp_log_file,
                             format=log_format, level=logging.INFO)
-        # logging.basicConfig(stream=sys.stdout, format=log_format,
-        #                     level=logging.INFO)
-        logging.info("****** start of a new run: %s ******" %
-                     (timestamp,))
         if os.path.exists(log_file):
             os.unlink(log_file)
         os.symlink(timestamp_log_file, log_file)
+    else:
+        logging.basicConfig(stream=sys.stdout, format=log_format,
+                            level=logging.INFO)
+        sys.stdout = LoggerWriter(logging.INFO)
+        sys.stderr = LoggerWriter(logging.ERROR)
+    logging.info("****** start of a new run: %s ******" % (timestamp,))
 
     # set the interval in which the IO manager works
     interval = float(config["interval"]) if "interval" in config \
