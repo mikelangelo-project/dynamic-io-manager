@@ -178,13 +178,13 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         global_cpu_counters = \
             [sum([c[i + 1] for c in per_cpu_counters], 0)
              for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
-        # logging.info("global_cpu_fields")
-        # logging.info(CPUStatCounterBase.global_cpu_fields)
-        # logging.info("per_cpu_counters")
-        # for c in per_cpu_counters:
-        #     logging.info(c)
-        # logging.info("global_cpu_counters")
-        # logging.info(global_cpu_counters)
+        logging.info("global_cpu_fields")
+        logging.info(CPUStatCounterBase.global_cpu_fields)
+        logging.info("per_cpu_counters")
+        for c in per_cpu_counters:
+            logging.info(c)
+        logging.info("global_cpu_counters")
+        logging.info(global_cpu_counters)
         return per_cpu_counters, global_cpu_counters
 
 
