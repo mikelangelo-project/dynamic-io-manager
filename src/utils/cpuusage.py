@@ -351,7 +351,7 @@ class CPUUsage:
     def get_ticks(self):
         # in jiffies rather then nano-seconds
         logging.info(self.uptime.up_time_diff)
-        return self.uptime.up_time_diff / 10 ** 7
+        return float(self.uptime.up_time_diff) / float(10 ** 7)
 
 
 def main():
