@@ -88,7 +88,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         pass
 
     def calculate_load(self, shared_workers):
-        timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
+        # timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         workers = Vhost.INSTANCE.workers
 
@@ -197,7 +197,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         # logging.info("efficient io ratio: %.2f" %
         #              (self.effective_io_ratio / self.overall_io_ratio,))
-        timer.done()
+        # timer.done()
 
     def should_update_core_number(self):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE

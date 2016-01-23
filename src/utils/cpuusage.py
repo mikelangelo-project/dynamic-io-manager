@@ -173,7 +173,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         CPUStatCounterBase.__init__(self)
 
     def read(self):
-        logging.info("CPUStatCounterRaw._read()")
+        # logging.info("CPUStatCounterRaw._read()")
         per_cpu_counters = [[cpu] + [reader.read() for reader in l]
                             for cpu, l in enumerate(self.per_cpu_counters_reader)]
         global_cpu_counters = \
@@ -282,7 +282,7 @@ class CPUUsage:
         self.current.update()
 
         h = self.historesis
-        logging.info(self.uptime.up_time_diff)
+        # logging.info(self.uptime.up_time_diff)
         t_diff = float(self.uptime.up_time_diff) / 10 ** 7  # convert to HZ
         # logging.info(t_diff)
 
@@ -350,7 +350,7 @@ class CPUUsage:
 
     def get_ticks(self):
         # in jiffies rather then nano-seconds
-        logging.info(self.uptime.up_time_diff)
+        # logging.info(self.uptime.up_time_diff)
         return float(self.uptime.up_time_diff) / float(10 ** 7)
 
 
