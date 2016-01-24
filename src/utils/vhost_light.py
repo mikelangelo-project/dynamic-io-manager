@@ -109,15 +109,15 @@ class VhostLight:
                 c.update_workers(self.vhost.workers.values())
             timer.checkpoint("rescan")
 
-        for w in self.vhost.workers.values():
+        for w in self.workers.values():
             w.update()
         timer.checkpoint("workers update")
 
-        for d in self.vhost.devices.values():
+        for d in self.devices.values():
             d.update()
         timer.checkpoint("devices update")
 
-        for vq in self.vhost.queues.values():
+        for vq in self.queues.values():
             vq.update()
         timer.checkpoint("vqs update")
 
