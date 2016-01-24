@@ -7,6 +7,8 @@
 #define VHOST_STAT(elem, stats_type, stat, disc) \
     {#stat, T_LONGLONG, offsetof(elem, stats) + offsetof(stats_type, stat), 0, disc}
 
+#define VHOST_PRINT_STAT(stat) \
+    printf("%s:%d " #stat ": %llx\n", __func__, __LINE__, self->stats.stat);
 // ------------------ vhost worker ---------------------------------------------
 typedef struct {
     PyObject_HEAD
@@ -59,6 +61,25 @@ static PyObject *
 VhostWorker_update(VhostWorker *self){
     if (self->kernel_address != 0UL){
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
+
+        printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
+        VHOST_PRINT_STAT(loops);
+        VHOST_PRINT_STAT(enabled_interrupts);
+        VHOST_PRINT_STAT(cycles);
+        VHOST_PRINT_STAT(mm_switches);
+        VHOST_PRINT_STAT(wait);
+        VHOST_PRINT_STAT(empty_works);
+        VHOST_PRINT_STAT(empty_polls);
+        VHOST_PRINT_STAT(stuck_works);
+        VHOST_PRINT_STAT(noqueue_works);
+        VHOST_PRINT_STAT(pending_works);
+        VHOST_PRINT_STAT(last_loop_tsc_end);
+        VHOST_PRINT_STAT(poll_cycles);
+        VHOST_PRINT_STAT(notif_cycles);
+        VHOST_PRINT_STAT(total_work_cycles);
+        VHOST_PRINT_STAT(ksoftirq_occurrences);
+        VHOST_PRINT_STAT(ksoftirq_time);
+        VHOST_PRINT_STAT(ksoftirqs);
     }
     Py_RETURN_NONE;
 }
