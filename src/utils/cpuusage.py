@@ -66,7 +66,7 @@ class IRQCounterRaw(IRQCounterBase):
         logging.info("kernel_address: %lx" % (kernel_addresses[0],))
         self.readers = [kernel_mapper.Counter(kernel_addresses[cpu] +
                                               RAW_FIELD_SIZE * cpu)
-                         for cpu in xrange(cpus)]
+                        for cpu in xrange(cpus)]
         self.interrupts = [c.read() for c in self.counters]
 
     def update(self):
@@ -137,10 +137,12 @@ class CPUStatCounterBase:
         per_cpu_counters2, global_cpu_counters2 = s_old
         # / 2.5 convert CLOCK TICKS(HZ) to TICK
         global_cpu_counters = \
-            [(a - b) / 2.5 for a, b in zip(global_cpu_counters1, global_cpu_counters2)]
+            [(a - b) / 2.5 for a, b in zip(global_cpu_counters1,
+                                           global_cpu_counters2)]
 
         per_cpu_counters = \
-            [[a_list[0]] + [(a - b) / 2.5 for a, b in zip(a_list[1:], b_list[1:])]
+            [[a_list[0]] + [(a - b) / 2.5
+                            for a, b in zip(a_list[1:], b_list[1:])]
              for a_list, b_list in zip(per_cpu_counters1, per_cpu_counters2)]
         return per_cpu_counters, global_cpu_counters
 
@@ -174,8 +176,9 @@ class CPUStatCounterRaw(CPUStatCounterBase):
 
     def read(self):
         # logging.info("CPUStatCounterRaw._read()")
-        per_cpu_counters = [[cpu] + [reader.read() for reader in l]
-                            for cpu, l in enumerate(self.per_cpu_counters_reader)]
+        per_cpu_counters = \
+            [[cpu] + [reader.read() for reader in l]
+             for cpu, l in enumerate(self.per_cpu_counters_reader)]
         global_cpu_counters = \
             [sum([c[i + 1] for c in per_cpu_counters], 0)
              for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
