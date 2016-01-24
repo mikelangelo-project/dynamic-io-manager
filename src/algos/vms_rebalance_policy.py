@@ -32,9 +32,9 @@ class VmsPreConfiguredBalancePolicy:
         self.configuration_mapping = \
             {int(conf["cores"]): conf["id"]
              for conf in balancer_info["configurations"]}
-        logging.info("\x1b[37mconfiguration_mapping:\x1b[39m \n%s" %
-                     (pprint.pformat(self.configuration_mapping, indent=2,
-                                     width=80, depth=4),))
+        # logging.info("\x1b[37mconfiguration_mapping:\x1b[39m \n%s" %
+        #              (pprint.pformat(self.configuration_mapping, indent=2,
+        #                              width=80, depth=4),))
 
     def _balance(self, vms):
         conf_id = self.configuration_mapping[len(self.cpus)]
