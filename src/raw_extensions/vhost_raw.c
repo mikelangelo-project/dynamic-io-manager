@@ -42,27 +42,26 @@ static int
 VhostWorker_init(VhostWorker *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"id", NULL};
-//    printf("%s:%d\n", __func__, __LINE__);
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &self->id))
         return -1;
-//    printf("%s:%d\n", __func__, __LINE__);
+
     self->kernel_address = vhost_worker_stats_kernel(self->id);
-//    printf("%s:%d\n", __func__, __LINE__);
+    printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
     if (self->kernel_address != 0UL){
-//        printf("%s:%d\n", __func__, __LINE__);
+        printf("%s:%d\n", __func__, __LINE__);
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
-//        printf("%s:%d\n", __func__, __LINE__);
+        printf("%s:%d\n", __func__, __LINE__);
     }
-//    printf("%s:%d\n", __func__, __LINE__);
+    printf("%s:%d\n", __func__, __LINE__);
     return 0;
 }
 
 static PyObject *
 VhostWorker_update(VhostWorker *self){
+    printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
     if (self->kernel_address != 0UL){
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
 
-        printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
         VHOST_PRINT_STAT(loops);
         VHOST_PRINT_STAT(enabled_interrupts);
         VHOST_PRINT_STAT(cycles);
