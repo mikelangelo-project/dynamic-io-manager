@@ -37,7 +37,8 @@ def usage(program_name, error):
     print('-s/--setup <io manager configuration>: starts mover with '
           'configuration.')
     print('-k/--kill: kills the mover that runs in a daemon.')
-    print('-p/process: run as a process and direct all output to stdout+stderr.')
+    print('-p/--process: run as a process and direct all output to '
+          'stdout+stderr.')
     sys.exit()
 
 MOVER_PID = "/tmp/io_manager_pid.txt"

@@ -292,15 +292,15 @@ class CPUUsage:
                 (1.0 - h) * (1.0 - float(c[4]) / t_diff)
             self.softirqs[c[0]] = float(c[7]) / float(t_diff)
 
-            # cpu_usage_str = "%s: " % (c[0],)
-            # for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
-            #     cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
-            # logging.info(cpu_usage_str)
+            cpu_usage_str = "%s: " % (c[0],)
+            for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
+                cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
+            logging.info(cpu_usage_str)
 
-            # logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
-            #              (c[0], c[4], c[7]))
-            # logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
-            #              (c[0], self.projected[c[0]], self.softirqs[c[0]]))
+            logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
+                         (c[0], c[4], c[7]))
+            logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
+                         (c[0], self.projected[c[0]], self.softirqs[c[0]]))
 
         # logging.info("4")
         self.interrups_counters.update()
@@ -322,8 +322,8 @@ class CPUUsage:
         sorted_cpus = sorted({k: v for k, v in self.projected.items()
                               if k in requested_cpus},
                              cmp=lambda x, y: x[1] - y[1])
-        # logging.info("CPUUsage.get_cpus_by_usage: requested_cpus: %s, "
-        #              "sorted_cpus: %s" % (requested_cpus, sorted_cpus))
+        logging.info("CPUUsage.get_cpus_by_usage: requested_cpus: %s, "
+                     "sorted_cpus: %s" % (requested_cpus, sorted_cpus))
         return sorted_cpus.keys()
 
     def get_empty_cpu(self, requested_cpus):
@@ -334,13 +334,13 @@ class CPUUsage:
                    if k in requested_cpus)
 
     def get_softirq_cpu(self, requested_cpus):
-        # logging.info("requested_cpus: %s." % (str(requested_cpus), ))
+        logging.info("requested_cpus: %s." % (str(requested_cpus), ))
         if not requested_cpus:
             return None
 
-        # logging.info("softirqs:")
-        # for k, v in self.softirqs.items():
-        #     logging.info("%s: %d" % (k, v))
+        logging.info("softirqs:")
+        for k, v in self.softirqs.items():
+            logging.info("%s: %d" % (k, v))
 
         return sum(v for k, v in self.softirqs.items()
                    if k in requested_cpus)
@@ -350,7 +350,7 @@ class CPUUsage:
 
     def get_ticks(self):
         # in jiffies rather then nano-seconds
-        # logging.info(self.uptime.up_time_diff)
+        logging.info(self.uptime.up_time_diff)
         return float(self.uptime.up_time_diff) / float(10 ** 7)
 
 

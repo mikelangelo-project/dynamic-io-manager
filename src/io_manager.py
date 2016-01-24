@@ -39,7 +39,8 @@ def usage(program_name, error):
     print('-s/--setup <io manager configuration>: starts io manager with '
           'configuration.')
     print('-k/--kill: kills an io manager that runs in a daemon.')
-    print('-p/process: run as a process and direct all output to stdout+stderr.')
+    print('-p/--process: run as a process and direct all output to '
+          'stdout+stderr.')
     print('')
     print('Configuration file example:')
     configuration_example = os.path.join(os.path.dirname(program_name), "..",
