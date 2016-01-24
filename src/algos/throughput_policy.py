@@ -100,25 +100,24 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
         empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
-        # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
-        #              (vhost_inst.cycles.delta,))
-        # logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
-        #              (vhost_inst.work_cycles.delta,))
-        # logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-        #              (self.io_cores,))
-        # logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
-        #              (cycles_this_epoch,))
-        # logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
-        #              (empty_cycles,))
+        logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
+                     (vhost_inst.cycles.delta,))
+        logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
+                     (vhost_inst.work_cycles.delta,))
+        logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
+                     (self.io_cores,))
+        logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
+                     (cycles_this_epoch,))
+        logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
+                     (empty_cycles,))
 
-        # handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
-        #     vhost_inst.per_queue_counters["poll_bytes"].delta
-        # cycles = vhost_inst.cycles.delta
-        # ratio_before = handled_bytes / float(cycles)
-        # logging.info("cycles:       %d", cycles)
-        # logging.info("handled_bytes:%d", handled_bytes)
-        # logging.info("ratio_before: %.2f", ratio_before)
-        # logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
+        handled_bytes = vhost_inst.per_queue_counters["handled_bytes"].delta
+        cycles = vhost_inst.cycles.delta
+        ratio_before = handled_bytes / float(cycles)
+        logging.info("cycles:       %d", cycles)
+        logging.info("handled_bytes:%d", handled_bytes)
+        logging.info("ratio_before: %.2f", ratio_before)
+        logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
         softirq_cpu_ratio = 0
         if shared_workers:
@@ -130,8 +129,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             total_interrupts = CPUUsage.INSTANCE.get_interrupts(io_cores_cpus)
             logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
                          (total_interrupts,))
-            # logging.info("\x1b[37msoftirq_interference_this_epoch %d.\x1b[39m" %
-            #              (vhost_inst.softirq_interference.delta,))
+            logging.info("\x1b[37msoftirq_interference_this_epoch %d.\x1b[39m" %
+                         (vhost_inst.softirq_interference.delta,))
             # ksoftirq thread is scheduled on our iocores, and worse yet it
             # preempts the iocores thread. We measure the iocores activity and
             # CPU usage using rdtsc assuming it is never preempts. softirq_cpu_
@@ -164,6 +163,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         for c in sorted(vhost_inst.per_worker_counters.values(),
                         key=lambda x: x.name):
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
+        logging.info("\x1b[37mcpu_usage_counter %.2f.\x1b[39m" %
+                     (vhost_inst.per_worker_counters["cpu_usage_counter"].delta,))
+        logging.info("\x1b[37mticks %.2f.\x1b[39m" %
+                     (float(CPUUsage.INSTANCE.get_ticks()),))
         self.overall_io_ratio = \
             vhost_inst.per_worker_counters["cpu_usage_counter"].delta / \
             float(CPUUsage.INSTANCE.get_ticks())
