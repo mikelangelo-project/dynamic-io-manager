@@ -1,4 +1,5 @@
 import logging
+import pprint
 from utils.aux import parse_user_list, Timer
 
 __author__ = 'eyalmo'
@@ -20,17 +21,20 @@ class VmsPreConfiguredBalancePolicy:
             c: list(set([cpu for cpus in vms.values() for cpu in cpus]))
             for c, vms in self.vms_configurations.items()
         }
-        # logging.info("\x1b[37mcpu_configuration:\x1b[39m \n%s" %
-        #              (pprint.pformat(self.cpu_configuration, indent=2,
-        #                              width=80, depth=4),))
+        logging.info("\x1b[37mcpu_configuration:\x1b[39m \n%s" %
+                     (pprint.pformat(self.cpu_configuration, indent=2,
+                                     width=80, depth=4),))
         self.cpus = list(initial_cpus)
         # logging.info("\x1b[37mcpus:\x1b[39m \n%s" %
         #              (pprint.pformat(self.cpus, indent=2, width=80,
         #                              depth=4),))
 
         self.configuration_mapping = \
-            {len(conf["cores"]): conf["id"]
+            {int(conf["cores"]): conf["id"]
              for conf in balancer_info["configurations"]}
+        logging.info("\x1b[37mconfiguration_mapping:\x1b[39m \n%s" %
+                     (pprint.pformat(self.configuration_mapping, indent=2,
+                                     width=80, depth=4),))
 
     def _balance(self, vms):
         conf_id = self.configuration_mapping[len(self.cpus)]
