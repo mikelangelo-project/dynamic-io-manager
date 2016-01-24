@@ -241,10 +241,10 @@ class CPUStatCounter(CPUStatCounterBase):
                 # logging.info(g)
                 global_cpu_counters.append(int(g[0]))
                 continue
-        logging.info("per_cpu_counters")
-        logging.info(per_cpu_counters)
-        logging.info("global_cpu_counters")
-        logging.info(global_cpu_counters)
+        # logging.info("per_cpu_counters")
+        # logging.info(per_cpu_counters)
+        # logging.info("global_cpu_counters")
+        # logging.info(global_cpu_counters)
 
         return per_cpu_counters, global_cpu_counters
 
@@ -295,12 +295,12 @@ class CPUUsage:
             cpu_usage_str = "%s: " % (c[0],)
             for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
                 cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
-            logging.info(cpu_usage_str)
-
-            logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
-                         (c[0], c[4], c[7]))
-            logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
-                         (c[0], self.projected[c[0]], self.softirqs[c[0]]))
+            # logging.info(cpu_usage_str)
+            #
+            # logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
+            #              (c[0], c[4], c[7]))
+            # logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
+            #              (c[0], self.projected[c[0]], self.softirqs[c[0]]))
 
         # logging.info("4")
         self.interrups_counters.update()
