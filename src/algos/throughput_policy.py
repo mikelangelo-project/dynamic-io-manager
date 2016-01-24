@@ -163,8 +163,6 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         for c in sorted(vhost_inst.per_worker_counters.values(),
                         key=lambda x: x.name):
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
-        logging.info("\x1b[37mcpu_usage_counter %.2f.\x1b[39m" %
-                     (vhost_inst.per_worker_counters["cpu_usage_counter"].delta,))
         logging.info("\x1b[37mticks %.2f.\x1b[39m" %
                      (float(CPUUsage.INSTANCE.get_ticks()),))
         self.overall_io_ratio = \

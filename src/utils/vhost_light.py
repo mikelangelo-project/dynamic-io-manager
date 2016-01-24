@@ -45,6 +45,7 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
     def update(self):
         value = self.readers[0].read() + self.readers[1].read()
         self.delta = value - self.current
+        logging.info("%d: value: %d delta: %d" % (self.pid, value, self.delta))
         self.current = value
         return self.delta
 
