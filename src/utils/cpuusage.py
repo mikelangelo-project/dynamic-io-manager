@@ -298,7 +298,7 @@ class CPUUsage:
             cpu_usage_str = "%s: " % (c[0],)
             for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
                 cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
-            # logging.info(cpu_usage_str)
+            logging.info(cpu_usage_str)
 
             logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
                          (c[0], c[4], c[7]))
