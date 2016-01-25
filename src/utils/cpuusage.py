@@ -289,11 +289,14 @@ class CPUUsage:
         t_diff = float(self.uptime.up_time_diff) / 10 ** 7  # convert to HZ
         # logging.info(t_diff)
 
+        idle = 6  # 4
+        softirq = 4  # 7
+
         for c in self.current.per_cpu_counters:
             # logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
-                (1.0 - h) * (1.0 - float(c[4]) / t_diff)
-            self.softirqs[c[0]] = float(c[7]) / float(t_diff)
+                (1.0 - h) * (1.0 - float(c[idle]) / t_diff)
+            self.softirqs[c[0]] = float(c[softirq]) / float(t_diff)
 
             cpu_usage_str = "%s: " % (c[0],)
             for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
@@ -301,7 +304,7 @@ class CPUUsage:
             logging.info(cpu_usage_str)
 
             logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
-                         (c[0], c[4], c[7]))
+                         (c[0], c[idle], c[softirq]))
             logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
                          (c[0], self.projected[c[0]], self.softirqs[c[0]]))
 
