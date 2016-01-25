@@ -102,10 +102,11 @@ if __name__ == '__main__':
         msg("workers_for_addition: %d" % (workers_for_addition,))
         for _ in xrange(workers_for_addition):
             vhost_worker_create()
-        Vhost.INSTANCE.update(update_epoch=False, rescan_files=True)
+        Vhost.INSTANCE.update(light_update=False, update_epoch=False,
+                              rescan_files=True)
         workers = sorted(Vhost.INSTANCE.workers.values(),
                          key=lambda _w: int(_w["id"].split(".")[1]))
-        # msg(workers)
+        msg(len(workers))
 
     if shared_workers:
         msg("shared_workers: %s" % (shared_workers,))
