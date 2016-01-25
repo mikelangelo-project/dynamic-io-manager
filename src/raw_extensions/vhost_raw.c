@@ -58,27 +58,27 @@ VhostWorker_init(VhostWorker *self, PyObject *args, PyObject *kwds)
 
 static PyObject *
 VhostWorker_update(VhostWorker *self){
-    printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
+//    printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
     if (self->kernel_address != 0UL){
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
-
-        VHOST_PRINT_STAT(loops);
-        VHOST_PRINT_STAT(enabled_interrupts);
-        VHOST_PRINT_STAT(cycles);
-        VHOST_PRINT_STAT(mm_switches);
-        VHOST_PRINT_STAT(wait);
-        VHOST_PRINT_STAT(empty_works);
-        VHOST_PRINT_STAT(empty_polls);
-        VHOST_PRINT_STAT(stuck_works);
-        VHOST_PRINT_STAT(noqueue_works);
-        VHOST_PRINT_STAT(pending_works);
-        VHOST_PRINT_STAT(last_loop_tsc_end);
-        VHOST_PRINT_STAT(poll_cycles);
-        VHOST_PRINT_STAT(notif_cycles);
-        VHOST_PRINT_STAT(total_work_cycles);
-        VHOST_PRINT_STAT(ksoftirq_occurrences);
-        VHOST_PRINT_STAT(ksoftirq_time);
-        VHOST_PRINT_STAT(ksoftirqs);
+//
+//        VHOST_PRINT_STAT(loops);
+//        VHOST_PRINT_STAT(enabled_interrupts);
+//        VHOST_PRINT_STAT(cycles);
+//        VHOST_PRINT_STAT(mm_switches);
+//        VHOST_PRINT_STAT(wait);
+//        VHOST_PRINT_STAT(empty_works);
+//        VHOST_PRINT_STAT(empty_polls);
+//        VHOST_PRINT_STAT(stuck_works);
+//        VHOST_PRINT_STAT(noqueue_works);
+//        VHOST_PRINT_STAT(pending_works);
+//        VHOST_PRINT_STAT(last_loop_tsc_end);
+//        VHOST_PRINT_STAT(poll_cycles);
+//        VHOST_PRINT_STAT(notif_cycles);
+//        VHOST_PRINT_STAT(total_work_cycles);
+//        VHOST_PRINT_STAT(ksoftirq_occurrences);
+//        VHOST_PRINT_STAT(ksoftirq_time);
+//        VHOST_PRINT_STAT(ksoftirqs);
     }
     Py_RETURN_NONE;
 }

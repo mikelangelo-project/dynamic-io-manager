@@ -45,7 +45,8 @@ class ProcessCPUUsageCounterRaw(ProcessCPUUsageCounterBase):
     def update(self):
         value = (self.readers[0].read() + self.readers[1].read()) / 2.5
         self.delta = value - self.current
-        logging.info("%d: value: %d delta: %d" % (self.pid, value, self.delta))
+        # logging.info("%d: value: %d delta: %d" %
+        #              (self.pid, value, self.delta))
         self.current = value
         return self.delta
 
@@ -66,7 +67,8 @@ class VhostLight:
             "cpu_usage_counter": VhostCPUUsageCounter("cpu_usage_counter")
         }
         self.per_queue_counters = \
-            {"handled_bytes": VhostHandledBytesCounter("handled_bytes")}
+            {"notif_bytes": VhostPolledBytesCounter("notif_bytes"),
+             "poll_bytes": VhostNotifBytesCounter("poll_bytes")}
 
         self._initialize()
 
@@ -202,10 +204,19 @@ class VhostCPUUsageCounter(VhostCounterBase):
         return VhostCounterBase.update(self, vhost, total)
 
 
-class VhostHandledBytesCounter(VhostCounterBase):
+class VhostPolledBytesCounter(VhostCounterBase):
     def __init__(self, name):
-        VhostCounterBase.__init__(self, name, "handled_bytes")
+        VhostCounterBase.__init__(self, name, "poll_bytes")
 
     def update(self, vhost, elements):
-        total = sum(e.handled_bytes for e in elements)
+        total = sum(e.poll_bytes for e in elements)
+        return VhostCounterBase.update(self, vhost, total)
+
+
+class VhostNotifBytesCounter(VhostCounterBase):
+    def __init__(self, name):
+        VhostCounterBase.__init__(self, name, "notif_bytes")
+
+    def update(self, vhost, elements):
+        total = sum(e.notif_bytes for e in elements)
         return VhostCounterBase.update(self, vhost, total)

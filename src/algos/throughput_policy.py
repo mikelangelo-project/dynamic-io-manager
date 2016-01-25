@@ -111,7 +111,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
                      (empty_cycles,))
 
-        handled_bytes = vhost_inst.per_queue_counters["handled_bytes"].delta
+        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+            vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
         ratio_before = handled_bytes / float(cycles)
         logging.info("cycles:       %d", cycles)
@@ -282,6 +283,6 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         logging.info("\x1b[37mshould%s add VM cores, empty cycles ratio is "
                      "%.2f.\x1b[39m" % ("" if add else " not", ratio))
         logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
-        logging.info("\x1b[37VM cores are %s.\x1b[39m" % (self.cpus, ))
+        logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
         return add, can_remove
 
