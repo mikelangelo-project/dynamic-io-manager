@@ -46,13 +46,13 @@ VhostWorker_init(VhostWorker *self, PyObject *args, PyObject *kwds)
         return -1;
 
     self->kernel_address = vhost_worker_stats_kernel(self->id);
-    printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
+//    printf("%s:%d kernel_address: %llx\n", __func__, __LINE__, self->kernel_address);
     if (self->kernel_address != 0UL){
-        printf("%s:%d\n", __func__, __LINE__);
+//        printf("%s:%d\n", __func__, __LINE__);
         copy_to_user(&self->stats, self->kernel_address, sizeof(self->stats));
-        printf("%s:%d\n", __func__, __LINE__);
+//        printf("%s:%d\n", __func__, __LINE__);
     }
-    printf("%s:%d\n", __func__, __LINE__);
+//    printf("%s:%d\n", __func__, __LINE__);
     return 0;
 }
 
