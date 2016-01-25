@@ -337,13 +337,13 @@ class CPUUsage:
                    if k in requested_cpus)
 
     def get_softirq_cpu(self, requested_cpus):
-        logging.info("requested_cpus: %s." % (str(requested_cpus), ))
+        # logging.info("requested_cpus: %s." % (str(requested_cpus), ))
         if not requested_cpus:
             return None
 
-        logging.info("softirqs:")
-        for k, v in self.softirqs.items():
-            logging.info("%s: %d" % (k, v))
+        # logging.info("softirqs:")
+        # for k, v in self.softirqs.items():
+        #     logging.info("%s: %d" % (k, v))
 
         return sum(v for k, v in self.softirqs.items()
                    if k in requested_cpus)
