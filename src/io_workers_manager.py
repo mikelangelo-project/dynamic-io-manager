@@ -106,7 +106,7 @@ class IOWorkersManager:
         logging.info("\x1b[33mremove IOcore\x1b[39m")
         self.epochs_last_action = 0
         # remove the IO core
-        cpu_id = self.io_core_policy.remove()
+        cpu_id = self.io_core_policy.remove(number=1)[0]
         removed_worker = [w for w in Vhost.INSTANCE.workers.values()
                           if w["cpu"] == cpu_id][0]
         removed_worker_id = removed_worker["id"]
