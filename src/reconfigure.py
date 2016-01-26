@@ -71,7 +71,8 @@ if __name__ == '__main__':
 
     # initialize vhost
     Vhost.initialize()
-    Vhost.INSTANCE.update(False)
+    Vhost.INSTANCE.update(light_update=False, update_epoch=False,
+                          rescan_files=True)
 
     vms_conf = config["vms"]
     workers_conf = sorted(config["workers"],
