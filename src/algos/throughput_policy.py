@@ -240,7 +240,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def should_stop_shared_worker(self):
         if not self.shared_workers or self.io_cores > 1:
             return False
-        full_ratio = self.overall_io_ratio  # 1 - self.ratio
+        full_ratio = 1.0 - self.ratio
         if self.stop_shared_ratio <= full_ratio:
             return False
 
