@@ -101,7 +101,7 @@ class VhostLight:
         # timer.checkpoint("done")
 
     def update(self, rescan=False):
-        timer = Timer("Timer vhost light update")
+        # timer = Timer("Timer vhost light update")
         if rescan:
             self.workers = {}
             self.devices = {}
@@ -109,33 +109,33 @@ class VhostLight:
             self._initialize()
             for c in self.per_worker_counters.values():
                 c.update_workers(self.vhost.workers.values())
-            timer.checkpoint("rescan")
+            # timer.checkpoint("rescan")
 
         for w in self.workers.values():
             w.update()
-        timer.checkpoint("workers update")
+        # timer.checkpoint("workers update")
 
         for d in self.devices.values():
             d.update()
-        timer.checkpoint("devices update")
+        # timer.checkpoint("devices update")
 
         for vq in self.queues.values():
             vq.update()
-        timer.checkpoint("vqs update")
+        # timer.checkpoint("vqs update")
 
         self.cycles.update(self.vhost.vhost, [self.vhost.vhost])
         self.work_cycles.update(self.vhost.vhost, self.workers.values())
         self.softirq_interference.update(self.vhost.vhost,
                                          self.workers.values())
-        timer.checkpoint("misc")
+        # timer.checkpoint("misc")
 
         for c in self.per_worker_counters.values():
             c.update(self.vhost.vhost, self.workers.values())
-        timer.checkpoint("per_worker_counters")
+        # timer.checkpoint("per_worker_counters")
         for c in self.per_queue_counters.values():
             c.update(self.vhost.vhost, self.queues.values())
-        timer.checkpoint("per_queue_counters")
-        timer.done()
+        # timer.checkpoint("per_queue_counters")
+        # timer.done()
 
 
 class VhostCounterBase:

@@ -18,7 +18,8 @@ class ThroughputRegretPolicy:
         logging.info("should regret")
         timer = Timer("Timer ThroughputRegretPolicy")
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
-        handled_bytes = vhost_inst.per_queue_counters["handled_bytes"].delta
+        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+            vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
         ratio_before = handled_bytes / float(cycles)
         logging.info("cycles:       %d", cycles)
@@ -38,7 +39,9 @@ class ThroughputRegretPolicy:
             time.sleep(self.interval)
             vhost_inst.update()
 
-            handled_bytes = vhost_inst.per_queue_counters["handled_bytes"].delta
+            handled_bytes = \
+                vhost_inst.per_queue_counters["notif_bytes"].delta + \
+                vhost_inst.per_queue_counters["poll_bytes"].delta
             cycles = vhost_inst.cycles.delta
             ratio_after = handled_bytes / float(cycles)
 
