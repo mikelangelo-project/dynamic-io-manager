@@ -48,14 +48,14 @@ class LastAddedPolicy:
             #      set(parse_user_list(vm["cpu"]))))
             initial_cpus.update(set(parse_user_list(vm["cpu"])))
         # msg("initial_cpus: %s" % (initial_cpus,))
-        initial_cpus = sorted(initial_cpus, cmp=lambda x, y: x < y)
+        initial_cpus = sorted(initial_cpus, cmp=lambda x, y: x > y)
         logging.info("vm initial cpus: %s" % (initial_cpus,))
         return LastAddedPolicy(initial_cpus)
 
     @staticmethod
     def create_io_cores_policy(workers_info):
         initial_cpus = list(set([int(w["cpu"]) for w in workers_info]))
-        initial_cpus = sorted(initial_cpus, cmp=lambda x, y: x > y)
+        initial_cpus = sorted(initial_cpus, cmp=lambda x, y: x <= y)
         logging.info("io cores initial cpus: %s" % (initial_cpus,))
         return LastAddedPolicy(initial_cpus)
 
@@ -67,7 +67,7 @@ class LastAddedPolicy:
 
     def remove(self, number=1):
         if len(self.cpus) < number:
-            logging.error("LastAddedPolicy: tring to pop more cpus then "
+            logging.error("LastAddedPolicy: trying to pop more CPUs then "
                           "available. has %s requested: %d" %
                           (self.cpus, number))
         return [self.cpus.pop() for _ in xrange(number)]
