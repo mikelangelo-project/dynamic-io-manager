@@ -202,8 +202,8 @@ class VhostCPUUsageCounter(VhostCounterBase):
     def update(self, vhost, elements):
         for c in self.workers_cpu_usage:
             c.update()
-            logging.info("%d: current: %d  delta: %d" %
-                         (c.pid, c.current, c.delta))
+            # logging.info("%d: current: %d  delta: %d" %
+            #              (c.pid, c.current, c.delta))
         total = sum(c.current for c in self.workers_cpu_usage)
         return VhostCounterBase.update(self, vhost, total)
 
