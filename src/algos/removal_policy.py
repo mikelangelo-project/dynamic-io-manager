@@ -48,9 +48,9 @@ class LastAddedPolicy:
             #      set(parse_user_list(vm["cpu"]))))
             initial_cpus.update(set(parse_user_list(vm["cpu"])))
         logging.info("initial_cpus: %s" % (initial_cpus,))
-        initial_cpus = sorted(initial_cpus, cmp=lambda x, y: x <= y)
+        initial_cpus = sorted(initial_cpus, key=lambda x: x)
         logging.info("initial_cpus: %s" % (initial_cpus,))
-        initial_cpus = sorted(initial_cpus, cmp=lambda x, y: x > y)
+        initial_cpus = sorted(initial_cpus, key=lambda x: -x)
         logging.info("vm initial cpus: %s" % (initial_cpus,))
         return LastAddedPolicy(initial_cpus)
 
