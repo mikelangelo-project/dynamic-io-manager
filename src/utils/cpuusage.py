@@ -299,7 +299,7 @@ class CPUUsage:
             self.softirqs[c[0]] = float(c[softirq]) / float(t_diff)
 
             cpu_usage_str = "%s: " % (c[0],)
-            for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
+            for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:6]):
                 cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
             logging.info(cpu_usage_str)
 
