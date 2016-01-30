@@ -298,11 +298,11 @@ class CPUUsage:
                 (1.0 - h) * (1.0 - float(c[idle]) / t_diff)
             self.softirqs[c[0]] = float(c[softirq]) / float(t_diff)
 
-            # cpu_usage_str = "%s: " % (c[0],)
-            # for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
-            #     cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
-            # logging.info(cpu_usage_str)
-            #
+            cpu_usage_str = "%s: " % (c[0],)
+            for i, f in enumerate(CPUStatCounter.per_cpu_fields[1:]):
+                cpu_usage_str += "%s: %.2f " % (f, float(c[i+1]) / t_diff)
+            logging.info(cpu_usage_str)
+
             # logging.info("raw: cpu %s: idle: %.2f softirqs: %.2f" %
             #              (c[0], c[idle], c[softirq]))
             # logging.info("cpu %s: projected: %.2f softirqs: %.2f" %
