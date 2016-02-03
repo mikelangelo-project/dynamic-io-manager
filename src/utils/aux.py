@@ -85,6 +85,8 @@ def ls(path, show_dirs=True, show_files=False, show_symlinks=False,
         res = filter(lambda _f: not os.path.islink(os.path.join(path, _f)), res)
     if show_only_readable:
         res = filter(lambda _f: is_readable(os.path.join(path, _f)), res)
+
+    res = filter(lambda _f: _f not in ["power", "subsystem", "uevent"], res)
     return res
 
 
