@@ -11,7 +11,7 @@ def usage(program_name, error):
 
 
 class Cycles:
-    _LIBRARY_PATH = 'librdtsc.so'
+    _LIBRARY_NAME = 'librdtsc.so'
     _RDTSCLIB = None
 
     cycles_per_second = None
@@ -29,19 +29,16 @@ class Cycles:
         if Cycles._RDTSCLIB is not None:
             return False
 
-        lib_path = Cycles._LIBRARY_PATH
+        lib_dir = os.path.dirname(os.path.realpath(__file__))
+        lib_path = os.path.join(lib_dir, Cycles._LIBRARY_NAME)
 
         # Compile the library
-        subprocess.call(['make', '-C', lib_path])
-
-        # Load the library
         if not os.path.exists(lib_path):
-            lib_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                    lib_path)
+            subprocess.call(['make', '-C', lib_dir])
 
         if not os.path.exists(lib_path):
             logging.error("Error: couldn't locate %s, searched locations: %s" %
-                          (Cycles._LIBRARY_PATH, lib_path))
+                          (Cycles._LIBRARY_NAME, lib_dir))
             raise IOError
 
         print("found library at " + lib_path)
