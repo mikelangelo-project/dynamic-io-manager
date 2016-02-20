@@ -125,7 +125,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         softirq_cpu_ratio = 0
         if shared_workers:
-            io_cores_cpus = [w["cpu"] for w in workers.values()]
+            io_cores_cpus = [workers[w_id]["cpu"] for w_id in workers.keys()]
             logging.info("\x1b[37mio_cores_cpus %s.\x1b[39m" %
                          (str(io_cores_cpus),))
             softirq_cpu = CPUUsage.INSTANCE.get_softirq_cpu(io_cores_cpus)
@@ -288,4 +288,3 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
         logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
         return add, can_remove
-
