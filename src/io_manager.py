@@ -170,6 +170,10 @@ def main(argv):
         else IO_MANAGER_INTERVAL
     logging.info(interval)
 
+    # print the run tag
+    if "tag" in conf:
+        logging.info(conf["tag"])
+
     # initialize vhost
     Vhost.initialize()
     Vhost.INSTANCE.update(light_update=False, update_epoch=True,
