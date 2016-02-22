@@ -27,7 +27,7 @@ from utils.aux import msg, Timer, LoggerWriter
 from utils.daemon import Daemon
 
 IO_MANAGER_PID = "/tmp/io_manager_pid.txt"
-IO_MANAGER_INTERVAL = 1
+IO_MANAGER_INTERVAL = 1.0
 
 
 def usage(program_name, error):
