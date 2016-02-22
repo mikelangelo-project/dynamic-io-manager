@@ -75,7 +75,6 @@ class IOWorkersManager:
             cpu_id = self.io_core_policy.remove()[0]
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
-            self.vm_manager.disable_shared_workers()
             return
 
         add_io_core, can_remove_io_core = \
@@ -97,7 +96,7 @@ class IOWorkersManager:
             balance_changes = \
                 self.balance_policy.balance_after_addition(self.io_workers,
                                                            [new_worker_id])
-            self.move_devices(balance_changes)
+            self.move_devices(balance_changes, balance_backing_device=True)
             return
 
         if not remove_io_core or not can_remove_io_core:
@@ -114,13 +113,12 @@ class IOWorkersManager:
         balance_changes = \
             self.balance_policy.balance_before_removal(self.io_workers,
                                                        removed_worker_id)
-        self.move_devices(balance_changes)
-        self.backing_devices_manager.update()
+        self.move_devices(balance_changes, balance_backing_device=True)
         if self.regret_policy.should_regret():
             undo_balance_changes = {}
             for dev_id, (old_worker, new_worker) in balance_changes.items():
                 undo_balance_changes[dev_id] = (new_worker, old_worker)
-            self.move_devices(undo_balance_changes)
+            self.move_devices(undo_balance_changes, balance_backing_device=True)
             return
 
         self._remove_io_worker(removed_worker)
@@ -174,6 +172,7 @@ class IOWorkersManager:
         # timer.checkpoint("before backing_devices_manager.balance")
         if balance_backing_device:
             self.backing_devices_manager.balance(self.io_workers)
+            self.backing_devices_manager.update()
         # timer.done()
 
     def enable_shared_workers(self, io_cores):
@@ -210,6 +209,9 @@ class IOWorkersManager:
             self._remove_io_worker(worker)
         vhost.vhost_light.update(rescan=True)
 
+        self.backing_devices_manager.balance(self.io_workers)
+        self.backing_devices_manager.update()
+
     def disable_shared_workers(self):
         self.poll_policy.disable_shared_workers()
         self.io_workers = []
@@ -219,6 +221,9 @@ class IOWorkersManager:
             worker_id = self._add_io_worker()
             vhost_write(vhost.devices[dev.id], "worker", worker_id)
         vhost.vhost_light.update(rescan=True)
+
+        self.backing_devices_manager.balance(self.io_workers)
+        self.backing_devices_manager.update()
 
     @staticmethod
     def _add_io_worker(new_io_core=0):
