@@ -68,7 +68,7 @@ class IOManagerDaemon(Daemon):
         self.io_workers_manager.initialize()
         self.vm_manager.update()
 
-        i = 0 # i = li = 0
+        i = 0  # i = li = 0
         # lis = 20  # int(1.0 / self.interval) + 1
 
         while True:
@@ -156,12 +156,15 @@ def main(argv):
     log_format = "[%(filename)s:%(lineno)s] %(message)s"
     if "log" in conf and conf["log"] and not no_daemon:
         log_file = os.path.expanduser(conf["log"])
-        timestamp_log_file = log_file + ".%s.txt" % (timestamp,)
-        logging.basicConfig(filename=timestamp_log_file,
+        formatted_log_file = log_file
+        if "tag" in conf:
+            formatted_log_file += ".%s" % (conf["tag"],)
+        formatted_log_file += ".%s.txt" % (timestamp,)
+        logging.basicConfig(filename=formatted_log_file,
                             format=log_format, level=logging.INFO)
         if os.path.exists(log_file):
             os.unlink(log_file)
-        os.symlink(timestamp_log_file, log_file)
+        os.symlink(formatted_log_file, log_file)
     else:
         logging.basicConfig(stream=sys.stdout, format=log_format,
                             level=logging.INFO)

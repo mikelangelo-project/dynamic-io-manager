@@ -51,6 +51,10 @@ class ThroughputRegretPolicy:
             # logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
 
         # timer.done()
+        if ratio_after <= ratio_before:
+            logging.info("ratio_before: %.2f", ratio_before)
+            logging.info("ratio_after:  %.2f", ratio_after)
+            logging.info("regret")
         return ratio_before > ratio_after
 
 
@@ -207,21 +211,21 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def should_update_core_number(self):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         add, can_remove = self._should_update_core_number(self.ratio)
-        if add:
-            logging.info("\x1b[37mshould add IO workers, empty cycles "
-                         "ratio is %.2f.\x1b[39m" % (self.ratio,))
-
-            cycles_this_epoch = vhost_inst.cycles.delta
-            logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
-                         (cycles_this_epoch,))
-
-            total_cycles_this_epoch = cycles_this_epoch * self.io_cores
-            empty_cycles = \
-                total_cycles_this_epoch - vhost_inst.work_cycles.delta
-            logging.info("\x1b[37mempty_cycles: %d.\x1b[39m" %
-                         (empty_cycles,))
-            logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
-                         (cycles_this_epoch,))
+        # if add:
+        #     logging.info("\x1b[37mshould add IO workers, empty cycles "
+        #                  "ratio is %.2f.\x1b[39m" % (self.ratio,))
+        #
+        #     cycles_this_epoch = vhost_inst.cycles.delta
+        #     logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
+        #                  (cycles_this_epoch,))
+        #
+        #     total_cycles_this_epoch = cycles_this_epoch * self.io_cores
+        #     empty_cycles = \
+        #         total_cycles_this_epoch - vhost_inst.work_cycles.delta
+        #     logging.info("\x1b[37mempty_cycles: %d.\x1b[39m" %
+        #                  (empty_cycles,))
+        #     logging.info("\x1b[37mcycles_this_epoch: %d.\x1b[39m" %
+        #                  (cycles_this_epoch,))
         return add, can_remove
 
     def should_start_shared_worker(self):
@@ -230,10 +234,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         full_ratio = self.overall_io_ratio  # 1 - self.ratio
         if self.start_shared_ratio >= full_ratio:
             return False, 0
-        logging.info("\x1b[mstart_shared_ratio: %0.2f.\x1b[39m" %
-                     (self.start_shared_ratio,))
-
-        logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
+        # logging.info("\x1b[mstart_shared_ratio: %0.2f.\x1b[39m" %
+        #              (self.start_shared_ratio,))
+        #
+        # logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
         # suggested number of io cores, we are always rounding up
         return True, max(int(self.effective_io_ratio + .9), 1)
 
@@ -244,13 +248,13 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         if self.stop_shared_ratio <= full_ratio:
             return False
 
-        logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
-        logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
-                     (self.shared_workers,))
-        logging.info("\x1b[37mio_cores: %d.\x1b[39m" % (self.io_cores,))
-        logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
-                     (self.stop_shared_ratio,))
-        logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
+        # logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
+        # logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
+        #              (self.shared_workers,))
+        # logging.info("\x1b[37mio_cores: %d.\x1b[39m" % (self.io_cores,))
+        # logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
+        #              (self.stop_shared_ratio,))
+        # logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
         return True
 
 
@@ -276,15 +280,15 @@ class VMCoreAdditionPolicy(AdditionPolicy):
     def should_update_core_number(self):
         ratio = CPUUsage.INSTANCE.get_empty_cpu(self.cpus)
         add, can_remove = self._should_update_core_number(ratio)
-        logging.info("\x1b[37mcan%s remove a VM core, empty cycles ratio is "
-                     "%.2f.\x1b[39m" % ("" if can_remove else "not", ratio))
-        logging.info("\x1b[37mcan_remove_ratio: %.2f.\x1b[39m" %
-                     (self.can_remove_ratio,))
-        logging.info("\x1b[37mcan remove: %s.\x1b[39m" %
-                     (self.can_remove_ratio < ratio,))
-
-        logging.info("\x1b[37mshould%s add VM cores, empty cycles ratio is "
-                     "%.2f.\x1b[39m" % ("" if add else " not", ratio))
-        logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
-        logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
+        # logging.info("\x1b[37mcan%s remove a VM core, empty cycles ratio is "
+        #              "%.2f.\x1b[39m" % ("" if can_remove else "not", ratio))
+        # logging.info("\x1b[37mcan_remove_ratio: %.2f.\x1b[39m" %
+        #              (self.can_remove_ratio,))
+        # logging.info("\x1b[37mcan remove: %s.\x1b[39m" %
+        #              (self.can_remove_ratio < ratio,))
+        #
+        # logging.info("\x1b[37mshould%s add VM cores, empty cycles ratio is "
+        #              "%.2f.\x1b[39m" % ("" if add else " not", ratio))
+        # logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
+        # logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
         return add, can_remove
