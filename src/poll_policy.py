@@ -76,7 +76,7 @@ class PollPolicy:
         for vq_id, vq in Vhost.INSTANCE.queues.items():
             if vq["can_poll"] == 0 and vq["poll"] == 0:
                 continue
-            logging.info("\x1b[37mvq=%s stop polling.\x1b[39m" % (vq_id,))
+            # logging.info("\x1b[37mvq=%s stop polling.\x1b[39m" % (vq_id,))
             vhost_write(vq, "poll", 0)
 
 
@@ -97,7 +97,7 @@ class NullPollPolicy:
         for vq_id, vq in Vhost.INSTANCE.queues.items():
             if vq["can_poll"] == 0 or vq["poll"] == 1:
                 continue
-            logging.info("\x1b[37mvq=%s start polling.\x1b[39m" % (vq_id,))
+            # logging.info("\x1b[37mvq=%s start polling.\x1b[39m" % (vq_id,))
             vhost_write(vq, "poll", 1)
 
     @staticmethod
@@ -107,5 +107,5 @@ class NullPollPolicy:
         for vq_id, vq in Vhost.INSTANCE.queues.items():
             if vq["can_poll"] == 0 and vq["poll"] == 0:
                 continue
-            logging.info("\x1b[37mvq=%s stop polling.\x1b[39m" % (vq_id,))
+            # logging.info("\x1b[37mvq=%s stop polling.\x1b[39m" % (vq_id,))
             vhost_write(vq, "poll", 0)
