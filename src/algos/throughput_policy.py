@@ -51,11 +51,11 @@ class ThroughputRegretPolicy:
             # logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
 
         # timer.done()
-        if ratio_after <= ratio_before:
+        if ratio_after < ratio_before - 0.05:
             logging.info("ratio_before: %.2f", ratio_before)
             logging.info("ratio_after:  %.2f", ratio_after)
             logging.info("regret")
-        return ratio_before > ratio_after
+        return ratio_before - 0.05 >= ratio_after
 
 
 class AdditionPolicy:
