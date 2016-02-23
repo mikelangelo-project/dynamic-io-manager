@@ -68,12 +68,12 @@ class IOManagerDaemon(Daemon):
         self.io_workers_manager.initialize()
         self.vm_manager.update()
 
-        i = li = 0
+        i = 0 # i = li = 0
         # lis = 20  # int(1.0 / self.interval) + 1
 
         while True:
             time.sleep(self.interval)
-            logging.info("round %d" % (i,))
+            # logging.info("round %d" % (i,))
             # timer.checkpoint("round %d" % (i,))
             Vhost.INSTANCE.update()
             # timer.checkpoint("Vhost.INSTANCE.update()")
@@ -90,7 +90,7 @@ class IOManagerDaemon(Daemon):
 
             self.io_workers_manager.update_vq_classifications()
             # timer.checkpoint("vq_classifier update_classification")
-            self.io_workers_manager.update_io_core_number()
+            updated = self.io_workers_manager.update_io_core_number()
             # timer.checkpoint("io_workers_manager update_io_core_number")
             self.io_workers_manager.update_balance()
             # timer.checkpoint("io_workers_manager update_balance")
@@ -98,6 +98,10 @@ class IOManagerDaemon(Daemon):
             # timer.checkpoint("io_workers_manager update_polling")
             self.backing_device_manager.update()
             # timer.checkpoint("backing_device_manager update")
+
+            if updated:
+                logging.info("update in round %d" % (i,))
+
             i += 1
             # if i - li > lis:
             #     timer.done()
