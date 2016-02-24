@@ -75,13 +75,13 @@ class IOWorkersManager:
     def update_io_core_number(self):
         shared_workers = len(self.io_workers) > 0
         self.throughput_policy.calculate_load(shared_workers)
-
         self.regret_policy.update()
+
         if not shared_workers:
             should_start, suggested_io_cores = \
                 self.throughput_policy.should_start_shared_worker()
             if not should_start or \
-                    not self.regret_policy.can_move("start_shared_worker"):
+                    not self.regret_policy.can_do_move("start_shared_worker"):
                 return False
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
@@ -91,7 +91,7 @@ class IOWorkersManager:
                 self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_ids)
             if suggested_io_cores > 1 or \
-                    self.regret_policy.is_good_move("start_shared_worker"):
+                    self.regret_policy.is_move_good("start_shared_worker"):
                 return True
 
             cpu_id = self.io_core_policy.remove()[0]
@@ -100,7 +100,7 @@ class IOWorkersManager:
             return False
 
         if self.throughput_policy.should_stop_shared_worker():
-            if not self.regret_policy.can_move("stop_shared_worker"):
+            if not self.regret_policy.can_do_move("stop_shared_worker"):
                 return False
             logging.info("\x1b[33mdisable shared IO workers.\x1b[39m")
             logging.info("\x1b[33mremove IOcore\x1b[39m")
@@ -109,7 +109,7 @@ class IOWorkersManager:
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
 
-            if self.regret_policy.is_good_move("stop_shared_worker"):
+            if self.regret_policy.is_move_good("stop_shared_worker"):
                 return True
 
             cpu_ids = self.vm_manager.remove_cores(number=1)
@@ -124,9 +124,9 @@ class IOWorkersManager:
             self.vm_manager.should_update_core_number()
 
         if add_io_core and can_add_io_core and \
-                self.regret_policy.can_move("add_io_core"):
+                self.regret_policy.can_do_move("add_io_core"):
             self._add_io_core()
-            if self.regret_policy.is_good_move("add_io_core"):
+            if self.regret_policy.is_move_good("add_io_core"):
                 return True
             self._remove_io_core()
             return False
@@ -136,13 +136,13 @@ class IOWorkersManager:
 
         logging.info("\x1b[33mremove IOcore\x1b[39m")
         self._remove_io_core()
-        if self.regret_policy.is_good_move("remove_io_core"):
+        if self.regret_policy.is_move_good("remove_io_core"):
             return True
         self._add_io_core()
         return False
 
     def update_balance(self):
-        if not self.regret_policy.can_move("update_balance"):
+        if not self.regret_policy.can_do_move("update_balance"):
             return False
 
         balance_changes = self.balance_policy.balance()
@@ -150,19 +150,19 @@ class IOWorkersManager:
             return
         self.move_devices(balance_changes)
 
-        if self.regret_policy.is_good_move("update_balance"):
+        if self.regret_policy.is_move_good("update_balance"):
             revert_balance_changes = {}
             for dev_id, (old_worker, new_worker) in balance_changes.items():
                 revert_balance_changes[dev_id] = (new_worker, old_worker)
 
     def update_polling(self):
-        if not self.regret_policy.can_move("update_polling"):
+        if not self.regret_policy.can_do_move("update_polling"):
             return False
 
         self.poll_policy.update_polling()
 
     def update_vq_classifications(self):
-        can_update = self.regret_policy.can_move("update_vq_classifications")
+        can_update = self.regret_policy.can_do_move("update_vq_classifications")
         self.vq_classifier.update_classifications(can_update)
 
     def move_devices(self, balance_changes, balance_backing_device=True):

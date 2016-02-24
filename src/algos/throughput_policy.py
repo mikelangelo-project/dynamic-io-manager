@@ -16,7 +16,7 @@ class ThroughputRegretPolicy:
         self.failed_moves_history = {}
 
         self.last_good_action = 0
-        self.cooling_off_period = 2
+        self.cooling_off_period = 20
 
     def initialize(self):
         pass
@@ -24,21 +24,30 @@ class ThroughputRegretPolicy:
     def update(self):
         self.epoch += 1
 
-    def can_move(self, move):
+    def can_do_move(self, move):
+        logging.info("can_do_move: %s", move)
         if self.epoch < self.last_good_action + self.cooling_off_period:
+            logging.info("cannot move cooling off period")
+            logging.info("epoch:              %d", self.epoch)
+            logging.info("last_good_action:   %d", self.last_good_action)
+            logging.info("cooling_off_period: %d", self.cooling_off_period)
             return False
 
         if move not in self.failed_moves_history:
+            logging.info("can do move")
             return True
 
-        last_regret_penalty = \
-            self.failed_moves_history[move]["last_regret_penalty"]
+        regret_penalty = \
+            self.failed_moves_history[move]["regret_penalty"]
         last_failed_move_epoch = \
             self.failed_moves_history[move]["last_failed_move_epoch"]
-        return self.epoch > last_failed_move_epoch + last_regret_penalty
+        logging.info("epoch:                  %d", self.epoch)
+        logging.info("last_failed_move_epoch: %d", last_failed_move_epoch)
+        logging.info("regret_penalty:         %d", regret_penalty)
+        return self.epoch > last_failed_move_epoch + regret_penalty
 
-    def is_good_move(self, move):
-        # logging.info("should regret")
+    def is_move_good(self, move):
+        logging.info("is_move_good %s", move)
         # timer = Timer("Timer ThroughputRegretPolicy")
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
@@ -79,7 +88,7 @@ class ThroughputRegretPolicy:
             self.last_good_action = self.epoch
 
             if move in self.failed_moves_history:
-                self.failed_moves_history[move]["last_regret_penalty"] = 1
+                self.failed_moves_history[move]["regret_penalty"] = 1
             # timer.done()
             return True
 
@@ -87,12 +96,14 @@ class ThroughputRegretPolicy:
         logging.info("ratio_after:  %.2f", ratio_after)
         logging.info("regret")
         if move not in self.failed_moves_history:
-            self.failed_moves_history[move] = {"last_regret_penalty": 1}
+            self.failed_moves_history[move] = {"regret_penalty": 1}
         else:
-            self.failed_moves_history[move]["last_regret_penalty"] *= \
+            self.failed_moves_history[move]["regret_penalty"] *= \
                 self.regret_penalty_factor
         self.failed_moves_history[move]["last_failed_move_epoch"] = self.epoch
 
+        logging.info("last_failed_move_epoch: %d", last_failed_move_epoch)
+        logging.info("regret_penalty:    %d", regret_penalty)
         # timer.done()
         return False
 
