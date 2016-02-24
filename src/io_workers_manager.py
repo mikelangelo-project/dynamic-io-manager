@@ -29,9 +29,6 @@ class IOWorkersManager:
 
         self.vm_manager = vm_manager
 
-        self.cooling_off_period = 1  # 20
-        self.epochs_last_action = 0
-
     def initialize(self):
         logging.info("\x1b[37mIOWorkersManager initialize\x1b[39m")
         shared_workers = len(self.io_workers) > 0
@@ -44,66 +41,19 @@ class IOWorkersManager:
                                                 self.vm_manager)
         self.regret_policy.initialize()
 
-    def update_io_core_number(self):
-        shared_workers = len(self.io_workers) > 0
-        self.throughput_policy.calculate_load(shared_workers)
+    def _add_io_core(self):
+        logging.info("\x1b[33madd a new IOcore\x1b[39m")
+        cpu_id = self.vm_manager.remove_cores(number=1)[0]
+        self.io_core_policy.add(cpu_id)
+        new_worker_id = self._add_io_worker(cpu_id)
+        self.io_workers.append(IOWorker({"id": new_worker_id,
+                                         "cpu": cpu_id}))
+        balance_changes = \
+            self.balance_policy.balance_after_addition(self.io_workers,
+                                                       [new_worker_id])
+        self.move_devices(balance_changes, balance_backing_device=True)
 
-        self.epochs_last_action += 1
-        if self.epochs_last_action <= self.cooling_off_period:
-            return False
-
-        if not shared_workers:
-            should_start, suggested_io_cores = \
-                self.throughput_policy.should_start_shared_worker()
-            if not should_start:
-                return False
-            self.epochs_last_action = 0
-            logging.info("\x1b[33menable shared IO workers.\x1b[39m")
-            logging.info("\x1b[33madd a new IOcore\x1b[39m")
-
-            cpu_ids = self.vm_manager.remove_cores(number=suggested_io_cores)
-            for cpu_id in cpu_ids:
-                self.io_core_policy.add(cpu_id)
-            self.enable_shared_workers(cpu_ids)
-            return True
-
-        if self.throughput_policy.should_stop_shared_worker():
-            self.epochs_last_action = 0
-            logging.info("\x1b[33mdisable shared IO workers.\x1b[39m")
-            logging.info("\x1b[33mremove IOcore\x1b[39m")
-            # remove the IO core
-            cpu_id = self.io_core_policy.remove()[0]
-            self.vm_manager.add_core(cpu_id)
-            self.disable_shared_workers()
-            return True
-
-        add_io_core, can_remove_io_core = \
-            self.throughput_policy.should_update_core_number()
-        remove_io_core, can_add_io_core = \
-            self.vm_manager.should_update_core_number()
-
-        if add_io_core and can_add_io_core:
-            self.epochs_last_action = 0
-            logging.info("\x1b[33madd a new IOcore\x1b[39m")
-            cpu_id = self.vm_manager.remove_cores(number=1)[0]
-            if self.regret_policy.should_regret():
-                self.vm_manager.add_core(cpu_id)
-                return False
-            self.io_core_policy.add(cpu_id)
-            new_worker_id = self._add_io_worker(cpu_id)
-            self.io_workers.append(IOWorker({"id": new_worker_id,
-                                             "cpu": cpu_id}))
-            balance_changes = \
-                self.balance_policy.balance_after_addition(self.io_workers,
-                                                           [new_worker_id])
-            self.move_devices(balance_changes, balance_backing_device=True)
-            return True
-
-        if not remove_io_core or not can_remove_io_core:
-            return False
-
-        logging.info("\x1b[33mremove IOcore\x1b[39m")
-        self.epochs_last_action = 0
+    def _remove_io_core(self):
         # remove the IO core
         cpu_id = self.io_core_policy.remove(number=1)[0]
         removed_worker = [w for w in Vhost.INSTANCE.workers.values()
@@ -114,13 +64,6 @@ class IOWorkersManager:
             self.balance_policy.balance_before_removal(self.io_workers,
                                                        removed_worker_id)
         self.move_devices(balance_changes, balance_backing_device=True)
-        if self.regret_policy.should_regret():
-            undo_balance_changes = {}
-            for dev_id, (old_worker, new_worker) in balance_changes.items():
-                undo_balance_changes[dev_id] = (new_worker, old_worker)
-            self.move_devices(undo_balance_changes, balance_backing_device=True)
-            return False
-
         self._remove_io_worker(removed_worker)
         self.io_workers = [w for w in self.io_workers
                            if w.id != removed_worker_id]
@@ -128,25 +71,98 @@ class IOWorkersManager:
                      (removed_worker["id"], cpu_id))
 
         self.vm_manager.add_core(cpu_id)
-        return True
+
+    def update_io_core_number(self):
+        shared_workers = len(self.io_workers) > 0
+        self.throughput_policy.calculate_load(shared_workers)
+
+        self.regret_policy.update()
+        if not shared_workers:
+            should_start, suggested_io_cores = \
+                self.throughput_policy.should_start_shared_worker()
+            if not should_start or \
+                    not self.regret_policy.can_move("start_shared_worker"):
+                return False
+            logging.info("\x1b[33menable shared IO workers.\x1b[39m")
+            logging.info("\x1b[33madd a new IOcore\x1b[39m")
+
+            cpu_ids = self.vm_manager.remove_cores(number=suggested_io_cores)
+            for cpu_id in cpu_ids:
+                self.io_core_policy.add(cpu_id)
+            self.enable_shared_workers(cpu_ids)
+            if suggested_io_cores > 1 or \
+                    not self.regret_policy.should_regret("start_shared_worker"):
+                return True
+
+            cpu_id = self.io_core_policy.remove()
+            self.vm_manager.add_core(cpu_id)
+            self.disable_shared_workers()
+            return False
+
+        if self.throughput_policy.should_stop_shared_worker():
+            if not self.regret_policy.can_move("stop_shared_worker"):
+                return False
+            logging.info("\x1b[33mdisable shared IO workers.\x1b[39m")
+            logging.info("\x1b[33mremove IOcore\x1b[39m")
+            # remove the IO core
+            cpu_id = self.io_core_policy.remove()[0]
+            self.vm_manager.add_core(cpu_id)
+            self.disable_shared_workers()
+
+            if not self.regret_policy.should_regret("stop_shared_worker"):
+                return True
+
+            cpu_ids = self.vm_manager.remove_cores(number=1)
+            for cpu_id in cpu_ids:
+                self.io_core_policy.add(cpu_id)
+            self.enable_shared_workers(cpu_ids)
+            return False
+
+        add_io_core, can_remove_io_core = \
+            self.throughput_policy.should_update_core_number()
+        remove_io_core, can_add_io_core = \
+            self.vm_manager.should_update_core_number()
+
+        if add_io_core and can_add_io_core and \
+                self.regret_policy.can_move("add_io_core"):
+            self._add_io_core()
+            if not self.regret_policy.should_regret("add_io_core"):
+                return True
+            self._remove_io_core()
+            return False
+
+        if not remove_io_core or not can_remove_io_core:
+            return False
+
+        logging.info("\x1b[33mremove IOcore\x1b[39m")
+        self._remove_io_core()
+        if not self.regret_policy.should_regret("remove_io_core"):
+            return True
+        self._add_io_core()
+        return False
 
     def update_balance(self):
-        if self.epochs_last_action <= self.cooling_off_period:
-            return
+        if not self.regret_policy.can_move("update_balance"):
+            return False
 
         balance_changes = self.balance_policy.balance()
         if not balance_changes:
             return
         self.move_devices(balance_changes)
 
+        if not self.regret_policy.should_regret("update_balance"):
+            revert_balance_changes = {}
+            for dev_id, (old_worker, new_worker) in balance_changes.items():
+                revert_balance_changes[dev_id] = (new_worker, old_worker)
+
     def update_polling(self):
-        if self.epochs_last_action <= self.cooling_off_period:
-            return
+        if not self.regret_policy.can_move("update_polling"):
+            return False
 
         self.poll_policy.update_polling()
 
     def update_vq_classifications(self):
-        can_update = self.epochs_last_action > self.cooling_off_period
+        can_update = self.regret_policy.can_move("update_vq_classifications")
         self.vq_classifier.update_classifications(can_update)
 
     def move_devices(self, balance_changes, balance_backing_device=True):

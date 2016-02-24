@@ -10,11 +10,34 @@ from utils.aux import parse_user_list, Timer
 class ThroughputRegretPolicy:
     def __init__(self, policy_info):
         self.interval = float(policy_info["interval"])
+        self.regret_penalty_factor = 10
+        self.epoch = 0
+
+        self.failed_moves_history = {}
+
+        self.last_successful_action = 0
+        self.cooling_off_period = 2
 
     def initialize(self):
         pass
 
-    def should_regret(self):
+    def update(self):
+        self.epoch += 1
+
+    def can_move(self, action):
+        if self.epoch < self.last_successful_action + self.cooling_off_period:
+            return False
+
+        if action not in self.failed_moves_history:
+            return True
+
+        last_regret_penalty = \
+            self.failed_moves_history[action]["last_regret_penalty"]
+        last_failed_move_epoch = \
+            self.failed_moves_history[action]["last_failed_move_epoch"]
+        return self.epoch > last_failed_move_epoch + last_regret_penalty
+
+    def should_regret(self, action):
         # logging.info("should regret")
         # timer = Timer("Timer ThroughputRegretPolicy")
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
@@ -55,7 +78,21 @@ class ThroughputRegretPolicy:
             logging.info("ratio_before: %.2f", ratio_before)
             logging.info("ratio_after:  %.2f", ratio_after)
             logging.info("regret")
-        return ratio_before - 0.05 >= ratio_after
+
+        if ratio_before - 0.05 >= ratio_after:
+            self.last_successful_action = self.epoch
+
+            if action in self.failed_moves_history:
+                self.failed_moves_history[action]["last_regret_penalty"] = 1
+            return False
+
+        if action not in self.failed_moves_history:
+            self.failed_moves_history[action] = {"last_regret_penalty": 1}
+        else:
+            self.failed_moves_history[action]["last_regret_penalty"] *= \
+                self.regret_penalty_factor
+        self.failed_moves_history[action]["last_failed_move_epoch"] = self.epoch
+        return True
 
 
 class AdditionPolicy:
@@ -137,7 +174,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             total_interrupts = CPUUsage.INSTANCE.get_interrupts(io_cores_cpus)
             # logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
             #              (total_interrupts,))
-            # logging.info("\x1b[37msoftirq_interference_this_epoch %d.\x1b[39m" %
+            # logging.info("\x1b[37msoftirq_interference_this_epoch %d."
+            #              "\x1b[39m" %
             #              (vhost_inst.softirq_interference.delta,))
             # ksoftirq thread is scheduled on our iocores, and worse yet it
             # preempts the iocores thread. We measure the iocores activity and
