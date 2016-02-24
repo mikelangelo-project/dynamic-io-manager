@@ -91,7 +91,7 @@ class IOWorkersManager:
                 self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_ids)
             if suggested_io_cores > 1 or \
-                    not self.regret_policy.should_regret("start_shared_worker"):
+                    self.regret_policy.is_good_move("start_shared_worker"):
                 return True
 
             cpu_id = self.io_core_policy.remove()
@@ -109,7 +109,7 @@ class IOWorkersManager:
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
 
-            if not self.regret_policy.should_regret("stop_shared_worker"):
+            if self.regret_policy.is_good_move("stop_shared_worker"):
                 return True
 
             cpu_ids = self.vm_manager.remove_cores(number=1)
@@ -126,7 +126,7 @@ class IOWorkersManager:
         if add_io_core and can_add_io_core and \
                 self.regret_policy.can_move("add_io_core"):
             self._add_io_core()
-            if not self.regret_policy.should_regret("add_io_core"):
+            if self.regret_policy.is_good_move("add_io_core"):
                 return True
             self._remove_io_core()
             return False
@@ -136,7 +136,7 @@ class IOWorkersManager:
 
         logging.info("\x1b[33mremove IOcore\x1b[39m")
         self._remove_io_core()
-        if not self.regret_policy.should_regret("remove_io_core"):
+        if self.regret_policy.is_good_move("remove_io_core"):
             return True
         self._add_io_core()
         return False
@@ -150,7 +150,7 @@ class IOWorkersManager:
             return
         self.move_devices(balance_changes)
 
-        if not self.regret_policy.should_regret("update_balance"):
+        if self.regret_policy.is_good_move("update_balance"):
             revert_balance_changes = {}
             for dev_id, (old_worker, new_worker) in balance_changes.items():
                 revert_balance_changes[dev_id] = (new_worker, old_worker)
