@@ -291,10 +291,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         full_ratio = self.overall_io_ratio  # 1 - self.ratio
         if self.start_shared_ratio >= full_ratio:
             return False, 0
-        # logging.info("\x1b[mstart_shared_ratio: %0.2f.\x1b[39m" %
-        #              (self.start_shared_ratio,))
-        #
-        # logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
+        logging.info("\x1b[mstart_shared_ratio: %0.2f.\x1b[39m" %
+                     (self.start_shared_ratio,))
+
+        logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
         # suggested number of io cores, we are always rounding up
         return True, max(int(self.effective_io_ratio + .9), 1)
 
