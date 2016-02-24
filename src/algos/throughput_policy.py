@@ -73,25 +73,25 @@ class ThroughputRegretPolicy:
             # logging.info("ratio_after:  %.2f", ratio_after)
             # logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
 
-        # timer.done()
-        if ratio_after < ratio_before - 0.2:
-            logging.info("ratio_before: %.2f", ratio_before)
-            logging.info("ratio_after:  %.2f", ratio_after)
-            logging.info("regret")
-
-        if ratio_before - 0.05 >= ratio_after:
+        if ratio_before < ratio_after:
             self.last_successful_action = self.epoch
 
             if action in self.failed_moves_history:
                 self.failed_moves_history[action]["last_regret_penalty"] = 1
+            # timer.done()
             return False
 
+        logging.info("ratio_before: %.2f", ratio_before)
+        logging.info("ratio_after:  %.2f", ratio_after)
+        logging.info("regret")
         if action not in self.failed_moves_history:
             self.failed_moves_history[action] = {"last_regret_penalty": 1}
         else:
             self.failed_moves_history[action]["last_regret_penalty"] *= \
                 self.regret_penalty_factor
         self.failed_moves_history[action]["last_failed_move_epoch"] = self.epoch
+
+        # timer.done()
         return True
 
 
