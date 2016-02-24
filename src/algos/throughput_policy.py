@@ -45,6 +45,7 @@ class ThroughputRegretPolicy:
             vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
         ratio_before = handled_bytes / float(cycles)
+        logging.info("before:")
         logging.info("cycles:       %d", cycles)
         logging.info("handled_bytes:%d", handled_bytes)
         logging.info("ratio_before: %.2f", ratio_before)
@@ -57,7 +58,7 @@ class ThroughputRegretPolicy:
         # timer.checkpoint("vhost_inst.update()")
 
         ratio_after = 0
-        for _ in xrange(5):
+        for _ in xrange(10):
             # for _ in xrange(1):
             time.sleep(self.interval)
             vhost_inst.update()
@@ -68,6 +69,7 @@ class ThroughputRegretPolicy:
             cycles = vhost_inst.cycles.delta
             ratio_after = handled_bytes / float(cycles)
 
+            logging.info("after:")
             logging.info("cycles:       %d", cycles)
             logging.info("handled_bytes:%d", handled_bytes)
             logging.info("ratio_after:  %.2f", ratio_after)
