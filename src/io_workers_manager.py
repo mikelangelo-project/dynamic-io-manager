@@ -94,7 +94,7 @@ class IOWorkersManager:
                     self.regret_policy.is_good_move("start_shared_worker"):
                 return True
 
-            cpu_id = self.io_core_policy.remove()
+            cpu_id = self.io_core_policy.remove()[0]
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
             return False
