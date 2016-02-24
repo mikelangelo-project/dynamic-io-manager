@@ -25,9 +25,10 @@ class ThroughputRegretPolicy:
         self.epoch += 1
 
     def can_do_move(self, move):
-        logging.info("can_do_move: %s", move)
+        # logging.info("can_do_move: %s", move)
         if self.epoch < self.last_good_action + self.cooling_off_period:
             logging.info("cannot move cooling off period")
+            logging.info("move:               %s", move)
             logging.info("epoch:              %d", self.epoch)
             logging.info("last_good_action:   %d", self.last_good_action)
             logging.info("cooling_off_period: %d", self.cooling_off_period)
@@ -43,6 +44,7 @@ class ThroughputRegretPolicy:
             self.failed_moves_history[move]["last_failed_move_epoch"]
 
         if self.epoch <= last_failed_move_epoch + regret_penalty:
+            logging.info("move:                   %s", move)
             logging.info("epoch:                  %d", self.epoch)
             logging.info("last_failed_move_epoch: %d", last_failed_move_epoch)
             logging.info("regret_penalty:         %d", regret_penalty)
