@@ -89,14 +89,15 @@ class IOWorkersManager:
             for cpu_id in cpu_ids:
                 self.io_core_policy.add(cpu_id)
             self.enable_shared_workers(cpu_ids)
-            if suggested_io_cores > 1 or \
-                    self.regret_policy.is_move_good("start_shared_worker"):
-                return True
-
-            cpu_id = self.io_core_policy.remove()[0]
-            self.vm_manager.add_core(cpu_id)
-            self.disable_shared_workers()
-            return False
+            return True
+            # if suggested_io_cores > 1 or \
+            #         self.regret_policy.is_move_good("start_shared_worker"):
+            #     return True
+            #
+            # cpu_id = self.io_core_policy.remove()[0]
+            # self.vm_manager.add_core(cpu_id)
+            # self.disable_shared_workers()
+            # return False
 
         if self.throughput_policy.should_stop_shared_worker():
             if not self.regret_policy.can_do_move("stop_shared_worker"):
@@ -108,14 +109,15 @@ class IOWorkersManager:
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
 
-            if self.regret_policy.is_move_good("stop_shared_worker"):
-                return True
-
-            cpu_ids = self.vm_manager.remove_cores(number=1)
-            for cpu_id in cpu_ids:
-                self.io_core_policy.add(cpu_id)
-            self.enable_shared_workers(cpu_ids)
-            return False
+            # if self.regret_policy.is_move_good("stop_shared_worker"):
+            #     return True
+            #
+            # cpu_ids = self.vm_manager.remove_cores(number=1)
+            # for cpu_id in cpu_ids:
+            #     self.io_core_policy.add(cpu_id)
+            # self.enable_shared_workers(cpu_ids)
+            # return False
+            return True
 
         add_io_core, can_remove_io_core = \
             self.throughput_policy.should_update_core_number()
