@@ -46,8 +46,7 @@ class IOWorkersManager:
         cpu_id = self.vm_manager.remove_cores(number=1)[0]
         self.io_core_policy.add(cpu_id)
         new_worker_id = self._add_io_worker(cpu_id)
-        self.io_workers.append(IOWorker({"id": new_worker_id,
-                                         "cpu": cpu_id}))
+        self.io_workers.append(IOWorker({"id": new_worker_id, "cpu": cpu_id}))
         balance_changes = \
             self.balance_policy.balance_after_addition(self.io_workers,
                                                        [new_worker_id])
