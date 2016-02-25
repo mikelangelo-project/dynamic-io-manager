@@ -55,17 +55,18 @@ class ThroughputRegretPolicy:
         return self.epoch > last_failed_move_epoch + regret_penalty
 
     @staticmethod
-    def _calc_cycles_to_bytes_ratio(interval=0):
+    def _calc_cycles_to_bytes_ratio():
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
             vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
         ratio = handled_bytes / float(cycles)
 
-        # logging.info("cycles:       %d", cycles)
-        # logging.info("handled_bytes:%d", handled_bytes)
-        # logging.info("ratio_before: %.2f", ratio)
-        # logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
+        logging.info("")
+        logging.info("cycles:       %d", cycles)
+        logging.info("handled_bytes:%d", handled_bytes)
+        logging.info("ratio_before: %.2f", ratio)
+        logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
         return ratio
 
     def is_move_good(self, move):
@@ -73,7 +74,9 @@ class ThroughputRegretPolicy:
         logging.info("is_move_good %s", move)
         ratio_before = self.current_ratio
         logging.info("ratio_before:      %.2f", ratio_before)
-        for i in xrange(5):
+
+        ratio_after = 0
+        for i in xrange(10):
             time.sleep(self.interval)
             vhost_inst.update()
             ratio_after = \
