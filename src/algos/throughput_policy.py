@@ -72,12 +72,13 @@ class ThroughputRegretPolicy:
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         logging.info("is_move_good %s", move)
         ratio_before = self.current_ratio
-        logging.info("ratio_before: %.2f", ratio_before)
-        time.sleep(self.interval)
-        vhost_inst.update()
-        ratio_after = \
-            ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
-        logging.info("ratio_after:  %.2f", ratio_after)
+        logging.info("ratio_before:      %.2f", ratio_before)
+        for i in xrange(5):
+            time.sleep(self.interval)
+            vhost_inst.update()
+            ratio_after = \
+                ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
+            logging.info("ratio_after [%d]:%.2f", i, ratio_after)
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
@@ -223,7 +224,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             float(CPUUsage.INSTANCE.get_ticks())
         if self.overall_io_ratio == 0:
             self.overall_io_ratio = 0.0000001
-        
+
         # logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
         #              (self.overall_io_ratio,))
         # logging.info("----------------")
