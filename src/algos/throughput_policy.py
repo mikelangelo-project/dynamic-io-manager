@@ -18,11 +18,15 @@ class ThroughputRegretPolicy:
         self.last_good_action = 0
         self.cooling_off_period = 1  # 20
 
+        self.current_ratio = 0.0
+
     def initialize(self):
         pass
 
     def update(self):
         self.epoch += 1
+        self.current_ratio = \
+            ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
@@ -50,55 +54,38 @@ class ThroughputRegretPolicy:
         #     logging.info("regret_penalty:         %d", regret_penalty)
         return self.epoch > last_failed_move_epoch + regret_penalty
 
-    def is_move_good(self, move):
-        logging.info("is_move_good %s", move)
-        # timer = Timer("Timer ThroughputRegretPolicy")
+    @staticmethod
+    def _calc_cycles_to_bytes_ratio():
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
             vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
-        ratio_before = handled_bytes / float(cycles)
-        logging.info("before:")
-        logging.info("cycles:       %d", cycles)
-        logging.info("handled_bytes:%d", handled_bytes)
+        ratio = handled_bytes / float(cycles)
+
+        # logging.info("cycles:       %d", cycles)
+        # logging.info("handled_bytes:%d", handled_bytes)
+        # logging.info("ratio_before: %.2f", ratio_before)
+        # logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
+        return ratio
+
+    def is_move_good(self, move):
+        vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
+        logging.info("is_move_good %s", move)
+        ratio_before = self.current_ratio
         logging.info("ratio_before: %.2f", ratio_before)
-        logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
-
-        # timer.checkpoint("before sleep")
-        # time.sleep(self.interval)
-        # timer.checkpoint("after sleep")
-        # vhost_inst.update()
-        # timer.checkpoint("vhost_inst.update()")
-
-        ratio_after = 0
-        # for _ in xrange(10):
-        for _ in xrange(1):
-            time.sleep(self.interval)
-            vhost_inst.update()
-
-            handled_bytes = \
-                vhost_inst.per_queue_counters["notif_bytes"].delta + \
-                vhost_inst.per_queue_counters["poll_bytes"].delta
-            cycles = vhost_inst.cycles.delta
-            ratio_after = handled_bytes / float(cycles)
-
-            logging.info("after:")
-            logging.info("cycles:       %d", cycles)
-            logging.info("handled_bytes:%d", handled_bytes)
-            logging.info("ratio_after:  %.2f", ratio_after)
-            logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
+        time.sleep(self.interval)
+        vhost_inst.update()
+        ratio_after = ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
+        logging.info("ratio_after:  %.2f", ratio_after)
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
 
             if move in self.failed_moves_history:
                 self.failed_moves_history[move]["regret_penalty"] = 1
-            # timer.done()
             return True
 
-        logging.info("ratio_before: %.2f", ratio_before)
-        logging.info("ratio_after:  %.2f", ratio_after)
-        logging.info("regret")
+        # logging.info("regret")
         if move not in self.failed_moves_history:
             self.failed_moves_history[move] = {"regret_penalty": 1}
         else:
@@ -106,10 +93,10 @@ class ThroughputRegretPolicy:
                 self.regret_penalty_factor
         self.failed_moves_history[move]["last_failed_move_epoch"] = self.epoch
 
-        logging.info("last_failed_move_epoch: %d",
-                     self.failed_moves_history[move]["last_failed_move_epoch"])
-        logging.info("regret_penalty:    %d",
-                     self.failed_moves_history[move]["regret_penalty"])
+        # logging.info("last_failed_move_epoch: %d",
+        #              self.failed_moves_history[move]["last_failed_move_epoch"])
+        # logging.info("regret_penalty:    %d",
+        #              self.failed_moves_history[move]["regret_penalty"])
         # timer.done()
         return False
 
@@ -163,25 +150,25 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
         empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
-        logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
-                     (vhost_inst.cycles.delta,))
-        logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
-                     (vhost_inst.work_cycles.delta,))
-        logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-                     (self.io_cores,))
-        logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
-                     (cycles_this_epoch,))
-        logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
-                     (empty_cycles,))
+        # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
+        #              (vhost_inst.cycles.delta,))
+        # logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
+        #              (vhost_inst.work_cycles.delta,))
+        # logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
+        #              (self.io_cores,))
+        # logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
+        #              (cycles_this_epoch,))
+        # logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
+        #              (empty_cycles,))
 
-        handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
-            vhost_inst.per_queue_counters["poll_bytes"].delta
-        cycles = vhost_inst.cycles.delta
-        ratio_before = handled_bytes / float(cycles)
-        logging.info("cycles:       %d", cycles)
-        logging.info("handled_bytes:%d", handled_bytes)
-        logging.info("ratio_before: %.2f", ratio_before)
-        logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
+        # handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
+        #     vhost_inst.per_queue_counters["poll_bytes"].delta
+        # cycles = vhost_inst.cycles.delta
+        # ratio_before = handled_bytes / float(cycles)
+        # logging.info("cycles:       %d", cycles)
+        # logging.info("handled_bytes:%d", handled_bytes)
+        # logging.info("ratio_before: %.2f", ratio_before)
+        # logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
         softirq_cpu_ratio = 0
         if shared_workers:
