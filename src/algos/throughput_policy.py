@@ -10,13 +10,13 @@ from utils.aux import parse_user_list, Timer
 class ThroughputRegretPolicy:
     def __init__(self, policy_info):
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 2  # 10
+        self.regret_penalty_factor = 10
         self.epoch = 0
 
         self.failed_moves_history = {}
 
         self.last_good_action = 0
-        self.cooling_off_period = 1  # 20
+        self.cooling_off_period = 20
 
         self.current_ratio = 0.0
 
@@ -55,7 +55,7 @@ class ThroughputRegretPolicy:
         return self.epoch > last_failed_move_epoch + regret_penalty
 
     @staticmethod
-    def _calc_cycles_to_bytes_ratio():
+    def _calc_cycles_to_bytes_ratio(interval=0):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
             vhost_inst.per_queue_counters["poll_bytes"].delta
@@ -64,8 +64,8 @@ class ThroughputRegretPolicy:
 
         # logging.info("cycles:       %d", cycles)
         # logging.info("handled_bytes:%d", handled_bytes)
-        # logging.info("ratio_before: %.2f", ratio_before)
-        # logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
+        # logging.info("ratio_before: %.2f", ratio)
+        # logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
         return ratio
 
     def is_move_good(self, move):
@@ -75,7 +75,8 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before: %.2f", ratio_before)
         time.sleep(self.interval)
         vhost_inst.update()
-        ratio_after = ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
+        ratio_after = \
+            ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
         logging.info("ratio_after:  %.2f", ratio_after)
 
         if ratio_before < ratio_after:
@@ -150,16 +151,16 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
         empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
-        # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
-        #              (vhost_inst.cycles.delta,))
-        # logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
-        #              (vhost_inst.work_cycles.delta,))
-        # logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-        #              (self.io_cores,))
-        # logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
-        #              (cycles_this_epoch,))
-        # logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
-        #              (empty_cycles,))
+        logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
+                     (vhost_inst.cycles.delta,))
+        logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
+                     (vhost_inst.work_cycles.delta,))
+        logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
+                     (self.io_cores,))
+        logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
+                     (cycles_this_epoch,))
+        logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
+                     (empty_cycles,))
 
         # handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
         #     vhost_inst.per_queue_counters["poll_bytes"].delta
@@ -207,10 +208,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             float(vhost_inst.cycles.delta) + \
             softirq_cpu_ratio
 
-        # logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
-        # logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
-        #              (self.effective_io_ratio,))
-        #
+        logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
+        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
+                     (self.effective_io_ratio,))
+
         # logging.info("----------------")
         # for c in sorted(vhost_inst.per_worker_counters.values(),
         #                 key=lambda x: x.name):
@@ -222,6 +223,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             float(CPUUsage.INSTANCE.get_ticks())
         if self.overall_io_ratio == 0:
             self.overall_io_ratio = 0.0000001
+        
         # logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
         #              (self.overall_io_ratio,))
         # logging.info("----------------")
@@ -229,27 +231,27 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         #                 key=lambda x: x.name):
         #     logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
         # logging.info("----------------")
-        # # if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
-        # #     empty_polls = \
-        # #         float(vhost_inst.per_worker_counters["empty_polls"].delta)
-        # #     empty_works = \
-        # #         float(vhost_inst.per_worker_counters["empty_works"].delta)
-        # #     loops = float(vhost_inst.per_worker_counters["loops"].delta)
-        # #     logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
-        # #     logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
-        # # else:
-        # #     logging.info("empty_polls ratio: 0.0.")
-        # #     logging.info("empty_works ratio: 0.0.")
-        #
-        # # self.average_bytes_per_packet = 0
-        # # if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
-        # #     self.average_bytes_per_packet = \
-        # #         float(vhost_inst.per_queue_counters["notif_bytes"].delta +
-        # #               vhost_inst.per_queue_counters["poll_cycles"].delta) / \
-        # #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
-        #
-        # logging.info("efficient io ratio: %.2f" %
-        #              (self.effective_io_ratio / self.overall_io_ratio,))
+        # if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
+        #     empty_polls = \
+        #         float(vhost_inst.per_worker_counters["empty_polls"].delta)
+        #     empty_works = \
+        #         float(vhost_inst.per_worker_counters["empty_works"].delta)
+        #     loops = float(vhost_inst.per_worker_counters["loops"].delta)
+        #     logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
+        #     logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
+        # else:
+        #     logging.info("empty_polls ratio: 0.0.")
+        #     logging.info("empty_works ratio: 0.0.")
+
+        # self.average_bytes_per_packet = 0
+        # if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
+        #     self.average_bytes_per_packet = \
+        #         float(vhost_inst.per_queue_counters["notif_bytes"].delta +
+        #               vhost_inst.per_queue_counters["poll_cycles"].delta) / \
+        #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
+
+        logging.info("efficient io ratio: %.2f" %
+                     (self.effective_io_ratio / self.overall_io_ratio,))
         # timer.done()
 
     def should_update_core_number(self):
