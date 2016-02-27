@@ -105,6 +105,6 @@ class BackingDevice:
     def next_cpu(self):
         for ea in self.affinity_entities:
             ea.next_cpu()
-            logging.info("ea %s of backing device %s of type %s moved to "
-                         "core %d" %
-                         (ea.id, self.id, self.type, ea.current_cpu))
+            # logging.info("ea %s of backing device %s of type %s moved to "
+            #              "core %d" %
+            #              (ea.id, self.id, self.type, ea.current_cpu))

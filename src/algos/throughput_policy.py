@@ -62,26 +62,26 @@ class ThroughputRegretPolicy:
         cycles = vhost_inst.cycles.delta
         ratio = handled_bytes / float(cycles)
 
-        logging.info("")
-        logging.info("cycles:       %d", cycles)
-        logging.info("handled_bytes:%d", handled_bytes)
-        logging.info("ratio_before: %.2f", ratio)
-        logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
+        # logging.info("")
+        # logging.info("cycles:       %d", cycles)
+        # logging.info("handled_bytes:%d", handled_bytes)
+        # logging.info("ratio_before: %.2f", ratio)
+        # logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
         return ratio
 
     def is_move_good(self, move):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
-        logging.info("is_move_good %s", move)
+        # logging.info("is_move_good %s", move)
         ratio_before = self.current_ratio
-        logging.info("ratio_before:      %.2f", ratio_before)
+        # logging.info("ratio_before:      %.2f", ratio_before)
 
         ratio_after = 0
-        for i in xrange(10):
+        for i in xrange(2):
             time.sleep(self.interval)
             vhost_inst.update()
             ratio_after = \
                 ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
-            logging.info("ratio_after [%d]:%.2f", i, ratio_after)
+            # logging.info("ratio_after [%d]:%.2f", i, ratio_after)
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
@@ -155,16 +155,16 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
         empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
-        logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
-                     (vhost_inst.cycles.delta,))
-        logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
-                     (vhost_inst.work_cycles.delta,))
-        logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
-                     (self.io_cores,))
-        logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
-                     (cycles_this_epoch,))
-        logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
-                     (empty_cycles,))
+        # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
+        #              (vhost_inst.cycles.delta,))
+        # logging.info("\x1b[37mwork_cycles       %d.\x1b[39m" %
+        #              (vhost_inst.work_cycles.delta,))
+        # logging.info("\x1b[37mio_cores          %d.\x1b[39m" %
+        #              (self.io_cores,))
+        # logging.info("\x1b[37mcycles_this_epoch %d.\x1b[39m" %
+        #              (cycles_this_epoch,))
+        # logging.info("\x1b[37mempty_cycles      %d.\x1b[39m" %
+        #              (empty_cycles,))
 
         # handled_bytes = vhost_inst.per_queue_counters["notif_bytes"].delta + \
         #     vhost_inst.per_queue_counters["poll_bytes"].delta
@@ -212,9 +212,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             float(vhost_inst.cycles.delta) + \
             softirq_cpu_ratio
 
-        logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
-        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
-                     (self.effective_io_ratio,))
+        # logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
+        # logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
+        #              (self.effective_io_ratio,))
 
         # logging.info("----------------")
         # for c in sorted(vhost_inst.per_worker_counters.values(),
@@ -254,8 +254,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         #               vhost_inst.per_queue_counters["poll_cycles"].delta) / \
         #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
 
-        logging.info("efficient io ratio: %.2f" %
-                     (self.effective_io_ratio / self.overall_io_ratio,))
+        # logging.info("efficient io ratio: %.2f" %
+        #              (self.effective_io_ratio / self.overall_io_ratio,))
         # timer.done()
 
     def should_update_core_number(self):
