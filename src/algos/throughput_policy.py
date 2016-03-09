@@ -19,13 +19,15 @@ class ThroughputRegretPolicy:
         self.cooling_off_period = 10  # 20
 
         self.current_ratio = 0.0
+        self.current_cycles = 0
+        self.current_handled_bytes = 0
 
     def initialize(self):
         pass
 
     def update(self):
         self.epoch += 1
-        self.current_ratio = \
+        self.current_ratio, self.current_cycles, self.current_handled_bytes = \
             ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
     def can_do_move(self, move):
@@ -62,17 +64,23 @@ class ThroughputRegretPolicy:
         cycles = vhost_inst.cycles.delta
         ratio = handled_bytes / float(cycles)
 
-        logging.info("")
-        logging.info("cycles:       %d", cycles)
-        logging.info("handled_bytes:%d", handled_bytes)
-        logging.info("ratio_before: %.2f", ratio)
-        logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
-        return ratio
+        # logging.info("")
+        # logging.info("cycles:       %d", cycles)
+        # logging.info("handled_bytes:%d", handled_bytes)
+        # logging.info("ratio_before: %.2f", ratio)
+        # logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
+
+        return ratio, handled_bytes, cycles
 
     def is_move_good(self, move):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         logging.info("is_move_good %s", move)
         ratio_before = self.current_ratio
+        logging.info("")
+        logging.info("cycles:       %d", self.current_cycles)
+        logging.info("handled_bytes:%d", self.current_handled_bytes)
+        logging.info("ratio_before: %.2f", self.current_ratio)
+        logging.info("throughput:   %.2fGbps", self.current_ratio * 2.2 * 8)
         logging.info("ratio_before:      %.2f", ratio_before)
 
         ratio_after = 0
@@ -84,6 +92,11 @@ class ThroughputRegretPolicy:
             vhost_inst.update()
             ratio_after = \
                 ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
+            logging.info("")
+            logging.info("cycles:       %d", self.current_cycles)
+            logging.info("handled_bytes:%d", self.current_handled_bytes)
+            logging.info("ratio_before: %.2f", self.current_ratio)
+            logging.info("throughput:   %.2fGbps", self.current_ratio * 2.2 * 8)
             logging.info("ratio_after [%d]:%.2f", i, ratio_after)
             if ratio_before < ratio_after:
                 break
