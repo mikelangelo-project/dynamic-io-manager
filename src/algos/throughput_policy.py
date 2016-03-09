@@ -298,13 +298,13 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         if self.stop_shared_ratio <= full_ratio:
             return False
 
-        # logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
-        # logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
-        #              (self.shared_workers,))
-        # logging.info("\x1b[37mio_cores: %d.\x1b[39m" % (self.io_cores,))
-        # logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
-        #              (self.stop_shared_ratio,))
-        # logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
+        logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
+        logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
+                     (self.shared_workers,))
+        logging.info("\x1b[37mio_cores: %d.\x1b[39m" % (self.io_cores,))
+        logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
+                     (self.stop_shared_ratio,))
+        logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
         return True
 
 
