@@ -84,7 +84,7 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before:      %.2f", ratio_before)
 
         ratio_after = 0
-        for i in xrange(10):
+        for i in xrange(2):
             time.sleep(self.interval)
             vhost_inst.update()
         for i in xrange(20):
@@ -99,7 +99,7 @@ class ThroughputRegretPolicy:
             logging.info("ratio_after: %.2f", ratio_after)
             logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
             logging.info("ratio_after [%d]:%.2f", i, ratio_after)
-            if ratio_before < ratio_after:
+            if ratio_before > ratio_after:
                 break
 
         if ratio_before < ratio_after:
