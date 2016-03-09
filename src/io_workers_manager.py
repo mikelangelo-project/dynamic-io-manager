@@ -74,11 +74,11 @@ class IOWorkersManager:
     def update_io_core_number(self):
         shared_workers = len(self.io_workers) > 0
 
-        if len(self.io_workers) == 1:
-            return False
-
         self.throughput_policy.calculate_load(shared_workers)
         self.regret_policy.update()
+
+        if len(self.io_workers) == 1:
+            return False
 
         if not shared_workers:
             should_start, suggested_io_cores = \
