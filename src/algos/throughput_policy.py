@@ -292,20 +292,21 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         return True, max(int(self.effective_io_ratio + .9), 1)
 
     def should_stop_shared_worker(self):
-        if not self.shared_workers or self.io_cores > 1:
-            return False
-        full_ratio = 1.0 - self.ratio
-        if self.stop_shared_ratio <= full_ratio:
-            return False
-
-        logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
-        logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
-                     (self.shared_workers,))
-        logging.info("\x1b[37mio_cores: %d.\x1b[39m" % (self.io_cores,))
-        logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
-                     (self.stop_shared_ratio,))
-        logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
-        return True
+        return False
+        # if not self.shared_workers or self.io_cores > 1:
+        #     return False
+        # full_ratio = 1.0 - self.ratio
+        # if self.stop_shared_ratio <= full_ratio:
+        #     return False
+        #
+        # logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
+        # logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
+        #              (self.shared_workers,))
+        # logging.info("\x1b[37mio_cores: %d.\x1b[39m" % (self.io_cores,))
+        # logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
+        #              (self.stop_shared_ratio,))
+        # logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
+        # return True
 
 
 class VMCoreAdditionPolicy(AdditionPolicy):
