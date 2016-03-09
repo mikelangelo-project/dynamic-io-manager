@@ -77,8 +77,8 @@ class IOWorkersManager:
         self.throughput_policy.calculate_load(shared_workers)
         self.regret_policy.update()
 
-        if len(self.io_workers) == 1:
-            return False
+        # if len(self.io_workers) == 1:
+        #    return False
 
         if not shared_workers:
             should_start, suggested_io_cores = \
@@ -113,15 +113,15 @@ class IOWorkersManager:
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
 
-            # if self.regret_policy.is_move_good("stop_shared_worker"):
-            #     return True
-            #
-            # cpu_ids = self.vm_manager.remove_cores(number=1)
-            # for cpu_id in cpu_ids:
-            #     self.io_core_policy.add(cpu_id)
-            # self.enable_shared_workers(cpu_ids)
-            # return False
-            return True
+            if self.regret_policy.is_move_good("stop_shared_worker"):
+                return True
+
+            cpu_ids = self.vm_manager.remove_cores(number=1)
+            for cpu_id in cpu_ids:
+                self.io_core_policy.add(cpu_id)
+            self.enable_shared_workers(cpu_ids)
+            return False
+            # return True
 
         add_io_core, can_remove_io_core = \
             self.throughput_policy.should_update_core_number()

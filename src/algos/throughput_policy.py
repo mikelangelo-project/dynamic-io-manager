@@ -10,13 +10,13 @@ from utils.aux import parse_user_list, Timer
 class ThroughputRegretPolicy:
     def __init__(self, policy_info):
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 10
+        self.regret_penalty_factor = 50
         self.epoch = 0
 
         self.failed_moves_history = {}
 
         self.last_good_action = 0
-        self.cooling_off_period = 2  # 20
+        self.cooling_off_period = 10  # 20
 
         self.current_ratio = 0.0
 
@@ -76,12 +76,17 @@ class ThroughputRegretPolicy:
         # logging.info("ratio_before:      %.2f", ratio_before)
 
         ratio_after = 0
-        for i in xrange(2):
+        for i in xrange(10):
+            time.sleep(self.interval)
+            vhost_inst.update()
+        for i in xrange(20):
             time.sleep(self.interval)
             vhost_inst.update()
             ratio_after = \
                 ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
             # logging.info("ratio_after [%d]:%.2f", i, ratio_after)
+            if ratio_before < ratio_after:
+                break
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
