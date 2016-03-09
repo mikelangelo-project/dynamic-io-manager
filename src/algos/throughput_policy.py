@@ -27,7 +27,7 @@ class ThroughputRegretPolicy:
 
     def update(self):
         self.epoch += 1
-        self.current_ratio, self.current_cycles, self.current_handled_bytes = \
+        self.current_ratio, self.current_handled_bytes, self.current_cycles = \
             ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
     def can_do_move(self, move):
@@ -90,13 +90,14 @@ class ThroughputRegretPolicy:
         for i in xrange(20):
             time.sleep(self.interval)
             vhost_inst.update()
-            ratio_after = \
+            ratio_after, handled_bytes, cycles = \
                 ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
+
             logging.info("")
-            logging.info("cycles:       %d", self.current_cycles)
-            logging.info("handled_bytes:%d", self.current_handled_bytes)
-            logging.info("ratio_before: %.2f", self.current_ratio)
-            logging.info("throughput:   %.2fGbps", self.current_ratio * 2.2 * 8)
+            logging.info("cycles:       %d", cycles)
+            logging.info("handled_bytes:%d", handled_bytes)
+            logging.info("ratio_after: %.2f", ratio_after)
+            logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
             logging.info("ratio_after [%d]:%.2f", i, ratio_after)
             if ratio_before < ratio_after:
                 break
