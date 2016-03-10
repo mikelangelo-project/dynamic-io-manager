@@ -66,10 +66,11 @@ class IOWorkersManager:
         balance_changes = \
             self.balance_policy.balance_before_removal(self.io_workers,
                                                        removed_worker_id)
-        self.move_devices(balance_changes, balance_backing_device=True)
-        self._remove_io_worker(removed_worker)
+
         self.io_workers = [w for w in self.io_workers
                            if w.id != removed_worker_id]
+        self.move_devices(balance_changes, balance_backing_device=True)
+        self._remove_io_worker(removed_worker)
         logging.info("Removed Worker: {id: %s, cpu: %d}" %
                      (removed_worker["id"], cpu_id))
 
