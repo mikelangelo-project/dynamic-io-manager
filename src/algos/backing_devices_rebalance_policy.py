@@ -42,7 +42,8 @@ class BackingDevicesPreConfiguredBalancePolicy:
         self.balance(io_workers)
 
     def balance(self, io_workers):
-        # logging.info("io_workers: %s" % (io_workers, ))
+        logging.info("BackingDevicesPreConfiguredBalancePolicy.balance: "
+                     "io_workers: %s" % (io_workers, ))
         conf_id = self.configuration_mapping[len(io_workers)]
         self.balance_by_configuration(conf_id, io_workers)
 
@@ -50,10 +51,10 @@ class BackingDevicesPreConfiguredBalancePolicy:
         backing_devices_conf = \
             self.backing_devices_configurations[conf_id]
         cpus_conf = self.cpu_configuration[conf_id]
-        # logging.info("backing devices configuration:")
-        # for bd_id, bd in backing_devices_conf.items():
-        #     logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
-        # logging.info("cpu configurations: %s" % (cpus_conf, ))
+        logging.info("backing devices configuration:")
+        for bd_id, bd in backing_devices_conf.items():
+            logging.info("\x1b[37m%s: %s\x1b[39m" % (bd_id, bd))
+        logging.info("cpu configurations: %s" % (cpus_conf, ))
 
         if io_workers:
             cpu_mapping = {cpu_conf: io_worker.cpu
@@ -64,19 +65,19 @@ class BackingDevicesPreConfiguredBalancePolicy:
                            for cpu_conf, cpu in zip(cpus_conf,
                                                     self.vm_manager.cpus)}
 
-        # logging.info("cpu_mapping:")
-        # for cpu_conf, cpu in cpu_mapping.items():
-        #     logging.info("\x1b[37m%s: %s\x1b[39m" % (cpu_conf, cpu))
+        logging.info("cpu_mapping:")
+        for cpu_conf, cpu in cpu_mapping.items():
+            logging.info("\x1b[37m%s: %s\x1b[39m" % (cpu_conf, cpu))
 
         # moving vms to the correct cpu cores
-        # logging.info("\x1b[37mmoving backing devices to the correct cpu "
-        #              "cores\x1b[39m")
+        logging.info("\x1b[37mmoving backing devices to the correct cpu "
+                     "cores\x1b[39m")
         for bd in self.backing_devices.values():
             cpu_mask = 0
             for c in backing_devices_conf[bd.id]:
                 cpu_mask += (1 << cpu_mapping[c])
-            # logging.info("\x1b[37mbacking device %s: %x\x1b[39m" %
-            #              (bd.id, cpu_mask))
+            logging.info("\x1b[37mbacking device %s: %x\x1b[39m" %
+                         (bd.id, cpu_mask))
             bd.zero_cpu_mask()
             bd.merge_cpu_mask(cpu_mask)
             bd.apply_cpu_mask()

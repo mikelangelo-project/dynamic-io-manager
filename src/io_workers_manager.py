@@ -44,16 +44,20 @@ class IOWorkersManager:
     def _add_io_core(self):
         logging.info("\x1b[33madd a new IOcore\x1b[39m")
         cpu_id = self.vm_manager.remove_cores(number=1)[0]
+        logging.info("\x1b[33mcpu id: %d\x1b[39m" % (cpu_id,))
         self.io_core_policy.add(cpu_id)
         new_worker_id = self._add_io_worker(cpu_id)
         self.io_workers.append(IOWorker({"id": new_worker_id, "cpu": cpu_id}))
+        logging.info("Added Worker: {id: %s, cpu: %d}" %
+                     (new_worker_id, cpu_id))
         balance_changes = \
             self.balance_policy.balance_after_addition(self.io_workers,
                                                        [new_worker_id])
         self.move_devices(balance_changes, balance_backing_device=True)
 
     def _remove_io_core(self):
-        # remove the IO core
+        logging.info("\x1b[33mremove an IO core\x1b[39m")
+        # remove an IO core
         cpu_id = self.io_core_policy.remove(number=1)[0]
         removed_worker = [w for w in Vhost.INSTANCE.workers.values()
                           if w["cpu"] == cpu_id][0]
@@ -113,15 +117,15 @@ class IOWorkersManager:
             self.vm_manager.add_core(cpu_id)
             self.disable_shared_workers()
 
-            if self.regret_policy.is_move_good("stop_shared_worker"):
-                return True
-
-            cpu_ids = self.vm_manager.remove_cores(number=1)
-            for cpu_id in cpu_ids:
-                self.io_core_policy.add(cpu_id)
-            self.enable_shared_workers(cpu_ids)
-            return False
-            # return True
+            # if self.regret_policy.is_move_good("stop_shared_worker"):
+            #     return True
+            #
+            # cpu_ids = self.vm_manager.remove_cores(number=1)
+            # for cpu_id in cpu_ids:
+            #     self.io_core_policy.add(cpu_id)
+            # self.enable_shared_workers(cpu_ids)
+            # return False
+            return True
 
         add_io_core, can_remove_io_core = \
             self.throughput_policy.should_update_core_number()
@@ -136,10 +140,11 @@ class IOWorkersManager:
             self._remove_io_core()
             return False
 
-        if not remove_io_core or not can_remove_io_core:
+        if not remove_io_core or not can_remove_io_core or \
+                not self.regret_policy.can_do_move("remove_io_core"):
+            # we don't want or can't remove an IO core
             return False
 
-        logging.info("\x1b[33mremove IOcore\x1b[39m")
         self._remove_io_core()
         if self.regret_policy.is_move_good("remove_io_core"):
             return True
@@ -178,9 +183,9 @@ class IOWorkersManager:
             return
 
         for dev_id, (old_worker, new_worker) in balance_changes.items():
-            # logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
-            #              "\x1b[39m\n" %
-            #              (dev_id, old_worker["id"], new_worker["id"]))
+            logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
+                         "\x1b[39m\n" %
+                         (dev_id, old_worker["id"], new_worker["id"]))
             # timer.checkpoint("dev %s" % (dev_id,))
             vhost_write(Vhost.INSTANCE.devices[dev_id], "worker",
                         new_worker["id"])

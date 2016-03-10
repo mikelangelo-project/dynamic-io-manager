@@ -50,10 +50,10 @@ class IOCoresPreConfiguredBalancePolicy:
         devices = Vhost.INSTANCE.devices
         workers = Vhost.INSTANCE.workers
         workers_conf = self.workers_configurations[conf_id]
-        # logging.info("workers_conf: %s" % (workers_conf,))
+        logging.info("workers_conf: %s" % (workers_conf,))
         devices_conf = self.devices_configurations[conf_id]
 
-        # logging.info("devices_conf: %s" % (devices_conf,))
+        logging.info("devices_conf: %s" % (devices_conf,))
         worker_mapping = {worker_conf: workers[worker.id]
                           for worker_conf, worker in zip(workers_conf,
                                                          io_workers)}
@@ -68,7 +68,7 @@ class IOCoresPreConfiguredBalancePolicy:
             balance_changes[dev_id] = (workers[dev["worker"]],
                                        worker_mapping[dev_conf])
 
-        # logging.info(balance_changes)
+        logging.info(balance_changes)
         return balance_changes
 
     def balance_after_addition(self, io_workers, new_worker_ids):
