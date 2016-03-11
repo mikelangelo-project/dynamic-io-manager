@@ -163,7 +163,11 @@ if __name__ == '__main__':
                     (dev["id"], dev["vhost_worker"], workers[i]["id"]))
 
                 dev["vhost_worker"] = workers[i]["id"]
-                vhost_write(devices[dev["id"]], "worker", dev["vhost_worker"])
+                try:
+                    vhost_write(devices[dev["id"]], "worker", dev["vhost_worker"])
+                except IOError:
+                    msg("errrrrrrrrrrrrrrrrrrrrrrrrr!")
+                    raise
 
                 # fix affinity
                 msg("io worker: worker: %s, cpu_mask: 0x"
