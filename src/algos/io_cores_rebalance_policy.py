@@ -68,7 +68,7 @@ class IOCoresPreConfiguredBalancePolicy:
             balance_changes[dev_id] = (workers[dev["worker"]],
                                        worker_mapping[dev_conf])
 
-        logging.info(balance_changes)
+        # logging.info(balance_changes)
         return balance_changes
 
     def balance_after_addition(self, io_workers, new_worker_ids):
