@@ -53,7 +53,7 @@ class IOCoresPreConfiguredBalancePolicy:
         logging.info("workers_conf: %s" % (workers_conf,))
         devices_conf = self.devices_configurations[conf_id]
 
-        logging.info("devices_conf: %s" % (devices_conf,))
+        # logging.info("devices_conf: %s" % (devices_conf,))
         worker_mapping = {worker_conf: workers[worker.id]
                           for worker_conf, worker in zip(workers_conf,
                                                          io_workers)}
