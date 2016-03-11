@@ -76,7 +76,7 @@ class IOWorkersManager:
 
         self.vm_manager.add_core(cpu_id)
 
-    def update_io_core_number(self):
+    def update_io_core_number(self, iteration=0):
         shared_workers = len(self.io_workers) > 0
 
         self.throughput_policy.calculate_load(shared_workers)
@@ -91,6 +91,7 @@ class IOWorkersManager:
             if not should_start or \
                     not self.regret_policy.can_do_move("start_shared_worker"):
                 return False
+            logging.info("round %d" % (iteration,))
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
             logging.info("\x1b[33madd a new IOcore\x1b[39m")
 
@@ -111,6 +112,7 @@ class IOWorkersManager:
         if self.throughput_policy.should_stop_shared_worker():
             if not self.regret_policy.can_do_move("stop_shared_worker"):
                 return False
+            logging.info("round %d" % (iteration,))
             logging.info("\x1b[33mdisable shared IO workers.\x1b[39m")
             logging.info("\x1b[33mremove IOcore\x1b[39m")
             # remove the IO core
@@ -135,6 +137,7 @@ class IOWorkersManager:
 
         if add_io_core and can_add_io_core and \
                 self.regret_policy.can_do_move("add_io_core"):
+            logging.info("round %d" % (iteration,))
             self._add_io_core()
             if self.regret_policy.is_move_good("add_io_core"):
                 return True
@@ -146,6 +149,7 @@ class IOWorkersManager:
             # we don't want or can't remove an IO core
             return False
 
+        logging.info("round %d" % (iteration,))
         self._remove_io_core()
         if self.regret_policy.is_move_good("remove_io_core"):
             return True
@@ -184,9 +188,9 @@ class IOWorkersManager:
             return
 
         for dev_id, (old_worker, new_worker) in balance_changes.items():
-            logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
-                         "\x1b[39m\n" %
-                         (dev_id, old_worker["id"], new_worker["id"]))
+            # logging.info("\x1b[37mdev: %s from worker: %s to worker: %s"
+            #              "\x1b[39m\n" %
+            #              (dev_id, old_worker["id"], new_worker["id"]))
             # timer.checkpoint("dev %s" % (dev_id,))
             vhost_write(Vhost.INSTANCE.devices[dev_id], "worker",
                         new_worker["id"])

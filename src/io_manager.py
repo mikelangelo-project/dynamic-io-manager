@@ -90,7 +90,7 @@ class IOManagerDaemon(Daemon):
 
             self.io_workers_manager.update_vq_classifications()
             # timer.checkpoint("vq_classifier update_classification")
-            updated = self.io_workers_manager.update_io_core_number()
+            updated = self.io_workers_manager.update_io_core_number(i)
             # timer.checkpoint("io_workers_manager update_io_core_number")
             self.io_workers_manager.update_balance()
             # timer.checkpoint("io_workers_manager update_balance")
