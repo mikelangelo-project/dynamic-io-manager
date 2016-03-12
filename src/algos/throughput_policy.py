@@ -119,10 +119,10 @@ class ThroughputRegretPolicy:
                 self.regret_penalty_factor
         self.failed_moves_history[move]["last_failed_move_epoch"] = self.epoch
 
-        # logging.info("last_failed_move_epoch: %d",
-        #              self.failed_moves_history[move]["last_failed_move_epoch"])
-        # logging.info("regret_penalty:    %d",
-        #              self.failed_moves_history[move]["regret_penalty"])
+        logging.info("last_failed_move_epoch: %d",
+                     self.failed_moves_history[move]["last_failed_move_epoch"])
+        logging.info("regret_penalty:    %d",
+                     self.failed_moves_history[move]["regret_penalty"])
         # timer.done()
         return False
 
