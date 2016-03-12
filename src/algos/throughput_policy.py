@@ -23,6 +23,8 @@ class ThroughputRegretPolicy:
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
+        self.history = []
+
     def initialize(self):
         pass
 
@@ -30,6 +32,10 @@ class ThroughputRegretPolicy:
         self.epoch += 1
         self.current_ratio, self.current_handled_bytes, self.current_cycles = \
             ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
+
+        self.history = self.history[1:5]
+        self.history.append((self.epoch, self.current_ratio,
+                             self.current_handled_bytes, self.current_cycles))
 
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
@@ -77,12 +83,13 @@ class ThroughputRegretPolicy:
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         logging.info("is_move_good %s", move)
         ratio_before = self.current_ratio
-        logging.info("")
-        logging.info("cycles:       %d", self.current_cycles)
-        logging.info("handled_bytes:%d", self.current_handled_bytes)
-        logging.info("ratio_before: %.2f", self.current_ratio)
-        logging.info("throughput:   %.2fGbps", self.current_ratio * 2.2 * 8)
-        logging.info("ratio_before:      %.2f", ratio_before)
+
+        for rec in self.history:
+            logging.info("epoch:        %d", rec[0])
+            logging.info("cycles:       %d", rec[3])
+            logging.info("handled_bytes:%d", rec[2])
+            logging.info("ratio:        %.2f", rec[1])
+            logging.info("throughput:   %.2fGbps", rec[1] * 2.2 * 8)
 
         ratio_after = 0
         iterations = 20
