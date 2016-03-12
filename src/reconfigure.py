@@ -3,6 +3,9 @@ import getopt
 import json
 import sys
 import os
+
+import time
+
 from utils.affinity_entity import parse_cpu_mask_from_cpu_list, \
     set_cpu_mask_to_pid
 from utils.aux import msg
@@ -164,11 +167,13 @@ if __name__ == '__main__':
                     (dev["id"], dev["vhost_worker"], workers[i]["id"]))
 
                 dev["vhost_worker"] = workers[i]["id"]
-                try:
-                    vhost_write(devices[dev["id"]], "worker", dev["vhost_worker"])
-                except IOError:
-                    msg("errrrrrrrrrrrrrrrrrrrrrrrrr!")
-                    raise
+                for _ in xrange(10):
+                    try:
+                        vhost_write(devices[dev["id"]], "worker",
+                                    dev["vhost_worker"])
+                    except IOError:
+                        msg("device still in transfer waiting 1 second.")
+                        time.sleep(1)
 
                 # fix affinity
                 msg("io worker: worker: %s, cpu_mask: 0x"
