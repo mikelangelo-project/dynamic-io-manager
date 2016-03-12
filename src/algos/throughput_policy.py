@@ -33,7 +33,8 @@ class ThroughputRegretPolicy:
         self.current_ratio, self.current_handled_bytes, self.current_cycles = \
             ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
-        self.history = self.history[1:5]
+        if len(self.history) == 5:
+            self.history = self.history[1:-1]
         self.history.append((self.epoch, self.current_ratio,
                              self.current_handled_bytes, self.current_cycles))
 
