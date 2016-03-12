@@ -138,6 +138,7 @@ class IOWorkersManager:
         if add_io_core and can_add_io_core and \
                 self.regret_policy.can_do_move("add_io_core"):
             logging.info("round %d" % (iteration,))
+            self.throughput_policy.print_load()
             self._add_io_core()
             if self.regret_policy.is_move_good("add_io_core"):
                 return True
@@ -150,6 +151,7 @@ class IOWorkersManager:
             return False
 
         logging.info("round %d" % (iteration,))
+        self.throughput_policy.print_load()
         self._remove_io_core()
         if self.regret_policy.is_move_good("remove_io_core"):
             return True

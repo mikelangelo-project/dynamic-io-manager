@@ -41,11 +41,6 @@ class ThroughputRegretPolicy:
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
         if self.epoch < self.last_good_action + self.cooling_off_period:
-            # logging.info("cannot move cooling off period")
-            # logging.info("move:               %s", move)
-            # logging.info("epoch:              %d", self.epoch)
-            # logging.info("last_good_action:   %d", self.last_good_action)
-            # logging.info("cooling_off_period: %d", self.cooling_off_period)
             return False
 
         if move not in self.failed_moves_history:
@@ -57,11 +52,6 @@ class ThroughputRegretPolicy:
         last_failed_move_epoch = \
             self.failed_moves_history[move]["last_failed_move_epoch"]
 
-        # if self.epoch <= last_failed_move_epoch + regret_penalty:
-        #     logging.info("move:                   %s", move)
-        #     logging.info("epoch:                  %d", self.epoch)
-        #     logging.info("last_failed_move_epoch: %d", last_failed_move_epoch)
-        #     logging.info("regret_penalty:         %d", regret_penalty)
         return self.epoch > last_failed_move_epoch + regret_penalty
 
     @staticmethod
@@ -71,13 +61,6 @@ class ThroughputRegretPolicy:
             vhost_inst.per_queue_counters["poll_bytes"].delta
         cycles = vhost_inst.cycles.delta
         ratio = handled_bytes / float(cycles)
-
-        # logging.info("")
-        # logging.info("cycles:       %d", cycles)
-        # logging.info("handled_bytes:%d", handled_bytes)
-        # logging.info("ratio_before: %.2f", ratio)
-        # logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
-
         return ratio, handled_bytes, cycles
 
     def is_move_good(self, move):
@@ -175,6 +158,50 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
     def initialize(self):
         pass
+
+    def print_load(self):
+        vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
+
+        logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
+        logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
+                     (self.effective_io_ratio,))
+
+        logging.info("----------------")
+        for c in sorted(vhost_inst.per_worker_counters.values(),
+                        key=lambda x: x.name):
+            logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
+        logging.info("\x1b[37mticks %.2f.\x1b[39m" %
+                     (float(CPUUsage.INSTANCE.get_ticks()),))
+
+        logging.info("\x1b[37moverall workers cpu %.2f.\x1b[39m" %
+                     (self.overall_io_ratio,))
+        logging.info("----------------")
+        for c in sorted(vhost_inst.per_queue_counters.values(),
+                        key=lambda x: x.name):
+            logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
+        logging.info("----------------")
+        if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
+            empty_polls = \
+                float(vhost_inst.per_worker_counters["empty_polls"].delta)
+            empty_works = \
+                float(vhost_inst.per_worker_counters["empty_works"].delta)
+            loops = float(vhost_inst.per_worker_counters["loops"].delta)
+            logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
+            logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
+        else:
+            logging.info("empty_polls ratio: 0.0.")
+            logging.info("empty_works ratio: 0.0.")
+
+        self.average_bytes_per_packet = 0
+        if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
+            self.average_bytes_per_packet = \
+                float(vhost_inst.per_queue_counters["notif_bytes"].delta +
+                      vhost_inst.per_queue_counters["poll_cycles"].delta) / \
+                vhost_inst.per_queue_counters["sendmsg_calls"].delta
+
+        logging.info("efficient io ratio: %.2f" %
+                     (self.effective_io_ratio / self.overall_io_ratio,))
+
 
     def calculate_load(self, shared_workers):
         # timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
