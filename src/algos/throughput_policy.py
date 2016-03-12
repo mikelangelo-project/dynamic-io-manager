@@ -179,29 +179,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         for c in sorted(vhost_inst.per_queue_counters.values(),
                         key=lambda x: x.name):
             logging.info("\x1b[37m%s %d.\x1b[39m" % (c.name, c.delta,))
-        logging.info("----------------")
-        if int(vhost_inst.per_worker_counters["loops"].delta) != 0:
-            empty_polls = \
-                float(vhost_inst.per_worker_counters["empty_polls"].delta)
-            empty_works = \
-                float(vhost_inst.per_worker_counters["empty_works"].delta)
-            loops = float(vhost_inst.per_worker_counters["loops"].delta)
-            logging.info("empty_polls ratio: %.2f." % (empty_polls / loops,))
-            logging.info("empty_works ratio: %.2f." % (empty_works / loops,))
-        else:
-            logging.info("empty_polls ratio: 0.0.")
-            logging.info("empty_works ratio: 0.0.")
-
-        self.average_bytes_per_packet = 0
-        if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
-            self.average_bytes_per_packet = \
-                float(vhost_inst.per_queue_counters["notif_bytes"].delta +
-                      vhost_inst.per_queue_counters["poll_cycles"].delta) / \
-                vhost_inst.per_queue_counters["sendmsg_calls"].delta
 
         logging.info("efficient io ratio: %.2f" %
                      (self.effective_io_ratio / self.overall_io_ratio,))
-
 
     def calculate_load(self, shared_workers):
         # timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
