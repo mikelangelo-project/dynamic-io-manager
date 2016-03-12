@@ -84,22 +84,24 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before:      %.2f", ratio_before)
 
         ratio_after = 0
-        for i in xrange(2):
+        iterations = 20
+        for i in xrange(5):
             time.sleep(self.interval)
             vhost_inst.update()
-        for i in xrange(20):
+        for i in xrange(iterations):
             time.sleep(self.interval)
             vhost_inst.update()
-            ratio_after, handled_bytes, cycles = \
+            ratio, handled_bytes, cycles = \
                 ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
             logging.info("")
             logging.info("cycles:       %d", cycles)
             logging.info("handled_bytes:%d", handled_bytes)
-            logging.info("ratio_after: %.2f", ratio_after)
-            logging.info("throughput:   %.2fGbps", ratio_after * 2.2 * 8)
-            logging.info("ratio_after [%d]:%.2f", i, ratio_after)
-            if ratio_before > ratio_after:
+            logging.info("ratio_after: %.2f", ratio)
+            logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
+            logging.info("ratio_after [%d]:%.2f", i, ratio)
+            ratio_after += ratio
+            if ratio_before > ratio_after / (i + 1):
                 break
 
         if ratio_before < ratio_after:
