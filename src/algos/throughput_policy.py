@@ -34,7 +34,7 @@ class ThroughputRegretPolicy:
             ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
         if len(self.history) == 5:
-            self.history = self.history[1:-1]
+            self.history = self.history[1:5]
         self.history.append((self.epoch, self.current_ratio,
                              self.current_handled_bytes, self.current_cycles))
         logging.info("history length: %d" % (len(self.history),))
