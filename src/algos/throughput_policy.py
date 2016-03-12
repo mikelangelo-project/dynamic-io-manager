@@ -37,7 +37,7 @@ class ThroughputRegretPolicy:
             self.history = self.history[1:5]
         self.history.append((self.epoch, self.current_ratio,
                              self.current_handled_bytes, self.current_cycles))
-        logging.info("history length: %d" % (len(self.history),))
+        # logging.info("history length: %d" % (len(self.history),))
 
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
