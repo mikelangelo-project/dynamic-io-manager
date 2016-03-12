@@ -42,8 +42,8 @@ class BackingDevicesPreConfiguredBalancePolicy:
         self.balance(io_workers)
 
     def balance(self, io_workers):
-        logging.info("BackingDevicesPreConfiguredBalancePolicy.balance: "
-                     "io_workers: %s" % (io_workers, ))
+        # logging.info("BackingDevicesPreConfiguredBalancePolicy.balance: "
+        #              "io_workers: %s" % (io_workers, ))
         conf_id = self.configuration_mapping[len(io_workers)]
         self.balance_by_configuration(conf_id, io_workers)
 
@@ -70,8 +70,8 @@ class BackingDevicesPreConfiguredBalancePolicy:
         #     logging.info("\x1b[37m%s: %s\x1b[39m" % (cpu_conf, cpu))
 
         # moving vms to the correct cpu cores
-        logging.info("\x1b[37mmoving backing devices to the correct cpu "
-                     "cores\x1b[39m")
+        # logging.info("\x1b[37mmoving backing devices to the correct cpu "
+        #              "cores\x1b[39m")
         for bd in self.backing_devices.values():
             cpu_mask = 0
             for c in backing_devices_conf[bd.id]:

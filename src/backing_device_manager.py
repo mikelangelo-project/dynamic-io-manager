@@ -17,7 +17,7 @@ class BackingDeviceManager:
                                                io_workers, vm_manager)
 
     def balance(self, io_workers):
-        logging.info("\x1b[37mUpdating backing devices\x1b[39m")
+        # logging.info("\x1b[37mUpdating backing devices\x1b[39m")
         self.backing_devices_policy.balance(io_workers)
 
     def update(self):
