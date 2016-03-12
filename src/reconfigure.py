@@ -107,7 +107,8 @@ if __name__ == '__main__':
                               rescan_files=True)
         workers = sorted(Vhost.INSTANCE.workers.values(),
                          key=lambda _w: int(_w["id"].split(".")[1]))
-        msg(len(workers))
+        msg("we have %d workers now: {%s}" %
+            (len(workers), ",".join(w["id"] for w in workers)))
 
     if shared_workers:
         msg("shared_workers: %s" % (shared_workers,))
