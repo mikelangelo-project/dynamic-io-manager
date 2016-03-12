@@ -17,7 +17,7 @@ class ThroughputRegretPolicy:
         self.failed_moves_history = {}
 
         self.last_good_action = 0
-        self.cooling_off_period = 0
+        self.cooling_off_period = 2
 
         self.current_ratio = 0.0
         self.current_cycles = 0
