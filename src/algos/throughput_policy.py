@@ -91,6 +91,7 @@ class ThroughputRegretPolicy:
             logging.info("ratio:        %.2f", rec[1])
             logging.info("throughput:   %.2fGbps", rec[1] * 2.2 * 8)
 
+        ratio_after_sum = 0
         ratio_after = 0
         iterations = 20
         for i in xrange(5):
@@ -108,8 +109,9 @@ class ThroughputRegretPolicy:
             logging.info("ratio_after: %.2f", ratio)
             logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
             logging.info("ratio_after [%d]:%.2f", i, ratio)
-            ratio_after += ratio
-            if ratio_before > ratio_after / (i + 1):
+            ratio_after_sum += ratio
+            ratio_after = ratio_after_sum / (i + 1)
+            if ratio_before > ratio_after:
                 break
 
         if ratio_before < ratio_after:
