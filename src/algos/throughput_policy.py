@@ -10,13 +10,14 @@ from utils.aux import parse_user_list, Timer
 class ThroughputRegretPolicy:
     def __init__(self, policy_info):
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 50
+        self.regret_penalty_factor = 2
+        self.initial_regret_penalty = 100
         self.epoch = 0
 
         self.failed_moves_history = {}
 
         self.last_good_action = 0
-        self.cooling_off_period = 10  # 20
+        self.cooling_off_period = 0
 
         self.current_ratio = 0.0
         self.current_cycles = 0
@@ -108,12 +109,14 @@ class ThroughputRegretPolicy:
             self.last_good_action = self.epoch
 
             if move in self.failed_moves_history:
-                self.failed_moves_history[move]["regret_penalty"] = 1
+                self.failed_moves_history[move]["regret_penalty"] = \
+                    self.initial_regret_penalty
             return True
 
         # logging.info("regret")
         if move not in self.failed_moves_history:
-            self.failed_moves_history[move] = {"regret_penalty": 1}
+            self.failed_moves_history[move] = \
+                {"regret_penalty": self.initial_regret_penalty}
         else:
             self.failed_moves_history[move]["regret_penalty"] *= \
                 self.regret_penalty_factor
