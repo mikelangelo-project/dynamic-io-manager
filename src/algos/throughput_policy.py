@@ -42,7 +42,7 @@ class ThroughputRegretPolicy:
                              self.current_handled_bytes, self.current_cycles))
 
         self.requested_actions = \
-            {move: (epochs, requested_this_epoch)
+            {move: (epochs, False)
              for move, (epochs, requested_this_epoch) in
              self.requested_actions.items() if requested_this_epoch}
 
@@ -53,6 +53,7 @@ class ThroughputRegretPolicy:
             return False
 
         epochs, requested_this_epoch = self.requested_actions[move]
+        self.requested_actions[move] = (epochs + 1, True)
         if epochs < self.cooling_off_period:
             return False
 
