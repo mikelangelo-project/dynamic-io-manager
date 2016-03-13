@@ -18,7 +18,7 @@ class ThroughputRegretPolicy:
 
         self.last_good_action = 0
 
-        self.requested_actions = []
+        self.requested_actions = {}
         self.cooling_off_period = 10
 
         self.current_ratio = 0.0
