@@ -44,7 +44,7 @@ class ThroughputRegretPolicy:
         self.requested_actions = \
             {move: (epochs, requested_this_epoch)
              for move, (epochs, requested_this_epoch) in
-             self.requested_actions.items if requested_this_epoch}
+             self.requested_actions.items() if requested_this_epoch}
 
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
