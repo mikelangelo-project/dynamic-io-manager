@@ -10,7 +10,7 @@ from utils.aux import parse_user_list, Timer
 class ThroughputRegretPolicy:
     def __init__(self, policy_info):
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 2
+        self.regret_penalty_factor = 3
         self.initial_regret_penalty = 100
         self.epoch = 0
 
