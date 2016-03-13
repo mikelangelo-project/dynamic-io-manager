@@ -17,6 +17,8 @@ class ThroughputRegretPolicy:
         self.failed_moves_history = {}
 
         self.last_good_action = 0
+
+        self.requested_actions = []
         self.cooling_off_period = 10
 
         self.current_ratio = 0.0
@@ -39,9 +41,19 @@ class ThroughputRegretPolicy:
         self.history.append((self.epoch, self.current_ratio,
                              self.current_handled_bytes, self.current_cycles))
 
+        self.requested_actions = \
+            {move: (epochs, requested_this_epoch)
+             for move, (epochs, requested_this_epoch) in
+             self.requested_actions.items if requested_this_epoch}
+
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
-        if self.epoch < self.last_good_action + self.cooling_off_period:
+        if move not in self.requested_actions:
+            self.requested_actions[move] = (1, True)
+            return False
+
+        epochs, requested_this_epoch = self.requested_actions[move]
+        if epochs < self.cooling_off_period:
             return False
 
         if move not in self.failed_moves_history:
