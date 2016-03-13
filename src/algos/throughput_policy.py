@@ -334,12 +334,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         return True, max(int(self.effective_io_ratio + .9), 1)
 
     def should_stop_shared_worker(self):
-        return False
-        # if not self.shared_workers or self.io_cores > 1:
-        #     return False
-        # full_ratio = 1.0 - self.ratio
-        # if self.stop_shared_ratio <= full_ratio:
-        #     return False
+        if not self.shared_workers or self.io_cores > 1:
+            return False
+        full_ratio = 1.0 - self.ratio
+        if self.stop_shared_ratio <= full_ratio:
+            return False
         #
         # logging.info("\x1b[37mshould disable shared workers.\x1b[39m")
         # logging.info("\x1b[37mshared_workers: %s.\x1b[39m" %
