@@ -221,7 +221,8 @@ def main(argv):
     # io_core_balance_policy = BalanceByDeviceNumberPolicy()
     throughput_policy = IOWorkerThroughputPolicy(conf["throughput_policy"])
     latency_policy = LatencyPolicy(conf["latency_policy"])
-    regret_policy = ThroughputRegretPolicy(conf["throughput_regret_policy"])
+    regret_policy = ThroughputRegretPolicy(conf["throughput_regret_policy"],
+                                           bdm)
 
     # setup the io core controller
     io_workers_manager = IOWorkersManager(devices, vm_manager, bdm,

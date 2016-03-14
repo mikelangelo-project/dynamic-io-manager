@@ -8,7 +8,8 @@ from utils.aux import parse_user_list, Timer
 
 
 class ThroughputRegretPolicy:
-    def __init__(self, policy_info):
+    def __init__(self, policy_info, backing_device_manager):
+        self.backing_device_manager = backing_device_manager
         self.interval = float(policy_info["interval"])
         self.regret_penalty_factor = 3
         self.initial_regret_penalty = 100
@@ -82,6 +83,7 @@ class ThroughputRegretPolicy:
         logging.info("is_move_good %s", move)
 
         for rec in self.history:
+            logging.info("")
             logging.info("epoch:        %d", rec[0])
             logging.info("cycles:       %d", rec[3])
             logging.info("handled_bytes:%d", rec[2])
@@ -92,12 +94,12 @@ class ThroughputRegretPolicy:
         ratio_after_sum = 0
         ratio_after = 0
         iterations = 20
-        for i in xrange(5):
-            time.sleep(self.interval)
-            vhost_inst.update()
+        grace_period = 5
         for i in xrange(iterations):
             time.sleep(self.interval)
             vhost_inst.update()
+            self.backing_device_manager.update()
+
             ratio, handled_bytes, cycles = \
                 ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
 
@@ -109,7 +111,11 @@ class ThroughputRegretPolicy:
             logging.info("ratio_after [%d]:%.2f", i, ratio)
             ratio_after_sum += ratio
             ratio_after = ratio_after_sum / (i + 1)
-            if ratio_before > ratio_after:
+
+            if i < grace_period:
+                continue
+
+            if ratio_before > ratio_after * 1.3:
                 break
 
         if ratio_before < ratio_after:
