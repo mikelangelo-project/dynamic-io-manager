@@ -180,9 +180,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.history_rounds = 0
         self.history = {
             # "average_bytes_per_packet": [0, 0, 0],
-            "ratio": [0, 0, 0],
-            "overall_io_ratio": [0, 0, 0],
-            "effective_io_ratio": [0, 0, 0]}
+            "empty_ratio": [0, 0, 0]  # ,
+            # "overall_io_ratio": [0, 0, 0],
+            # "effective_io_ratio": [0, 0, 0]
+        }
         self._init_history()
 
     def initialize(self):
@@ -245,8 +246,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         # update("average_bytes_per_packet", self.average_bytes_per_packet)
         update("empty_ratio", self.ratio)
-        update("overall_io_ratio", self.overall_io_ratio)
-        update("effective_io_ratio", self.effective_io_ratio)
+        # update("overall_io_ratio", self.overall_io_ratio)
+        # update("effective_io_ratio", self.effective_io_ratio)
 
         if self.history_rounds == 100:
             self.print_history()
