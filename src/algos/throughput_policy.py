@@ -455,7 +455,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         logging.info("\x1b[37mggggggggggggggggrrrrrrrrrrrrrrrr.\x1b[39m")
         self.history_rounds += 1
         for cpu, empty_cpu_ratio in self.history.items():
-            ratio = CPUUsage.INSTANCE.get_empty_cpu(cpu)
+            ratio = CPUUsage.INSTANCE.get_empty_cpu((cpu,))
             if self.history_rounds == 1:
                 empty_cpu_ratio[0] = empty_cpu_ratio[1] = \
                     empty_cpu_ratio[2] = ratio
