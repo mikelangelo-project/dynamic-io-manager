@@ -82,6 +82,9 @@ class IOWorkersManager:
         self.throughput_policy.calculate_load(shared_workers)
         self.regret_policy.update()
 
+        self.throughput_policy.update_history()
+        self.vm_manager.vm_core_addition_policy.update_history()
+
         # if len(self.io_workers) == 1:
         #    return False
 

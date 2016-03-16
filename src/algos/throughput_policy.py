@@ -228,6 +228,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
                           max_ratio))
 
     def update_history(self):
+        logging.info("\x1b[37mggggggggggggggggrrrrrrrrrrrrrrrr2.\x1b[39m")
         self.history_rounds += 1
 
         def update(field, new_val):
@@ -451,6 +452,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
                           max_ratio))
 
     def update_history(self):
+        logging.info("\x1b[37mggggggggggggggggrrrrrrrrrrrrrrrr.\x1b[39m")
         self.history_rounds += 1
         for cpu, empty_cpu_ratio in zip(self.cpus, self.history):
             min_ratio, max_ratio, sum_ratio = empty_cpu_ratio
