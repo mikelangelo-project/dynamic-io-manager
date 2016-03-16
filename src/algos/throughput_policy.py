@@ -436,7 +436,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
 
     def _init_history(self):
         self.history_rounds = 0
-        self.history = (0, 0, 0)
+        self.history = {cpu: (0, 0, 0) for cpu in self.cpus}
 
     def print_history(self):
         if self.history_rounds == 0:
