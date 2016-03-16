@@ -436,7 +436,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
 
     def _init_history(self):
         self.history_rounds = 0
-        self.history = {cpu: (0, 0, 0) for cpu in self.cpus}
+        self.history = {cpu: [0, 0, 0] for cpu in self.cpus}
 
     def print_history(self):
         if self.history_rounds == 0:
@@ -457,16 +457,16 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         for cpu, empty_cpu_ratio in self.history.items():
             ratio = CPUUsage.INSTANCE.get_empty_cpu(cpu)
             if self.history_rounds == 1:
-                self.history[cpu][0] = self.history[cpu][1] = \
-                    self.history[cpu][2] = ratio
+                empty_cpu_ratio[0] = empty_cpu_ratio[1] = \
+                    empty_cpu_ratio[2] = ratio
                 continue
 
             # min ratio
-            self.history[cpu][0] = min(self.history[cpu][0], ratio)
+            empty_cpu_ratio[0] = min(empty_cpu_ratio[0], ratio)
             # max ratio
-            self.history[cpu][1] = max(self.history[cpu][0], ratio)
+            empty_cpu_ratio[1] = max(empty_cpu_ratio[1], ratio)
             # sum ratio
-            self.history[cpu][2] += ratio
+            empty_cpu_ratio[2] += ratio
 
         if self.history_rounds == 100:
             self.print_history()
