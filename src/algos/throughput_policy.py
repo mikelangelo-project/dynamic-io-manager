@@ -97,6 +97,8 @@ class ThroughputRegretPolicy:
         grace_period = 5
         for i in xrange(iterations):
             time.sleep(self.interval)
+            # refresh all counters
+            CPUUsage.INSTANCE.update()
             vhost_inst.update()
             self.backing_device_manager.update()
 
@@ -173,8 +175,14 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.overall_io_ratio = None
         self.io_cores = None
         self.shared_workers = False
-
         self.effective_io_ratio = None
+
+        self.history_rounds = 0
+        self.history = {"average_bytes_per_packet": None,
+                        "ratio": None,
+                        "overall_io_ratio": None,
+                        "effective_io_ratio": None}
+        self._init_history()
 
     def initialize(self):
         pass
@@ -202,6 +210,44 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         logging.info("efficient io ratio: %.2f" %
                      (self.effective_io_ratio / self.overall_io_ratio,))
+
+    def _init_history(self):
+        self.history_rounds = 0
+        self.history = {key: [0, 0, 0] for key in self.history.keys()}
+
+    def print_history(self):
+        if self.history_rounds == 0:
+            logging.info("\x1b[37mno history recorded.\x1b[39m")
+            return
+
+        logging.info("----------------")
+        for key, (sum_ratio, min_ratio, max_ratio) in self.history.items():
+            logging.info("\x1b[37m %s: avg: %3.2f, max: %3.2f, "
+                         "min: %3.2f.\x1b[39m" %
+                         (key, sum_ratio / self.history_rounds, min_ratio,
+                          max_ratio))
+
+    def update_history(self):
+        self.history_rounds += 1
+
+        def update(field, new_val):
+            if self.history_rounds == 1:
+                self.history[field][0] = self.history[field][1] = \
+                    self.history[field][2] = new_val
+                return
+
+            self.history[field][0] += new_val
+            self.history[field][1] = min(new_val, self.history[field][1])
+            self.history[field][2] = max(new_val, self.history[field][2])
+
+        update("average_bytes_per_packet", self.average_bytes_per_packet)
+        update("ratio", self.ratio)
+        update("overall_io_ratio", self.overall_io_ratio)
+        update("effective_io_ratio", self.effective_io_ratio)
+
+        if self.history_rounds == 100:
+            self.print_history()
+            self._init_history()
 
     def calculate_load(self, shared_workers):
         # timer = Timer("Timer IOWorkerThroughputPolicy.calculate_load")
@@ -320,7 +366,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # timer.done()
 
     def should_update_core_number(self):
-        vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
+        # vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
         add, can_remove = self._should_update_core_number(self.ratio)
         # if add:
         #     logging.info("\x1b[37mshould add IO workers, empty cycles "
@@ -381,16 +427,64 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         AdditionPolicy.__init__(self, policy_info)
         self.cpus = VMCoreAdditionPolicy.get_initial_cpus(vms_info)
 
+        self.ratio = 0.0
+
+        self.history_rounds = None
+        self.history = None
+        self._init_history()
+
+    def _init_history(self):
+        self.history_rounds = 0
+        self.history = (0, 0, 0)
+
+    def print_history(self):
+        if self.history_rounds == 0:
+            logging.info("\x1b[37mno history recorded.\x1b[39m")
+            return
+
+        logging.info("----------------")
+        for cpu, empty_cpu_ratio in zip(self.cpus, self.history):
+            min_ratio, max_ratio, sum_ratio = empty_cpu_ratio
+            logging.info("\x1b[37mvm cores [%2d] empty cycles ratio: "
+                         "avg: %3.2f, max: %3.2f, min: %3.2f.\x1b[39m" %
+                         (cpu, sum_ratio / self.history_rounds, min_ratio,
+                          max_ratio))
+
+    def update_history(self):
+        self.history_rounds += 1
+        for cpu, empty_cpu_ratio in zip(self.cpus, self.history):
+            min_ratio, max_ratio, sum_ratio = empty_cpu_ratio
+            ratio = CPUUsage.INSTANCE.get_empty_cpu(cpu)
+
+            sum_ratio += ratio
+            min_ratio = ratio if self.history_rounds == 1 or ratio < min_ratio \
+                else min_ratio
+            max_ratio = ratio if self.history_rounds == 1 or ratio > max_ratio \
+                else min_ratio
+
+            self.history = (sum_ratio, min_ratio, max_ratio)
+
+        if self.history_rounds == 100:
+            self.print_history()
+            self._init_history()
+
     def add(self, cpu_id):
         self.cpus.append(int(cpu_id))
+        self._init_history()
 
     def remove(self, cpu_ids):
         for cpu_id in cpu_ids:
             self.cpus.remove(int(cpu_id))
+        self._init_history()
+
+    def print_load(self):
+        logging.info("----------------")
+        logging.info("\x1b[37mvm cores empty cycles ratio is %.2f.\x1b[39m" %
+                     (self.ratio,))
 
     def should_update_core_number(self):
-        ratio = CPUUsage.INSTANCE.get_empty_cpu(self.cpus)
-        add, can_remove = self._should_update_core_number(ratio)
+        self.ratio = CPUUsage.INSTANCE.get_empty_cpu(self.cpus)
+        add, can_remove = self._should_update_core_number(self.ratio)
         # logging.info("\x1b[37mcan%s remove a VM core, empty cycles ratio is "
         #              "%.2f.\x1b[39m" % ("" if can_remove else "not", ratio))
         # logging.info("\x1b[37mcan_remove_ratio: %.2f.\x1b[39m" %

@@ -139,6 +139,7 @@ class IOWorkersManager:
                 self.regret_policy.can_do_move("add_io_core"):
             logging.info("round %d" % (iteration,))
             self.throughput_policy.print_load()
+            self.vm_manager.vm_core_addition_policy.print_load()
             self._add_io_core()
             if self.regret_policy.is_move_good("add_io_core"):
                 return True
@@ -152,6 +153,7 @@ class IOWorkersManager:
 
         logging.info("round %d" % (iteration,))
         self.throughput_policy.print_load()
+        self.vm_manager.vm_core_addition_policy.print_load()
         self._remove_io_core()
         if self.regret_policy.is_move_good("remove_io_core"):
             return True
