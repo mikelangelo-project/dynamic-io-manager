@@ -191,6 +191,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def print_load(self):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
 
+        logging.info("\x1b[37mio cores  %d.\x1b[39m" % (self.io_cores,))
         logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
         logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
                      (self.effective_io_ratio,))
@@ -222,6 +223,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             return
 
         logging.info("----------------")
+        logging.info("\x1b[37mio cores  %d.\x1b[39m" % (self.io_cores,))
         for key, (sum_ratio, min_ratio, max_ratio) in self.history.items():
             logging.info("\x1b[37m %25s: avg: %3.2f, min: %3.2f, "
                          "max: %3.2f.\x1b[39m" %
@@ -242,7 +244,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             self.history[field][2] = max(new_val, self.history[field][2])
 
         # update("average_bytes_per_packet", self.average_bytes_per_packet)
-        update("ratio", self.ratio)
+        update("empty_ratio", self.ratio)
         update("overall_io_ratio", self.overall_io_ratio)
         update("effective_io_ratio", self.effective_io_ratio)
 
