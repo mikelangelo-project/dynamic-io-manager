@@ -444,7 +444,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
             return
 
         logging.info("----------------")
-        for cpu, empty_cpu_ratio in zip(self.cpus, self.history):
+        for cpu, empty_cpu_ratio in self.history.items():
             min_ratio, max_ratio, sum_ratio = empty_cpu_ratio
             logging.info("\x1b[37mvm cores [%2d] empty cycles ratio: "
                          "avg: %3.2f, max: %3.2f, min: %3.2f.\x1b[39m" %
@@ -454,17 +454,19 @@ class VMCoreAdditionPolicy(AdditionPolicy):
     def update_history(self):
         logging.info("\x1b[37mggggggggggggggggrrrrrrrrrrrrrrrr.\x1b[39m")
         self.history_rounds += 1
-        for cpu, empty_cpu_ratio in zip(self.cpus, self.history):
-            min_ratio, max_ratio, sum_ratio = empty_cpu_ratio
+        for cpu, empty_cpu_ratio in self.history.items():
             ratio = CPUUsage.INSTANCE.get_empty_cpu(cpu)
+            if self.history_rounds == 1:
+                self.history[cpu][0] = self.history[cpu][1] = \
+                    self.history[cpu][2] = ratio
+                continue
 
-            sum_ratio += ratio
-            min_ratio = ratio if self.history_rounds == 1 or ratio < min_ratio \
-                else min_ratio
-            max_ratio = ratio if self.history_rounds == 1 or ratio > max_ratio \
-                else min_ratio
-
-            self.history = (sum_ratio, min_ratio, max_ratio)
+            # min ratio
+            self.history[cpu][0] = min(self.history[cpu][0], ratio)
+            # max ratio
+            self.history[cpu][1] = max(self.history[cpu][0], ratio)
+            # sum ratio
+            self.history[cpu][2] += ratio
 
         if self.history_rounds == 100:
             self.print_history()
