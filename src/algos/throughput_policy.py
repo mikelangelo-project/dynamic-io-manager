@@ -241,7 +241,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             self.history[field][1] = min(new_val, self.history[field][1])
             self.history[field][2] = max(new_val, self.history[field][2])
 
-        update("average_bytes_per_packet", self.average_bytes_per_packet)
+        # update("average_bytes_per_packet", self.average_bytes_per_packet)
         update("ratio", self.ratio)
         update("overall_io_ratio", self.overall_io_ratio)
         update("effective_io_ratio", self.effective_io_ratio)
