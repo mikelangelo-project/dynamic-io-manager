@@ -170,7 +170,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # The ratio of total empty cycles to cycles this epoch
         self.start_shared_ratio = float(policy_info["start_shared_ratio"])
 
-        self.average_bytes_per_packet = None
+        # self.average_bytes_per_packet = None
         self.ratio = None
         self.overall_io_ratio = None
         self.io_cores = None
@@ -178,10 +178,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.effective_io_ratio = None
 
         self.history_rounds = 0
-        self.history = {"average_bytes_per_packet": [0, 0, 0],
-                        "ratio": [0, 0, 0],
-                        "overall_io_ratio": [0, 0, 0],
-                        "effective_io_ratio": [0, 0, 0]}
+        self.history = {
+            # "average_bytes_per_packet": [0, 0, 0],
+            "ratio": [0, 0, 0],
+            "overall_io_ratio": [0, 0, 0],
+            "effective_io_ratio": [0, 0, 0]}
         self._init_history()
 
     def initialize(self):
@@ -228,7 +229,6 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
                           max_ratio))
 
     def update_history(self):
-        logging.info("\x1b[37mggggggggggggggggrrrrrrrrrrrrrrrr2.\x1b[39m")
         self.history_rounds += 1
 
         def update(field, new_val):
