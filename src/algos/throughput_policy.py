@@ -223,8 +223,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         logging.info("----------------")
         for key, (sum_ratio, min_ratio, max_ratio) in self.history.items():
-            logging.info("\x1b[37m %s: avg: %3.2f, max: %3.2f, "
-                         "min: %3.2f.\x1b[39m" %
+            logging.info("\x1b[37m %15s: avg: %3.2f, min: %3.2f, "
+                         "max: %3.2f.\x1b[39m" %
                          (key, sum_ratio / self.history_rounds, min_ratio,
                           max_ratio))
 
@@ -447,7 +447,7 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         for cpu, empty_cpu_ratio in self.history.items():
             min_ratio, max_ratio, sum_ratio = empty_cpu_ratio
             logging.info("\x1b[37mvm cores [%2d] empty cycles ratio: "
-                         "avg: %3.2f, max: %3.2f, min: %3.2f.\x1b[39m" %
+                         "avg: %3.2f, min: %3.2f, max: %3.2f.\x1b[39m" %
                          (cpu, sum_ratio / self.history_rounds, min_ratio,
                           max_ratio))
 
