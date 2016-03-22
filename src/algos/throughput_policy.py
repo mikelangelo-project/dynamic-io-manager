@@ -523,4 +523,11 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         #              "%.2f.\x1b[39m" % ("" if add else " not", ratio))
         # logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
         # logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
+
+        if add:
+            logging.info("\x1b[37mshould add VM cores, empty cycles ratio is "
+                         "%.2f.\x1b[39m" % (self.ratio, ))
+            logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
+            logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
+
         return add, can_remove
