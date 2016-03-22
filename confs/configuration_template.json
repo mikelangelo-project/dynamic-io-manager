@@ -39,10 +39,15 @@
     ...
   ],
   "throughput_policy": {
-    "stop_shared_ratio": "ratio of empty cycles to stop handling multiple devices in a single worker.",
-    "start_shared_ratio": "ratio of worker cycles to start handling multiple devices in a single worker.",
-    "add_ratio": "ratio of worker cycles to add an IO core.",
-    "remove_ratio": "ratio of empty cycles to remove an IO core."
+    "configurations" : [
+     {
+       "id": "<The configuration id. for example, elvis-1>",
+       "vhost_workers": "<vhost workers number>",
+       "add_ratio": "ratio of worker cycles to add an IO core.",
+       "can_remove_ratio": "ratio of empty cycles to remove an IO core."
+     },
+     ...
+   ]
   },
   "latency_policy": {
     "add_ratio": "0.5",

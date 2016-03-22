@@ -148,10 +148,10 @@ class ThroughputRegretPolicy:
 class AdditionPolicy:
     def __init__(self, policy_info):
         # The ratio of total empty cycles to cycles this epoch
-        self.add_ratio = float(policy_info["add_ratio"])  # 0.05
+        self.add_ratio = None
 
         # The ratio of total empty cycles to cycles this epoch
-        self.can_remove_ratio = float(policy_info["can_remove_ratio"])  # 1.05
+        self.can_remove_ratio = None
 
     def initialize(self):
         pass
@@ -165,10 +165,15 @@ class AdditionPolicy:
 class IOWorkerThroughputPolicy(AdditionPolicy):
     def __init__(self, policy_info):
         AdditionPolicy.__init__(self, policy_info)
+        self.configurations = \
+            {int(conf["vhost_workers"]): conf
+             for conf in policy_info["configurations"]}
+
         # The ratio of total empty cycles to cycles this epoch
-        self.stop_shared_ratio = float(policy_info["stop_shared_ratio"])  # 0.3
+        self.stop_shared_ratio = \
+            1 - float(self.configurations[1]["can_remove_ratio"])
         # The ratio of total empty cycles to cycles this epoch
-        self.start_shared_ratio = float(policy_info["start_shared_ratio"])
+        self.start_shared_ratio = 1 - float(self.configurations[0]["add_ratio"])
 
         # self.average_bytes_per_packet = None
         self.ratio = None
@@ -367,6 +372,15 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         # logging.info("efficient io ratio: %.2f" %
         #              (self.effective_io_ratio / self.overall_io_ratio,))
+
+        config_id = len(workers) if shared_workers else 0
+        # The ratio of total empty cycles to cycles this epoch
+        self.add_ratio = self.configurations[config_id]["add_ratio"]
+
+        # The ratio of total empty cycles to cycles this epoch
+        self.can_remove_ratio = \
+            self.configurations[config_id]["can_remove_ratio"]
+
         # timer.done()
 
     def should_update_core_number(self):
@@ -429,6 +443,13 @@ class VMCoreAdditionPolicy(AdditionPolicy):
 
     def __init__(self, vms_info, policy_info):
         AdditionPolicy.__init__(self, policy_info)
+
+        # The ratio of total empty cycles to cycles this epoch
+        self.add_ratio = float(policy_info["add_ratio"])  # 0.05
+
+        # The ratio of total empty cycles to cycles this epoch
+        self.can_remove_ratio = float(policy_info["can_remove_ratio"])  # 1.05
+
         self.cpus = VMCoreAdditionPolicy.get_initial_cpus(vms_info)
 
         self.ratio = 0.0
