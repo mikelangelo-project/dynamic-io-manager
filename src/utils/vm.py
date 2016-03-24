@@ -10,11 +10,6 @@ class VM(Thread):
     def __init__(self, vm_info, backing_devices):
         Thread.__init__(self, int(vm_info["pid"]), vm_info["id"],
                         parse_cpu_mask_from_cpu_list(vm_info["cpu"]))
-
-        logging.info(self.idx)
-        logging.info(self.pid)
-        logging.info(self.cpu_mask)
-
         self.devices = [Device(self, dev_info, backing_devices)
                         for dev_info in vm_info["devices"]]
 
@@ -31,7 +26,8 @@ class VM(Thread):
         Thread.apply_cpu_mask(self)
 
     def __str__(self):
-        return "VM: {pid: %d, id: %s}" % (self.pid, self.idx)
+        return "VM: {pid: %d, id: %s, cpu_mask: %x}" % \
+               (self.pid, self.idx, self.cpu_mask)
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__, self.__str__())

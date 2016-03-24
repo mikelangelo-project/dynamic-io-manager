@@ -35,11 +35,11 @@ class IOCoresPreConfiguredBalancePolicy:
             {len(conf["vhost_workers"]): conf["id"]
              for conf in balancer_info["configurations"]}
 
-        logging.info("workers_configurations: %s" %
-                     (self.workers_configurations,))
-        logging.info("\x1b[37mconfiguration_mapping:\x1b[39m \n%s" %
-                     (pprint.pformat(self.configuration_mapping, indent=2,
-                                     width=80, depth=4),))
+        # logging.info("workers_configurations: %s" %
+        #              (self.workers_configurations,))
+        # logging.info("\x1b[37mconfiguration_mapping:\x1b[39m \n%s" %
+        #              (pprint.pformat(self.configuration_mapping, indent=2,
+        #                              width=80, depth=4),))
 
     def _balance(self, io_workers):
         # logging.info("Vhost.INSTANCE.devices: %s" % (devices,))

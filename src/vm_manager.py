@@ -10,7 +10,7 @@ class VMManager:
                  vm_core_addition_policy, vm_balance_policy):
         self.vms = [VM(vm_info, backing_devices) for vm_info in vms_info]
         self.cpus = VMCoreAdditionPolicy.get_initial_cpus(vms_info)
-        logging.info(self.vms)
+        # logging.info(self.vms)
         self.backing_devices = backing_devices
 
         self.vm_policy = vm_policy
