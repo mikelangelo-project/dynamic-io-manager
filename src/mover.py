@@ -76,7 +76,7 @@ class MoverDaemon(Daemon):
 
         i = li = 0
         lis = int(1.0 / self.interval) + 1
-        logging.info("print every %d rounds.", (lis, ))
+        logging.info("print every %d rounds." % (lis, ))
 
         while True:
             for conf_id in configuration_ids:
