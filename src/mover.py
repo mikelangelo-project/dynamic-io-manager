@@ -103,7 +103,7 @@ class MoverDaemon(Daemon):
 
             if i - li > lis:
                 # timer.done()
-                logging.info("round %d", (i, ))
+                logging.info("round %d" % (i, ))
                 li = i
 
         logging.info("*****Done****")
