@@ -74,8 +74,9 @@ class MoverDaemon(Daemon):
             self.backing_device_manager.backing_devices_policy
         configuration_ids = vm_balance_policy.vms_configurations.keys()
 
-        # i = li = 0
-        # lis = 20  # int(1.0 / self.interval) + 1
+        i = li = 0
+        lis = int(1.0 / self.interval) + 1
+        logging.info("print every %d rounds.", (lis, ))
 
         while True:
             for conf_id in configuration_ids:
@@ -100,9 +101,10 @@ class MoverDaemon(Daemon):
                 # timer.checkpoint("end round %d: move_devices" % (i,))
                 # i += 1
 
-            # if i - li > lis:
-            #     timer.done()
-            #     li = i
+            if i - li > lis:
+                # timer.done()
+                logging.info("round %d", (i, ))
+                li = i
 
         logging.info("*****Done****")
 
