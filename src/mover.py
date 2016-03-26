@@ -207,7 +207,8 @@ def main(argv):
     # io_core_balance_policy = BalanceByDeviceNumberPolicy()
     throughput_policy = IOWorkerThroughputPolicy(config["throughput_policy"])
     latency_policy = LatencyPolicy(config["latency_policy"])
-    regret_policy = ThroughputRegretPolicy(config["throughput_regret_policy"])
+    regret_policy = ThroughputRegretPolicy(config["throughput_regret_policy"],
+                                           bdm)
 
     # log the resolution of the timer
     Timer.check_resolution()
