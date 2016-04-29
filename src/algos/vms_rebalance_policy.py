@@ -21,13 +21,13 @@ class VmsPreConfiguredBalancePolicy:
             c: list(set([cpu for cpus in vms.values() for cpu in cpus]))
             for c, vms in self.vms_configurations.items()
         }
-        logging.info("\x1b[37mcpu_configuration:\x1b[39m \n%s" %
-                     (pprint.pformat(self.cpu_configuration, indent=2,
-                                     width=80, depth=4),))
+        # logging.info("\x1b[37mcpu_configuration:\x1b[39m \n%s" %
+        #              (pprint.pformat(self.cpu_configuration, indent=2,
+        #                              width=80, depth=4),))
         self.cpus = list(initial_cpus)
-        logging.info("\x1b[37mcpus:\x1b[39m \n%s" %
-                     (pprint.pformat(self.cpus, indent=2, width=80,
-                                     depth=4),))
+        # logging.info("\x1b[37mcpus:\x1b[39m \n%s" %
+        #              (pprint.pformat(self.cpus, indent=2, width=80,
+        #                              depth=4),))
 
         self.configuration_mapping = \
             {int(conf["cores"]): conf["id"]
@@ -42,24 +42,24 @@ class VmsPreConfiguredBalancePolicy:
 
     def balance_by_configuration(self, conf_id, vms):
         # timer = Timer("Timer VmsPreConfiguredBalancePolicy")
-        logging.info("\x1b[37mcpus:\x1b[39m \n%s" %
-                     (pprint.pformat(self.cpus, indent=2, width=80,
-                                     depth=4),))
+        # logging.info("\x1b[37mcpus:\x1b[39m \n%s" %
+        #              (pprint.pformat(self.cpus, indent=2, width=80,
+        #                              depth=4),))
         vms_conf = self.vms_configurations[conf_id]
         cpus_conf = self.cpu_configuration[conf_id]
         cpu_mapping = {cpu_conf: cpu
                        for cpu_conf, cpu in zip(cpus_conf, self.cpus)}
-        logging.info("\x1b[37mcpu_mapping:\x1b[39m \n%s" %
-                     (pprint.pformat(cpu_mapping, indent=2, width=80,
-                                     depth=4),))
+        # logging.info("\x1b[37mcpu_mapping:\x1b[39m \n%s" %
+        #              (pprint.pformat(cpu_mapping, indent=2, width=80,
+        #                              depth=4),))
 
         # moving vms to the correct cpu cores
         logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
         for vm in vms:
             # timer.checkpoint("vm %s" % (vm.idx,))
-            new_cpu_sequence = [cpu_mapping[c] for c in vms_conf[vm.idx]]
-            logging.info("\x1b[37mvm %s: %s\x1b[39m" % (vm.idx,
-                                                        new_cpu_sequence))
+            # new_cpu_sequence = [cpu_mapping[c] for c in vms_conf[vm.idx]]
+            # logging.info("\x1b[37mvm %s: %s\x1b[39m" % (vm.idx,
+            #                                             new_cpu_sequence))
             cpu_mask = 0
             for c in vms_conf[vm.idx]:
                 cpu_mask += (1 << cpu_mapping[c])
