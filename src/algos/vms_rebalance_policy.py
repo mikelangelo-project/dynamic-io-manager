@@ -42,10 +42,16 @@ class VmsPreConfiguredBalancePolicy:
 
     def balance_by_configuration(self, conf_id, vms):
         # timer = Timer("Timer VmsPreConfiguredBalancePolicy")
+        logging.info("\x1b[37mcpus:\x1b[39m \n%s" %
+                     (pprint.pformat(self.cpus, indent=2, width=80,
+                                     depth=4),))
         vms_conf = self.vms_configurations[conf_id]
         cpus_conf = self.cpu_configuration[conf_id]
         cpu_mapping = {cpu_conf: cpu
                        for cpu_conf, cpu in zip(cpus_conf, self.cpus)}
+        logging.info("\x1b[37mcpu_mapping:\x1b[39m \n%s" %
+                     (pprint.pformat(cpu_mapping, indent=2, width=80,
+                                     depth=4),))
 
         # moving vms to the correct cpu cores
         logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
