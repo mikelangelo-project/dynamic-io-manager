@@ -54,7 +54,7 @@ class VmsPreConfiguredBalancePolicy:
         #                              depth=4),))
 
         # moving vms to the correct cpu cores
-        logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
+        # logging.info("\x1b[37mmoving vms to the correct cpu cores\x1b[39m")
         for vm in vms:
             # timer.checkpoint("vm %s" % (vm.idx,))
             # new_cpu_sequence = [cpu_mapping[c] for c in vms_conf[vm.idx]]
