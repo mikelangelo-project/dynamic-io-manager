@@ -4,7 +4,7 @@ import time
 
 from utils.vhost import Vhost
 from utils.cpuusage import CPUUsage
-from utils.aux import parse_user_list, Timer
+from utils.aux import parse_user_list
 
 
 class ThroughputRegretPolicy:
@@ -20,7 +20,8 @@ class ThroughputRegretPolicy:
         self.last_good_action = 0
 
         self.requested_actions = {}
-        self.cooling_off_period = 10
+        self.requested_actions_ratio = 0.6
+        self.requested_actions_history_len = 10
 
         self.current_ratio = 0.0
         self.current_cycles = 0
@@ -42,20 +43,41 @@ class ThroughputRegretPolicy:
         self.history.append((self.epoch, self.current_ratio,
                              self.current_handled_bytes, self.current_cycles))
 
-        self.requested_actions = \
-            {move: (epochs, False)
-             for move, (epochs, requested_this_epoch) in
-             self.requested_actions.items() if requested_this_epoch}
+        updated_requested_actions = {}
+        for move, (epochs, requested_this_epoch) in self.requested_actions.items():
+            # if this move was already requested this epoch just update the
+            # requested_this_epoch variable
+            if requested_this_epoch:
+                updated_requested_actions[move] = (epochs, False)
+                continue
+
+            # if it was not add a new entry indicating the move was not
+            # requested this epoch.
+
+            if len(epochs) < self.requested_actions_history_len:
+                updated_requested_actions[move] = (epochs + [False], False)
+                continue
+
+            updated_requested_actions[move] = \
+                (epochs[1:self.requested_actions_history_len] + [False], False)
+
+        self.requested_actions = updated_requested_actions
 
     def can_do_move(self, move):
         # logging.info("can_do_move: %s", move)
         if move not in self.requested_actions:
-            self.requested_actions[move] = (1, True)
+            self.requested_actions[move] = ([True], True)
             return False
 
         epochs, requested_this_epoch = self.requested_actions[move]
-        self.requested_actions[move] = (epochs + 1, True)
-        if epochs < self.cooling_off_period:
+        if len(epochs) < self.requested_actions_history_len:
+            self.requested_actions[move] = (epochs + [True], True)
+            return False
+
+        self.requested_actions[move] = \
+            (epochs[1:self.requested_actions_history_len] + [True], True)
+        if sum(1 for e in epochs if e) / len(epochs) < \
+                self.requested_actions_ratio:
             return False
 
         if move not in self.failed_moves_history:
@@ -126,6 +148,9 @@ class ThroughputRegretPolicy:
             if move in self.failed_moves_history:
                 self.failed_moves_history[move]["regret_penalty"] = \
                     self.initial_regret_penalty
+
+            # after a successful action we reset the requested actions histogram
+            self.requested_actions = {}
             return True
 
         # logging.info("regret")
@@ -189,6 +214,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             # "overall_io_ratio": [0, 0, 0],
             # "effective_io_ratio": [0, 0, 0]
         }
+        self.negative_ratio_rounds = 0
         self._init_history()
 
     def initialize(self):
@@ -221,6 +247,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
     def _init_history(self):
         self.history_rounds = 0
+        self.negative_ratio_rounds = 0
         self.history = {key: [0, 0, 0] for key in self.history.keys()}
 
     def print_history(self):
@@ -232,9 +259,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         logging.info("\x1b[37mio cores  %d.\x1b[39m" % (self.io_cores,))
         for key, (sum_ratio, min_ratio, max_ratio) in self.history.items():
             logging.info("\x1b[37m %25s: avg: %3.2f, min: %3.2f, "
-                         "max: %3.2f.\x1b[39m" %
+                         "max: %3.2f, negative: %d.\x1b[39m" %
                          (key, sum_ratio / self.history_rounds, min_ratio,
-                          max_ratio))
+                          max_ratio, self.negative_ratio_rounds))
 
     def update_history(self):
         self.history_rounds += 1
@@ -322,6 +349,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # activity (which is a useful work). 1 means a full core was wasted.
         self.ratio = float(empty_cycles) / float(cycles_this_epoch) - \
             softirq_cpu_ratio
+        if self.ratio < 0:
+            self.negative_ratio_rounds += 1
+            self.ratio = 0
+
         # this the ratio of cycles used to handle virtual IO.
         self.effective_io_ratio = \
             float(vhost_inst.work_cycles.delta) / \
