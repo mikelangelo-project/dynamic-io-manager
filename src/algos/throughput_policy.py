@@ -12,6 +12,7 @@ class ThroughputRegretPolicy:
         self.backing_device_manager = backing_device_manager
         self.interval = float(policy_info["interval"])
         self.regret_penalty_factor = 3
+        self.max_regret_penalty_factor = 50
         self.initial_regret_penalty = 100
         self.epoch = 0
 
@@ -160,6 +161,13 @@ class ThroughputRegretPolicy:
         else:
             self.failed_moves_history[move]["regret_penalty"] *= \
                 self.regret_penalty_factor
+
+            if self.failed_moves_history[move]["regret_penalty"] > \
+                    self.initial_regret_penalty * \
+                    self.max_regret_penalty_factor:
+                self.failed_moves_history[move]["regret_penalty"] = \
+                    self.initial_regret_penalty * self.max_regret_penalty_factor
+
         self.failed_moves_history[move]["last_failed_move_epoch"] = self.epoch
 
         logging.info("last_failed_move_epoch: %d",
@@ -200,7 +208,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # The ratio of total empty cycles to cycles this epoch
         self.start_shared_ratio = 1 - float(self.configurations[0]["add_ratio"])
 
-        # self.average_bytes_per_packet = None
+        # The minimum average bytes per packet allowed before reducing the
+        # number of sidecores
+        self.min_average_byte_per_packet = None
+
+        self.average_bytes_per_packet = None
         self.ratio = None
         self.overall_io_ratio = None
         self.io_cores = None
@@ -209,7 +221,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         self.history_rounds = 0
         self.history = {
-            # "average_bytes_per_packet": [0, 0, 0],
+            "average_bytes_per_packet": [0, 0, 0],
             "empty_ratio": [0, 0, 0]  # ,
             # "overall_io_ratio": [0, 0, 0],
             # "effective_io_ratio": [0, 0, 0]
@@ -224,6 +236,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
 
         logging.info("\x1b[37mio cores  %d.\x1b[39m" % (self.io_cores,))
+        logging.info("\x1b[37maverage bytes per packet is %d.\x1b[39m" %
+                     (self.average_bytes_per_packet,))
         logging.info("\x1b[37mempty ratio is %.2f.\x1b[39m" % (self.ratio,))
         logging.info("\x1b[37meffective io ratio is %.2f.\x1b[39m" %
                      (self.effective_io_ratio,))
@@ -276,7 +290,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             self.history[field][1] = min(new_val, self.history[field][1])
             self.history[field][2] = max(new_val, self.history[field][2])
 
-        # update("average_bytes_per_packet", self.average_bytes_per_packet)
+        update("average_bytes_per_packet", self.average_bytes_per_packet)
         update("empty_ratio", self.ratio)
         # update("overall_io_ratio", self.overall_io_ratio)
         # update("effective_io_ratio", self.effective_io_ratio)
@@ -394,12 +408,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         #     logging.info("empty_polls ratio: 0.0.")
         #     logging.info("empty_works ratio: 0.0.")
 
-        # self.average_bytes_per_packet = 0
-        # if vhost_inst.per_queue_counters["sendmsg_calls"].delta > 0:
-        #     self.average_bytes_per_packet = \
-        #         float(vhost_inst.per_queue_counters["notif_bytes"].delta +
-        #               vhost_inst.per_queue_counters["poll_cycles"].delta) / \
-        #         vhost_inst.per_queue_counters["sendmsg_calls"].delta
+        self.average_bytes_per_packet = \
+            vhost_inst.per_queue_counters["handled_bytes"].delta / \
+            vhost_inst.per_queue_counters["handled_packets"].delta
+        logging.info("average bytes per packet: %d." %
+                     (self.average_bytes_per_packet,))
 
         # logging.info("efficient io ratio: %.2f" %
         #              (self.effective_io_ratio / self.overall_io_ratio,))
@@ -411,6 +424,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # The ratio of total empty cycles to cycles this epoch
         self.can_remove_ratio = \
             self.configurations[config_id]["can_remove_ratio"]
+
+        # The minimum average bytes per packet allowed before reducing the
+        # number of sidecores
+        self.min_average_byte_per_packet = \
+            self.configurations[config_id]["min_average_byte_per_packet"]
 
         # timer.done()
 
@@ -462,6 +480,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         #              (self.stop_shared_ratio,))
         # logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
         # return True
+
+    def batching_should_reduce_core_number(self):
+        return self.min_average_byte_per_packet > self.average_bytes_per_packet
 
 
 class VMCoreAdditionPolicy(AdditionPolicy):

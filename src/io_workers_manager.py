@@ -137,6 +137,13 @@ class IOWorkersManager:
             self.throughput_policy.should_update_core_number()
         remove_io_core, can_add_io_core = \
             self.vm_manager.should_update_core_number()
+        batching_remove_io_core = \
+            self.throughput_policy.batching_should_reduce_core_number()
+
+        if batching_remove_io_core and \
+                self.regret_policy.can_do_move("batching_remove_io_core"):
+            if self.regret_policy.is_move_good("batching_remove_io_core"):
+                return True
 
         if add_io_core and can_add_io_core and \
                 self.regret_policy.can_do_move("add_io_core"):

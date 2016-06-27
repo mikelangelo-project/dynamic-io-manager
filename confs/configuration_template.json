@@ -44,7 +44,8 @@
        "id": "<The configuration id. for example, elvis-1>",
        "vhost_workers": "<vhost workers number>",
        "add_ratio": "ratio of worker cycles to add an IO core.",
-       "can_remove_ratio": "ratio of empty cycles to remove an IO core."
+       "can_remove_ratio": "ratio of empty cycles to remove an IO core.",
+       "min_average_byte_per_packet": "the minimum average of bytes per packet before reducing the amount of sidecores."
      },
      ...
    ]

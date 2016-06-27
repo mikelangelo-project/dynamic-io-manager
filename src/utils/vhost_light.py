@@ -68,7 +68,9 @@ class VhostLight:
         }
         self.per_queue_counters = \
             {"notif_bytes": VhostPolledBytesCounter("notif_bytes"),
-             "poll_bytes": VhostNotifBytesCounter("poll_bytes")}
+             "poll_bytes": VhostNotifBytesCounter("poll_bytes"),
+             "handled_bytes": VhostNotifBytesCounter("handled_bytes"),
+             "handled_packets": VhostNotifBytesCounter("handled_packets")}
 
         self._initialize()
 

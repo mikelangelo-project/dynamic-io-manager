@@ -106,6 +106,8 @@ static PyMemberDef VhostWorker_members[] = {
     VHOST_WORKER_STAT(last_loop_tsc_end, "tsc when the last loop was performed"),
     VHOST_WORKER_STAT(poll_cycles, "cycles spent handling kicks in poll mode"),
     VHOST_WORKER_STAT(notif_cycles, "cycles spent handling works in notif mode"),
+    VHOST_WORKER_STAT(handled_bytes, "bytes sent/received"),
+    VHOST_WORKER_STAT(handled_packets, "bytes sent/received"),
     VHOST_WORKER_STAT(total_work_cycles, "total cycles spent handling works"),
     VHOST_WORKER_STAT(ksoftirq_occurrences, "number of times a softirq occured during worker work"),
     VHOST_WORKER_STAT(ksoftirq_time, "time (ns) that softirq process took while worker processed its work"),

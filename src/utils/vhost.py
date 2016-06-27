@@ -167,7 +167,7 @@ class Vhost:
         #      "poll_pending_cycles", "poll_wait"]  # , "sendmsg_calls"]
         # }
         self.per_queue_counters = {
-            n: VhostCounter(n) for n in ["handled_bytes"]
+            n: VhostCounter(n) for n in ["handled_bytes", "handled_packets"]
         }
 
         self._initialize()

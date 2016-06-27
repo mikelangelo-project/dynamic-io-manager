@@ -20,6 +20,9 @@ struct vhost_virtqueue_stats {
     u64 notif_wait; /* cycles elapsed between work arrival and handling in notif mode */
     u64 notif_limited; /* number of times the queue was limited by netweight in notif mode */
 
+    u64 handled_bytes; /* bytes sent/received */
+	u64 handled_packets; /* bytes sent/received */
+
     u64 ring_full; /* number of times the ring was full */
 
     u64 stuck_times; /* how many times this queue was stuck and limited other queues */
@@ -28,7 +31,7 @@ struct vhost_virtqueue_stats {
     u64 last_poll_tsc_end; /* tsc when the last poll finished */
     u64 last_notif_tsc_end; /* tsc when the last notif finished */
     u64 last_poll_empty_tsc; /* tsc when the queue was detected empty for the first time */
-    u64 handled_bytes; /* number of bytes handled by this queue in the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)*/
+    u64 handled_bytes_this_work; /* number of bytes handled by this queue in the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)*/
     u64 was_limited; /* flag indicating if the queue was limited by net-weight during the last poll/notif. Must be updated by the concrete vhost implementations (vhost-net)*/
 
     u64 ksoftirq_occurrences; /* number of times a softirq occured during the processing of this queue */
