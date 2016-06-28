@@ -21,7 +21,7 @@ struct vhost_virtqueue_stats {
     u64 notif_limited; /* number of times the queue was limited by netweight in notif mode */
 
     u64 handled_bytes; /* bytes sent/received */
-	u64 handled_packets; /* bytes sent/received */
+	u64 handled_packets; /* packets sent/received */
 
     u64 ring_full; /* number of times the ring was full */
 
