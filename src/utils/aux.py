@@ -5,34 +5,73 @@ import os
 import stat
 import re
 import logging
+import sys
+from subprocess import Popen, PIPE, STDOUT
 from os import popen
 
 from utils.get_cycles.get_cycles import Cycles
 
+class bcolors:
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[34m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    WARNING = YELLOW
+    FAIL = RED
+    INFO = BLUE
+    ENDC = '\033[0m'
+
 
 def syscmd(s):
     res = ''.join(popen(s).readlines()).strip()
-#     msg("%s -> %s" % (s, res))    
+#     msg("%s -> %s" % (s, res))
     return res
+
+def __live_execute(cmd):
+    cmd = " ".join(cmd)
+    info(cmd)
+    p = Popen(cmd, bufsize=-1, stdin=PIPE, stdout=PIPE, shell=True)
+    for line in iter(p.stdout.readline, ''):
+         print line.rstrip('\n')
+    if p.wait() != 0:
+        if p.stderr:
+            warn(p.stderr, step_back=2)
+        err(cmd + " failed!", step_back=2)
+    return p.stdout
 
 
 # prints a message to stdout + stderr, adds the source file + line number.
 # use this instead of echo
-def msg(s):
-    frame_info = getframeinfo(currentframe().f_back)
+def msg(s, step_back=1, end_of_line="\n"):
+    frame = currentframe()
+    for _ in xrange(step_back):
+        frame = frame.f_back
+    frame_info = getframeinfo(frame)
     f = os.path.basename(frame_info.filename)
     l = frame_info.lineno
-    print("[\x1b[33m%s:%d\x1b[39m] %s" % (f, l, s))
+    sys.stdout.write("[" + bcolors.BLUE + "%s:%d" % (f, l) + bcolors.ENDC + "] %s" % (s,) + end_of_line)
+    # Flushes the output buffer to achieve real time traces
+    sys.stdout.flush()
+
+
+# prints an info message to stdout + stderr
+def info(s, step_back=1):
+    msg(bcolors.INFO + "info: %s" % (s, ) + bcolors.ENDC, step_back+1)
 
 
 # prints a warning message to stdout + stderr
-def warn(s):
-    msg("warning: %s" % (s, ))
+def warn(s, step_back=1):
+    msg(bcolors.WARNING + "warning: " + bcolors.ENDC + "%s" % (s, ), step_back+1)
 
 
 # print an error message to stdout + stderr and exit
-def err(s):
-    msg("error: %s" % (s, ))
+def err(s, step_back=1):
+    msg(bcolors.FAIL + "error: " + bcolors.ENDC + "%s" % (s, ), step_back+1)
     exit(1)
 
 
