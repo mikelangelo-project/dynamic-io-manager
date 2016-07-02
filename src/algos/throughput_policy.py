@@ -65,6 +65,9 @@ class ThroughputRegretPolicy:
         self.requested_actions = updated_requested_actions
 
     def can_do_move(self, move):
+        if self.epoch < self.last_good_action + self.history_length * 2:
+            return False
+
         # logging.info("can_do_move: %s", move)
         if move not in self.requested_actions:
             self.requested_actions[move] = ([True], True)
@@ -141,11 +144,12 @@ class ThroughputRegretPolicy:
             ratio_after_sum += ratio
             ratio_after = ratio_after_sum / (i - grace_period + 1)
 
-            if ratio_before > ratio_after * 1.3:
-                break
-        logging.info("----------------------")
-        logging.info("ratio_before [%d]:%.2f", ratio_before)
-        logging.info("ratio_after [%d]:%.2f", ratio_after)
+            # if ratio_before > ratio_after * 1.3:
+            #     break
+
+        logging.info("--------------------------")
+        logging.info("--ratio_before [%d]:%.2f--", ratio_before)
+        logging.info("--ratio_after  [%d]:%.2f--", ratio_after)
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
