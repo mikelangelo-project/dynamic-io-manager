@@ -233,7 +233,7 @@ class VhostHandledBytesCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "handled_bytes")
 
     def update(self, vhost, elements):
-        total = sum(e.notif_bytes for e in elements)
+        total = sum(e.handled_bytes for e in elements)
         return VhostCounterBase.update(self, vhost, total)
 
 
@@ -242,5 +242,5 @@ class VhostHandledPacketsCounter(VhostCounterBase):
         VhostCounterBase.__init__(self, name, "handled_packets")
 
     def update(self, vhost, elements):
-        total = sum(e.notif_bytes for e in elements)
+        total = sum(e.handled_packets for e in elements)
         return VhostCounterBase.update(self, vhost, total)
