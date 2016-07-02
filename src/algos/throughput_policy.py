@@ -415,7 +415,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         logging.info("handled_bytes: %d." %
                      (vhost_inst.per_queue_counters["handled_bytes"].delta,))
-        logging.info("handled_bytes: %d." %
+        logging.info("handled_packets: %d." %
                      (vhost_inst.per_queue_counters["handled_packets"].delta,))
         logging.info("average bytes per packet: %d." %
                      (self.average_bytes_per_packet,))
