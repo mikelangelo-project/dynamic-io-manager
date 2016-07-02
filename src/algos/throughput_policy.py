@@ -147,9 +147,8 @@ class ThroughputRegretPolicy:
             #     break
 
         logging.info("")
-        logging.info("--------------------------")
-        logging.info("--ratio_before [%d]:%.2f--", ratio_before)
-        logging.info("--ratio_after  [%d]:%.2f--", ratio_after)
+        logging.info("ratio_before :%.2f", ratio_before)
+        logging.info("ratio_after  :%.2f", ratio_after)
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
