@@ -28,8 +28,9 @@ class ThroughputRegretPolicy:
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
-        self.history_length = 19
+        self.history_length = 20
         self.history = []
+        self.grace_period = 5
 
     def initialize(self):
         pass
@@ -119,9 +120,7 @@ class ThroughputRegretPolicy:
 
         ratio_after_sum = 0
         ratio_after = 0
-        iterations = 20
-        grace_period = 5
-        for i in xrange(iterations):
+        for i in xrange(self.history_length + self.grace_period):
             time.sleep(self.interval)
             # refresh all counters
             CPUUsage.INSTANCE.update()
@@ -138,11 +137,11 @@ class ThroughputRegretPolicy:
             logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
             logging.info("ratio_after [%d]:%.2f", i, ratio)
 
-            if i < grace_period:
+            if i < self.grace_period:
                 continue
 
             ratio_after_sum += ratio
-            ratio_after = ratio_after_sum / (i - grace_period + 1)
+            ratio_after = ratio_after_sum / (i - self.grace_period + 1)
 
             # if ratio_before > ratio_after * 1.3:
             #     break
