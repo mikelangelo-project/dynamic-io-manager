@@ -150,7 +150,7 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before :%.2f", ratio_before)
         logging.info("ratio_after  :%.2f", ratio_after)
 
-        if ratio_before < ratio_after:
+        if ratio_before + 0.05 < ratio_after:
             self.last_good_action = self.epoch
 
             if move in self.failed_moves_history:
