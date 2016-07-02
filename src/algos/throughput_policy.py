@@ -22,13 +22,13 @@ class ThroughputRegretPolicy:
 
         self.requested_actions = {}
         self.requested_actions_ratio = 0.6
-        self.requested_actions_history_len = 10
+        self.requested_actions_history_len = 20
 
         self.current_ratio = 0.0
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
-        self.history_length = 5
+        self.history_length = 19
         self.history = []
 
     def initialize(self):
