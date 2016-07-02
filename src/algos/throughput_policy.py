@@ -413,12 +413,13 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             vhost_inst.per_queue_counters["handled_packets"].delta \
             if vhost_inst.per_queue_counters["handled_packets"].delta > 0 else 1
 
-        logging.info("handled_bytes: %d." %
-                     (vhost_inst.per_queue_counters["handled_bytes"].delta,))
-        logging.info("handled_packets: %d." %
-                     (vhost_inst.per_queue_counters["handled_packets"].delta,))
-        logging.info("average bytes per packet: %d." %
-                     (self.average_bytes_per_packet,))
+        # if vhost_inst.per_queue_counters["handled_packets"].delta > 1000:
+        #     logging.info("handled_bytes: %d." %
+        #                  (vhost_inst.per_queue_counters["handled_bytes"].delta,))
+        #     logging.info("handled_packets: %d." %
+        #                  (vhost_inst.per_queue_counters["handled_packets"].delta,))
+        #     logging.info("average bytes per packet: %d." %
+        #                  (self.average_bytes_per_packet,))
 
         # logging.info("efficient io ratio: %.2f" %
         #              (self.effective_io_ratio / self.overall_io_ratio,))
