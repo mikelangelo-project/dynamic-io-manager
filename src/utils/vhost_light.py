@@ -69,8 +69,8 @@ class VhostLight:
         self.per_queue_counters = \
             {"notif_bytes": VhostPolledBytesCounter("notif_bytes"),
              "poll_bytes": VhostNotifBytesCounter("poll_bytes"),
-             "handled_bytes": VhostNotifBytesCounter("handled_bytes"),
-             "handled_packets": VhostNotifBytesCounter("handled_packets")}
+             "handled_bytes": VhostHandledBytesCounter("handled_bytes"),
+             "handled_packets": VhostHandledPacketsCounter("handled_packets")}
 
         self._initialize()
 
@@ -222,6 +222,24 @@ class VhostPolledBytesCounter(VhostCounterBase):
 class VhostNotifBytesCounter(VhostCounterBase):
     def __init__(self, name):
         VhostCounterBase.__init__(self, name, "notif_bytes")
+
+    def update(self, vhost, elements):
+        total = sum(e.notif_bytes for e in elements)
+        return VhostCounterBase.update(self, vhost, total)
+
+
+class VhostHandledBytesCounter(VhostCounterBase):
+    def __init__(self, name):
+        VhostCounterBase.__init__(self, name, "handled_bytes")
+
+    def update(self, vhost, elements):
+        total = sum(e.notif_bytes for e in elements)
+        return VhostCounterBase.update(self, vhost, total)
+
+
+class VhostHandledPacketsCounter(VhostCounterBase):
+    def __init__(self, name):
+        VhostCounterBase.__init__(self, name, "handled_packets")
 
     def update(self, vhost, elements):
         total = sum(e.notif_bytes for e in elements)
