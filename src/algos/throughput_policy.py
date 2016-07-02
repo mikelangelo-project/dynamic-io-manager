@@ -134,14 +134,18 @@ class ThroughputRegretPolicy:
             logging.info("ratio_after: %.2f", ratio)
             logging.info("throughput:   %.2fGbps", ratio * 2.2 * 8)
             logging.info("ratio_after [%d]:%.2f", i, ratio)
-            ratio_after_sum += ratio
-            ratio_after = ratio_after_sum / (i + 1)
 
             if i < grace_period:
                 continue
 
+            ratio_after_sum += ratio
+            ratio_after = ratio_after_sum / (i - grace_period + 1)
+
             if ratio_before > ratio_after * 1.3:
                 break
+        logging.info("----------------------")
+        logging.info("ratio_before [%d]:%.2f", ratio_before)
+        logging.info("ratio_after [%d]:%.2f", ratio_after)
 
         if ratio_before < ratio_after:
             self.last_good_action = self.epoch
