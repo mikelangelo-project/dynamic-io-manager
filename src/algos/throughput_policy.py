@@ -217,7 +217,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         # The minimum average bytes per packet allowed before reducing the
         # number of sidecores
-        self.min_average_byte_per_packet = None
+        self.min_average_byte_per_packet = \
+            int(self.configurations[1]["min_average_byte_per_packet"])
 
         self.average_bytes_per_packet = None
         self.ratio = None
