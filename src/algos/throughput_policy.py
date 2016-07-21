@@ -11,8 +11,8 @@ class ThroughputRegretPolicy:
     def __init__(self, policy_info, backing_device_manager):
         self.backing_device_manager = backing_device_manager
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 2
-        self.max_regret_penalty_factor = 5
+        self.regret_penalty_factor = 10
+        self.max_regret_penalty_factor = 50
         self.initial_regret_penalty = 100
         self.epoch = 0
 
