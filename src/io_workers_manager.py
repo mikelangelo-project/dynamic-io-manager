@@ -142,8 +142,11 @@ class IOWorkersManager:
 
         if batching_remove_io_core and \
                 self.regret_policy.can_do_move("batching_remove_io_core"):
+            self._remove_io_core()
             if self.regret_policy.is_move_good("batching_remove_io_core"):
                 return True
+            self._add_io_core()
+            return False
 
         if add_io_core and can_add_io_core and \
                 self.regret_policy.can_do_move("add_io_core"):
