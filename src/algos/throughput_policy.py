@@ -11,8 +11,8 @@ class ThroughputRegretPolicy:
     def __init__(self, policy_info, backing_device_manager):
         self.backing_device_manager = backing_device_manager
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 3
-        self.max_regret_penalty_factor = 50
+        self.regret_penalty_factor = 2
+        self.max_regret_penalty_factor = 5
         self.initial_regret_penalty = 100
         self.epoch = 0
 
@@ -219,6 +219,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # number of sidecores
         self.min_average_byte_per_packet = \
             int(self.configurations[1]["min_average_byte_per_packet"])
+        logging.info("\x1b[37min_average_byte_per_packet  %d.\x1b[39m" %
+                     (self.min_average_byte_per_packet,))
 
         self.average_bytes_per_packet = None
         self.ratio = None
@@ -497,7 +499,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # return True
 
     def batching_should_reduce_core_number(self):
-        return self.min_average_byte_per_packet > self.average_bytes_per_packet
+        if self.min_average_byte_per_packet > self.average_bytes_per_packet:
+            return True
+
+        return False
 
 
 class VMCoreAdditionPolicy(AdditionPolicy):
