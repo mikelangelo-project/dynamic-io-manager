@@ -501,6 +501,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # return True
 
     def batching_should_reduce_core_number(self):
+        if not self.shared_workers or self.io_cores == 1:
+            return False
+
         if self.min_average_byte_per_packet > self.average_bytes_per_packet:
             return True
 
