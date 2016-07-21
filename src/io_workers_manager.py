@@ -181,8 +181,7 @@ class IOWorkersManager:
         if not balance_changes:
             return
         self.move_devices(balance_changes)
-
-        if self.regret_policy.is_move_good("update_balance"):
+        if not self.regret_policy.is_move_good("update_balance"):
             revert_balance_changes = {}
             for dev_id, (old_worker, new_worker) in balance_changes.items():
                 revert_balance_changes[dev_id] = (new_worker, old_worker)

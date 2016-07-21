@@ -153,12 +153,14 @@ class ThroughputRegretPolicy:
         if ratio_before + 0.05 < ratio_after:
             self.last_good_action = self.epoch
 
-            if move in self.failed_moves_history:
-                self.failed_moves_history[move]["regret_penalty"] = \
-                    self.initial_regret_penalty
+            # if move in self.failed_moves_history:
+            #     self.failed_moves_history[move]["regret_penalty"] = \
+            #         self.initial_regret_penalty
 
             # after a successful action we reset the requested actions histogram
             self.requested_actions = {}
+            # reset failed moves
+            self.failed_moves_history = {}
             return True
 
         # logging.info("regret")
