@@ -230,13 +230,15 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.io_cores = None
         self.shared_workers = False
         self.effective_io_ratio = None
+        self.throughput = None
 
         self.history_rounds = 0
         self.history = {
             "average_bytes_per_packet": [0, 0, 0],
-            "empty_ratio": [0, 0, 0]  # ,
+            "empty_ratio": [0, 0, 0],
             # "overall_io_ratio": [0, 0, 0],
             # "effective_io_ratio": [0, 0, 0]
+            "throughput": [0, 0, 0]
         }
         self.negative_ratio_rounds = 0
         self._init_history()
@@ -306,6 +308,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         update("empty_ratio", self.ratio)
         # update("overall_io_ratio", self.overall_io_ratio)
         # update("effective_io_ratio", self.effective_io_ratio)
+        update("throughput", self.throughput)
 
         if self.history_rounds == 100:
             self.print_history()
@@ -424,6 +427,10 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             vhost_inst.per_queue_counters["handled_bytes"].delta / \
             vhost_inst.per_queue_counters["handled_packets"].delta \
             if vhost_inst.per_queue_counters["handled_packets"].delta > 0 else 1
+
+        self.throughput = \
+            vhost_inst.per_queue_counters["handled_bytes"].delta / \
+            vhost_inst.cycles.delta * 2.2 * 8
 
         # if vhost_inst.per_queue_counters["handled_packets"].delta > 1000:
         #     logging.info("handled_bytes: %d." %
@@ -601,10 +608,10 @@ class VMCoreAdditionPolicy(AdditionPolicy):
         # logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
         # logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
 
-        if add:
-            logging.info("\x1b[37mshould add VM cores, empty cycles ratio is "
-                         "%.2f.\x1b[39m" % (self.ratio, ))
-            logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
-            logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
+        # if add:
+        #     logging.info("\x1b[37mshould add VM cores, empty cycles ratio is "
+        #                  "%.2f.\x1b[39m" % (self.ratio, ))
+        #     logging.info("\x1b[37madd_ratio: %.2f.\x1b[39m" % (self.add_ratio,))
+        #     logging.info("\x1b[37mVM cores are %s.\x1b[39m" % (self.cpus, ))
 
         return add, can_remove
