@@ -380,7 +380,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
             softirq_cpu_ratio
         if self.ratio < 0:
             self.negative_ratio_rounds += 1
-            self.ratio = 0
+            # self.ratio = 0
 
         # this the ratio of cycles used to handle virtual IO.
         self.effective_io_ratio = \
@@ -460,7 +460,9 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
     def should_update_core_number(self):
         # vhost_inst = Vhost.INSTANCE.vhost_light  # Vhost.INSTANCE
-        add, can_remove = self._should_update_core_number(self.ratio)
+        add, can_remove = \
+            self._should_update_core_number(self.ratio
+                                            if self.ratio > 0 else 0.0)
         # if add:
         #     logging.info("\x1b[37mshould add IO workers, empty cycles "
         #                  "ratio is %.2f.\x1b[39m" % (self.ratio,))
@@ -494,7 +496,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
     def should_stop_shared_worker(self):
         if not self.shared_workers or self.io_cores > 1:
             return False
-        full_ratio = 1.0 - self.ratio
+        full_ratio = 1.0 - (self.ratio if self.ratio > 0 else 0.0)
         if self.stop_shared_ratio <= full_ratio:
             return False
         #
