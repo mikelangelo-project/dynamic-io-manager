@@ -22,15 +22,15 @@ class ThroughputRegretPolicy:
 
         self.requested_actions = {}
         self.requested_actions_ratio = 0.6
-        self.requested_actions_history_len = 50  # 20
+        self.requested_actions_history_len = 20  # 50
 
         self.current_ratio = 0.0
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
-        self.history_length = 50  # 20
+        self.history_length = 20  # 50
         self.history = []
-        self.grace_period = 10  # 5
+        self.grace_period = 5  # 10
 
         self.can_move_history = {}
         self.can_move_history_length = 100
