@@ -32,10 +32,22 @@ class ThroughputRegretPolicy:
         self.history = []
         self.grace_period = 10  # 5
 
+        self.can_move_history = {}
+        self.can_move_history_length = 100
+
     def initialize(self):
         pass
 
+    def print_can_move_history(self):
+        logging.info("can_move_history")
+        for move, c in self.can_move_history.items():
+            logging.info("%s: %d", move, c)
+
     def update(self):
+        if self.epoch % self.can_move_history_length:
+            self.print_can_move_history()
+            self.can_move_history = {}
+
         self.epoch += 1
         self.current_ratio, self.current_handled_bytes, self.current_cycles = \
             ThroughputRegretPolicy._calc_cycles_to_bytes_ratio()
@@ -60,12 +72,15 @@ class ThroughputRegretPolicy:
                 updated_requested_actions[move] = (epochs + [False], False)
                 continue
 
-            updated_requested_actions[move] = \
-                (epochs[1:self.requested_actions_history_len] + [False], False)
+            updated_requested_actions[move] = (epochs[1:] + [False], False)
 
         self.requested_actions = updated_requested_actions
 
     def can_do_move(self, move):
+        if move in self.can_move_history:
+            self.can_move_history[move] = 0
+        self.can_move_history[move] += 1
+
         if self.epoch < self.last_good_action + self.history_length * 2:
             return False
 
@@ -79,9 +94,8 @@ class ThroughputRegretPolicy:
             self.requested_actions[move] = (epochs + [True], True)
             return False
 
-        self.requested_actions[move] = \
-            (epochs[1:self.requested_actions_history_len] + [True], True)
-        if sum(1 for e in epochs if e) / len(epochs) < \
+        self.requested_actions[move] = (epochs[1:] + [True], True)
+        if len([e for e in epochs if e]) / len(epochs) < \
                 self.requested_actions_ratio:
             return False
 
