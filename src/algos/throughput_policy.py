@@ -44,7 +44,7 @@ class ThroughputRegretPolicy:
             logging.info("%s: %d", move, c)
 
     def update(self):
-        if self.epoch % self.can_move_history_length:
+        if self.epoch % self.can_move_history_length == 0:
             self.print_can_move_history()
             self.can_move_history = {}
 
