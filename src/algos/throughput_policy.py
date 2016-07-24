@@ -77,7 +77,7 @@ class ThroughputRegretPolicy:
         self.requested_actions = updated_requested_actions
 
     def can_do_move(self, move):
-        if move in self.can_move_history:
+        if move not in self.can_move_history:
             self.can_move_history[move] = 0
         self.can_move_history[move] += 1
 
