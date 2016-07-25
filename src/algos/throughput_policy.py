@@ -10,10 +10,10 @@ from utils.aux import parse_user_list
 class ThroughputRegretPolicy:
     def __init__(self, policy_info, backing_device_manager):
         self.backing_device_manager = backing_device_manager
-        self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 10
-        self.max_regret_penalty_factor = 50
-        self.initial_regret_penalty = 100
+        self.interval = 0.1  # float(policy_info["interval"])
+        self.regret_penalty_factor = 2  # 10
+        self.max_regret_penalty_factor = 5  # 50
+        self.initial_regret_penalty = 10  # 100
         self.epoch = 0
 
         self.failed_moves_history = {}
@@ -22,18 +22,18 @@ class ThroughputRegretPolicy:
 
         self.requested_actions = {}
         self.requested_actions_ratio = 0.6
-        self.requested_actions_history_len = 50  # 20
+        self.requested_actions_history_len = 5  # 50  # 20
 
         self.current_ratio = 0.0
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
-        self.history_length = 50  # 20
+        self.history_length = 5  # 50  # 20
         self.history = []
-        self.grace_period = 10  # 5
+        self.grace_period = 1  # 10  # 5
 
         self.can_move_history = {}
-        self.can_move_history_length = 100
+        self.can_move_history_length = 10  # 100
 
     def initialize(self):
         pass
