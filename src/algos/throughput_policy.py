@@ -10,10 +10,10 @@ from utils.aux import parse_user_list
 class ThroughputRegretPolicy:
     def __init__(self, policy_info, backing_device_manager):
         self.backing_device_manager = backing_device_manager
-        self.interval = 0.1  # float(policy_info["interval"])
-        self.regret_penalty_factor = 2  # 10
-        self.max_regret_penalty_factor = 5  # 50
-        self.initial_regret_penalty = 10  # 100
+        self.interval = float(policy_info["interval"])
+        self.regret_penalty_factor = 10
+        self.max_regret_penalty_factor = 50
+        self.initial_regret_penalty = 100
         self.epoch = 0
 
         self.failed_moves_history = {}
@@ -22,18 +22,18 @@ class ThroughputRegretPolicy:
 
         self.requested_actions = {}
         self.requested_actions_ratio = 0.6
-        self.requested_actions_history_len = 5  # 50  # 20
+        self.requested_actions_history_len = 20
 
         self.current_ratio = 0.0
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
-        self.history_length = 5  # 50  # 20
+        self.history_length = 20
         self.history = []
-        self.grace_period = 1  # 10  # 5
+        self.grace_period = 5
 
         self.can_move_history = {}
-        self.can_move_history_length = 10  # 100
+        self.can_move_history_length = 100
 
     def initialize(self):
         pass
@@ -257,6 +257,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.negative_ratio_rounds = 0
         self._init_history()
 
+        self.borrowed_ratio = 0
+
     def initialize(self):
         pass
 
@@ -339,7 +341,8 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.shared_workers = shared_workers
 
         total_cycles_this_epoch = cycles_this_epoch * self.io_cores
-        empty_cycles = total_cycles_this_epoch - vhost_inst.work_cycles.delta
+        empty_cycles = \
+            total_cycles_this_epoch - vhost_inst.work_cycles.delta
 
         # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
         #              (vhost_inst.cycles.delta,))
@@ -391,10 +394,11 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # the idle cycles ratio in the iocores not including the ksoftirq
         # activity (which is a useful work). 1 means a full core was wasted.
         self.ratio = float(empty_cycles) / float(cycles_this_epoch) - \
-            softirq_cpu_ratio
+            softirq_cpu_ratio - self.borrowed_ratio
         if self.ratio < 0:
             self.negative_ratio_rounds += 1
-            # self.ratio = 0
+            self.borrowed_ratio = -self.ratio
+            self.ratio = 0
 
         # this the ratio of cycles used to handle virtual IO.
         self.effective_io_ratio = \
