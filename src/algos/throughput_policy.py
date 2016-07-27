@@ -35,6 +35,8 @@ class ThroughputRegretPolicy:
         self.can_move_history = {}
         self.can_move_history_length = 100
 
+        self.good_move_margin = 0.01  # 0.05
+
     def initialize(self):
         pass
 
@@ -81,7 +83,7 @@ class ThroughputRegretPolicy:
             self.can_move_history[move] = 0
         self.can_move_history[move] += 1
 
-        if self.epoch < self.last_good_action + self.history_length * 2:
+        if self.epoch < self.last_good_action + self.history_length * 1.5:
             return False
 
         # logging.info("can_do_move: %s", move)
@@ -164,7 +166,7 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before :%.2f", ratio_before)
         logging.info("ratio_after  :%.2f", ratio_after)
 
-        if ratio_before + 0.05 < ratio_after:
+        if ratio_before + self.good_move_margin < ratio_after:
             self.last_good_action = self.epoch
 
             # if move in self.failed_moves_history:
