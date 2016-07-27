@@ -95,7 +95,7 @@ class ThroughputRegretPolicy:
             return False
 
         self.requested_actions[move] = (epochs[1:] + [True], True)
-        if len([e for e in epochs if e]) / len(epochs) < \
+        if float(len([e for e in epochs if e])) / float(len(epochs)) < \
                 self.requested_actions_ratio:
             return False
 
