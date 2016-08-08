@@ -91,7 +91,7 @@ class IOManager:
                 {
                     "min_average_byte_per_packet": 0,
                     "can_remove_ratio": 1.0,
-                    "add_ratio": 0.05,
+                    "add_ratio": -0.05,
                     "id": "elvis-4",
                     "vhost_workers": 4
                 }
