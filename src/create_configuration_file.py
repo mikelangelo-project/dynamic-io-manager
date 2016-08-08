@@ -97,7 +97,7 @@ class IOManager:
                 }
             ]
         }
-        config["interval"] = "0.05"
+        config["interval"] = "0.1"
         config["vm_core_addition_policy"] = {
             "add_ratio": "0.05",
             "can_remove_ratio": "1.0"
@@ -119,7 +119,7 @@ class IOManager:
         config["path"] = os.path.dirname(os.path.abspath(__file__))
         config["use_mover"] = False
         config["throughput_regret_policy"] = {
-            "interval": "0.01"
+            "interval": "0.05"
         }
 
         config["vms"] = [
