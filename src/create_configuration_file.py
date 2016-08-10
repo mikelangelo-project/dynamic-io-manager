@@ -61,35 +61,35 @@ class IOManager:
         config["throughput_policy"] = {
             "configurations": [
                 {
-                    "min_average_byte_per_packet": 0,
+                    "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.0,
                     "add_ratio": 0.4,
                     "id": "elvis-0",
                     "vhost_workers": 0
                 },
                 {
-                    "min_average_byte_per_packet": 0,
+                    "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.8,
                     "add_ratio": 0.05,
                     "id": "elvis-1",
                     "vhost_workers": 1
                 },
                 {
-                    "min_average_byte_per_packet": 0,
+                    "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.5,
                     "add_ratio": 0.05,
                     "id": "elvis-2",
                     "vhost_workers": 2
                 },
                 {
-                    "min_average_byte_per_packet": 0,
+                    "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.8,
                     "add_ratio": 0.05,
                     "id": "elvis-3",
                     "vhost_workers": 3
                 },
                 {
-                    "min_average_byte_per_packet": 0,
+                    "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 1.0,
                     "add_ratio": -0.05,
                     "id": "elvis-4",
