@@ -119,7 +119,7 @@ class IOManager:
         config["path"] = os.path.dirname(os.path.abspath(__file__))
         config["use_mover"] = False
         config["throughput_regret_policy"] = {
-            "interval": "0.05"
+            "interval": "0.1"
         }
 
         config["vms"] = [
