@@ -2,18 +2,20 @@
 import logging
 import time
 
+import traceback
 from utils.vhost import Vhost
 from utils.cpuusage import CPUUsage
 from utils.aux import parse_user_list
+from utils.cpus import CPU
 
 
 class ThroughputRegretPolicy:
     def __init__(self, policy_info, backing_device_manager):
         self.backing_device_manager = backing_device_manager
         self.interval = float(policy_info["interval"])
-        self.regret_penalty_factor = 10
-        self.max_regret_penalty_factor = 50
-        self.initial_regret_penalty = 100
+        self.regret_penalty_factor = 2
+        self.max_regret_penalty_factor = 5
+        self.initial_regret_penalty = 20
         self.epoch = 0
 
         self.failed_moves_history = {}
@@ -28,12 +30,12 @@ class ThroughputRegretPolicy:
         self.current_cycles = 0
         self.current_handled_bytes = 0
 
-        self.history_length = 20
+        self.history_length = 5
         self.history = []
         self.grace_period = 5
 
         self.can_move_history = {}
-        self.can_move_history_length = 100
+        self.can_move_history_length = 5
 
         self.good_move_margin = 0.01  # 0.05
 
@@ -166,7 +168,8 @@ class ThroughputRegretPolicy:
         logging.info("ratio_before :%.2f", ratio_before)
         logging.info("ratio_after  :%.2f", ratio_after)
 
-        if ratio_before + self.good_move_margin < ratio_after:
+        if ratio_before == ratio_after or \
+           ratio_before + self.good_move_margin < ratio_after:
             self.last_good_action = self.epoch
 
             # if move in self.failed_moves_history:
@@ -208,6 +211,7 @@ class AdditionPolicy:
         # The ratio of total empty cycles to cycles this epoch
         self.add_ratio = None
 
+        # two prints for the next function (_should_update...) the second call print add_ratio as none?
         # The ratio of total empty cycles to cycles this epoch
         self.can_remove_ratio = None
 
@@ -342,9 +346,12 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         self.io_cores = len(workers) if shared_workers else 1
         self.shared_workers = shared_workers
 
-        total_cycles_this_epoch = cycles_this_epoch * self.io_cores
+        total_cycles_this_epoch = cycles_this_epoch * len(workers)
         empty_cycles = \
             total_cycles_this_epoch - vhost_inst.work_cycles.delta
+
+        if empty_cycles < 0:
+            empty_cycles = 0
 
         # logging.info("\x1b[37mcycles.delta      %d.\x1b[39m" %
         #              (vhost_inst.cycles.delta,))
@@ -367,32 +374,6 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # logging.info("throughput:   %.2fGbps", ratio_before * 2.2 * 8)
 
         softirq_cpu_ratio = 0
-        if shared_workers:
-            io_cores_cpus = [workers[w_id]["cpu"] for w_id in workers.keys()]
-            # logging.info("\x1b[37mio_cores_cpus %s.\x1b[39m" %
-            #              (str(io_cores_cpus),))
-            softirq_cpu = CPUUsage.INSTANCE.get_softirq_cpu(io_cores_cpus)
-            # logging.info("\x1b[37msoftirq_cpu %.2f.\x1b[39m" % (softirq_cpu,))
-            total_interrupts = CPUUsage.INSTANCE.get_interrupts(io_cores_cpus)
-            # logging.info("\x1b[37mtotal_interrupts %d.\x1b[39m" %
-            #              (total_interrupts,))
-            # logging.info("\x1b[37msoftirq_interference_this_epoch %d."
-            #              "\x1b[39m" %
-            #              (vhost_inst.softirq_interference.delta,))
-            # ksoftirq thread is scheduled on our iocores, and worse yet it
-            # preempts the iocores thread. We measure the iocores activity and
-            # CPU usage using rdtsc assuming it is never preempts. softirq_cpu_
-            # ratio is the CPU usage of the softirq thread that didn't occur
-            # during a preemption of the thread in the iocore. 1 means a full
-            # core was used.
-            if float(total_interrupts) > 0:
-                softirq_cpu_ratio = \
-                    float(softirq_cpu) - float(softirq_cpu) * \
-                    float(vhost_inst.softirq_interference.delta) / \
-                    float(total_interrupts)
-            # logging.info("\x1b[37msoftirq cpu %.2f.\x1b[39m" %
-            #              (softirq_cpu_ratio,))
-
         # the idle cycles ratio in the iocores not including the ksoftirq
         # activity (which is a useful work). 1 means a full core was wasted.
         self.ratio = float(empty_cycles) / float(cycles_this_epoch) - \
@@ -450,7 +431,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         self.throughput = \
             vhost_inst.per_queue_counters["handled_bytes"].delta / \
-            vhost_inst.cycles.delta * 2.2 * 8
+            vhost_inst.cycles.delta
 
         # if vhost_inst.per_queue_counters["handled_packets"].delta > 1000:
         #     logging.info("handled_bytes: %d." %
@@ -511,7 +492,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
 
         # logging.info("\x1b[mfull ratio: %0.2f.\x1b[39m" % (full_ratio,))
         # suggested number of io cores, we are always rounding up
-        return True, max(int(self.effective_io_ratio), 1)
+        return True, max(int(self.effective_io_ratio/2.0), 1)
 
     def should_stop_shared_worker(self):
         if not self.shared_workers or self.io_cores > 1:
@@ -527,7 +508,7 @@ class IOWorkerThroughputPolicy(AdditionPolicy):
         # logging.info("\x1b[37mstop_shared_ratio: %.3f.\x1b[39m" %
         #              (self.stop_shared_ratio,))
         # logging.info("\x1b[37mfull_ratio: %.3f.\x1b[39m" % (full_ratio,))
-        # return True
+        return True
 
     def batching_should_reduce_core_number(self):
         if not self.shared_workers or self.io_cores == 1:
