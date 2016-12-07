@@ -2,6 +2,7 @@ import re
 import logging
 import time
 import sys
+import os
 
 import kernel_mapper
 from uptime import UpTimeCounterRaw
@@ -10,6 +11,7 @@ from utils.aux import syscmd, err, Timer, spilt_output_into_rows
 
 RAW_FIELD_SIZE = 8
 
+USER_HZ = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
 
 class UpTimeCounter:
     regex = re.compile("\s*(\d+.?\d*)\s+(\d+.?\d*)\s*")
@@ -106,11 +108,6 @@ class IRQCounter(IRQCounterBase):
 
 
 class CPUStatCounterBase:
-    common_fields = ["user", "nice", "system", "softirq", "irq", "idle",
-                     "iowait", "steal", "guest", "guest_nice"]
-    per_cpu_fields = ["id"] + common_fields
-    global_cpu_fields = common_fields
-
     def __init__(self):
         self.per_cpu_counters_start, self.global_cpu_counters_start = \
             self.read()
@@ -153,6 +150,12 @@ class CPUStatCounterBase:
 
 class CPUStatCounterRaw(CPUStatCounterBase):
     file_path = "/sys/class/stats/cpustat_addr"
+    common_fields = ["user", "nice", "system", "softirq", "irq", "idle",
+                     "iowait", "steal", "guest", "guest_nice"]
+    per_cpu_fields = ["id"] + common_fields
+    global_cpu_fields = common_fields
+    idle = 6
+    softirq = 4
 
     def __init__(self):
         with open(CPUStatCounterRaw.file_path, "r") as f:
@@ -181,7 +184,7 @@ class CPUStatCounterRaw(CPUStatCounterBase):
              for cpu, l in enumerate(self.per_cpu_counters_reader)]
         global_cpu_counters = \
             [sum([c[i + 1] for c in per_cpu_counters], 0)
-             for i in xrange(len(CPUStatCounterBase.global_cpu_fields))]
+             for i in xrange(len(CPUStatCounterRaw.global_cpu_fields))]
         # logging.info("global_cpu_fields")
         # logging.info(CPUStatCounterBase.global_cpu_fields)
         # logging.info("per_cpu_counters")
@@ -192,8 +195,17 @@ class CPUStatCounterRaw(CPUStatCounterBase):
         return per_cpu_counters, global_cpu_counters
 
 
+def convert_jiffies_to_ns(jiffies):
+    return (float(jiffies) / USER_HZ) * 10 ** 9
+
+
 class CPUStatCounter(CPUStatCounterBase):
     cmd = "/bin/cat /proc/stat"
+    common_fields = ["user", "nice", "system", "idle", "iowait", "irq",
+                     "softirq", "steal", "guest", "guest_nice"]
+    per_cpu_fields = ["id"] + common_fields
+    global_cpu_fields = common_fields
+
     global_cpu_regex = \
         re.compile("cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+"
                    "(\d+)\s+(\d+)\s+(\d+)\s+(\d+)")
@@ -202,17 +214,19 @@ class CPUStatCounter(CPUStatCounterBase):
                    "(\d+)\s+(\d+)\s+(\d+)\s+(\d+)")
     context_switches_regex = \
         re.compile("ctxt\s+(\d+)")
+    idle = 4
+    softirq = 7
 
     def __init__(self):
         CPUStatCounterBase.__init__(self)
 
     def read(self):
-        logging.info("CPUStatCounter._parse()")
+        # logging.info("CPUStatCounter._parse()")
         per_cpu_counters = []
         global_cpu_counters = \
             [0 for _ in xrange(len(CPUStatCounter.global_cpu_fields))]
 
-        raw_str = syscmd(CPUUsage.cmd)
+        raw_str = syscmd(CPUStatCounter.cmd)
         if not raw_str:
             return per_cpu_counters, global_cpu_counters
         for row in spilt_output_into_rows(raw_str):
@@ -224,7 +238,7 @@ class CPUStatCounter(CPUStatCounterBase):
                 g = r.groups()
                 # logging.info(g)
                 global_cpu_counters = \
-                    [int(g[i])
+                    [convert_jiffies_to_ns(int(g[i]))
                      for i in xrange(len(CPUStatCounter.global_cpu_fields) - 1)]
                 continue
 
@@ -233,7 +247,7 @@ class CPUStatCounter(CPUStatCounterBase):
                 # logging.info("per cpu counters")
                 g = r.groups()
                 # logging.info(g)
-                per_cpu_counters.append([int(g[i]) for i in xrange(len(
+                per_cpu_counters.append([int(g[0])] + [convert_jiffies_to_ns(int(g[i])) for i in xrange(1, len(
                     CPUStatCounter.per_cpu_fields))])
                 continue
 
@@ -242,7 +256,7 @@ class CPUStatCounter(CPUStatCounterBase):
                 # logging.info("context switches counter")
                 g = r.groups()
                 # logging.info(g)
-                global_cpu_counters.append(int(g[0]))
+                global_cpu_counters.append(convert_jiffies_to_ns(int(g[0])))
                 continue
         # logging.info("per_cpu_counters")
         # logging.info(per_cpu_counters)
@@ -272,7 +286,7 @@ class CPUUsage:
 
     def __init__(self, historesis=0.0):
         # gets both user and kernel cpu ticks.
-        self.current = CPUStatCounterRaw()  # CPUStatCounter()
+        self.current = CPUStatCounter() # CPUStatCounterRaw()
         self.projected = {c[0]: 0 for c in self.current.per_cpu_counters}
         self.softirqs = {c[0]: 0 for c in self.current.per_cpu_counters}
         self.interrups_counters = IRQCounter(len(self.current.per_cpu_counters))
@@ -286,17 +300,14 @@ class CPUUsage:
 
         h = self.historesis
         # logging.info(self.uptime.up_time_diff)
-        t_diff = float(self.uptime.up_time_diff) / 10 ** 7  # convert to HZ
+        t_diff = float(self.uptime.up_time_diff)
         # logging.info(t_diff)
-
-        idle = 6  # 4
-        softirq = 4  # 7
 
         for c in self.current.per_cpu_counters:
             # logging.info(str(c))
             self.projected[c[0]] = self.projected[c[0]] * h + \
-                (1.0 - h) * (1.0 - float(c[idle]) / t_diff)
-            self.softirqs[c[0]] = float(c[softirq]) / float(t_diff)
+                (1.0 - h) * (1.0 - float(c[self.current.idle]) / t_diff)
+            self.softirqs[c[0]] = float(c[self.current.softirq]) / float(t_diff)
 
         # for c in self.current.per_cpu_counters[:7]:
         #     cpu_usage_str = "%s: " % (c[0],)
@@ -358,7 +369,7 @@ class CPUUsage:
     def get_ticks(self):
         # in jiffies rather then nano-seconds
         # logging.info(self.uptime.up_time_diff)
-        return float(self.uptime.up_time_diff) / float(10 ** 7)
+        return float(self.uptime.up_time_diff)
 
 
 def main():
