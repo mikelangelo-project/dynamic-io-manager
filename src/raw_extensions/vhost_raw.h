@@ -51,7 +51,9 @@ struct vhost_device_stats {
 struct vhost_worker_stats {
     u64 loops; /* number of loops performed */
     u64 enabled_interrupts; /* number of times interrupts were re-enabled */
+    u64 tsc_cycles; /* current tsc read */
     u64 cycles; /* cycles spent in the worker, excluding cycles doing queue work */
+    u64 total_cycles; /* cycles spent in the worker */
     u64 mm_switches; /* number of times the mm was switched */
     u64 wait; /* number of cycles the worker thread was not running after schedule */
     u64 empty_works; /* number of times there were no works in the queue -- ignoring poll kicks  */
@@ -64,6 +66,7 @@ struct vhost_worker_stats {
 
     u64 poll_cycles; /* cycles spent handling kicks in poll mode */
     u64 notif_cycles; /* cycles spent handling works in notif mode */
+    u64 nett_work_cycles; /* total cycles spent handling works */
     u64 total_work_cycles; /* total cycles spent handling works */
 
     u64 ksoftirq_occurrences; /* number of times a softirq occured during worker work */
