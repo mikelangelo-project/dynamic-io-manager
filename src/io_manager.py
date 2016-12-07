@@ -172,6 +172,9 @@ def main(argv):
         sys.stderr = LoggerWriter(logging.ERROR)
     logging.info("****** start of a new run: %s ******" % (timestamp,))
 
+    # set the process affinity
+    os.system("taskset -cp {0} {1}".format("0", os.getpid()))
+
     # set the interval in which the IO manager works
     interval = float(conf["interval"]) if "interval" in conf \
         else IO_MANAGER_INTERVAL
@@ -227,6 +230,7 @@ def main(argv):
     # setup the io core controller
     io_workers_manager = IOWorkersManager(devices, vm_manager, bdm,
                                           conf["workers"],
+                                          conf["io_cores_restrictions"],
                                           vq_classifier,
                                           poll_policy,
                                           throughput_policy,
