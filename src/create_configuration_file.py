@@ -2,13 +2,10 @@
 import json
 import os
 import subprocess
+import argparse
 from utils.aux import msg, err, ls
 
 __author__ = 'yossiku'
-
-def usage(program_name, error):
-    print("%s <num_of_cores> <network_if_name_1> [network_if_name_2]" % (program_name, ))
-    sys.exit(0)
 
 class IOManager:
     MOUNT_POINT = "/sys/class/vhost"
@@ -47,7 +44,7 @@ class IOManager:
         return [dev_id for dev_id in ls(os.path.join(self.MOUNT_POINT, "dev"))
                 if dev_id not in ["power", "subsystem", "uevent"]]
 
-    def get_config_file(self):
+    def get_config_file(self, min, max):
         vms_pids = self.get_vms_pids()
         config = {}
 
@@ -63,35 +60,35 @@ class IOManager:
                 {
                     "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.0,
-                    "add_ratio": 0.4,
+                    "add_ratio": 0.5,
                     "id": "elvis-0",
                     "vhost_workers": 0
                 },
                 {
                     "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.8,
-                    "add_ratio": 0.05,
+                    "add_ratio": 0.12,
                     "id": "elvis-1",
                     "vhost_workers": 1
                 },
                 {
                     "min_average_byte_per_packet": 1600,
-                    "can_remove_ratio": 0.5,
-                    "add_ratio": 0.05,
+                    "can_remove_ratio": 0.8,
+                    "add_ratio": 0.12,
                     "id": "elvis-2",
                     "vhost_workers": 2
                 },
                 {
                     "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 0.8,
-                    "add_ratio": 0.05,
+                    "add_ratio": 0.12,
                     "id": "elvis-3",
                     "vhost_workers": 3
                 },
                 {
                     "min_average_byte_per_packet": 1600,
                     "can_remove_ratio": 1.0,
-                    "add_ratio": -0.05,
+                    "add_ratio": 0.12,
                     "id": "elvis-4",
                     "vhost_workers": 4
                 }
@@ -142,6 +139,10 @@ class IOManager:
                   }
             vm_info["devices"].append(dev)
 
+        config["io_cores_restrictions"] = {
+            "min": int(min or 0),
+            "max": int(max or 4)
+        }
         config["io_cores_balance_policy"] = {
             "id": "preconfigured",
             "configurations": [
@@ -209,22 +210,34 @@ class IOManager:
 
 
 def main(argv):
-    # parse command line options
-    if len(argv) < 3:
-        usage(argv[0], "Not enough arguments!")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("num_of_cores",
+                        help="is the number of cores on your system; use less if you want to confine the virtual machines and iocores to use a subset of the available cores",
+                        type=int)
 
-    num_of_cores = int(argv[1])
+    parser.add_argument("if_name",
+                        help="is the interface name (from the host perspective) in which all traffic of the virtual machines goes through. Currently, supporting up to 2 NICs")
+
+    parser.add_argument("--config", help="configuration file path")
+    parser.add_argument("--min", help="minimum number of iocores allowed")
+    parser.add_argument("--max", help="maximum number of iocores allowed")
+    args = parser.parse_args()
+
+    configuration_file = "/tmp/io_manager_configuration.json"
+    if args.config:
+        configuration_file = args.config
+
+    num_of_cores = args.num_of_cores
     if num_of_cores <= 4:
         err("num_of_cores must be greater than 4")
 
-    if_names = [argv[2]]
-    if len(argv) > 3:
-        if_names.append(argv[3])
+    if_names = args.if_name.split(',')
+    if len(if_names) > 2:
+        err("too many network interfaces")
 
     io_manager = IOManager(num_of_cores, if_names)
 
-    configuration_file = "/tmp/io_manager_configuration.json"
-    conf = io_manager.get_config_file()
+    conf = io_manager.get_config_file(args.min, args.max)
     with open(configuration_file, "w") as f:
         json.dump(conf, f, indent=2)
 

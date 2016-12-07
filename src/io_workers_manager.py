@@ -10,7 +10,7 @@ __author__ = 'eyalmo'
 
 class IOWorkersManager:
     def __init__(self, devices, vm_manager, backing_devices_manager,
-                 io_workers_info,
+                 io_workers_info, iocores_restrictions,
                  vq_classifier, poll_policy, throughput_policy, latency_policy,
                  io_core_policy=None, balance_policy=None, regret_policy=None):
         self.io_workers = [IOWorker(w_info) for w_info in io_workers_info]
@@ -24,6 +24,10 @@ class IOWorkersManager:
         self.io_core_policy = io_core_policy
         self.balance_policy = balance_policy
         self.regret_policy = regret_policy
+
+        self.min_iocores = iocores_restrictions["min"]
+        self.max_iocores = iocores_restrictions["max"]
+        logging.info("iocores restrictions - min: {0}, max: {1}".format(self.min_iocores, self.max_iocores))
 
         self.devices = devices
 
@@ -91,8 +95,16 @@ class IOWorkersManager:
         if not shared_workers:
             should_start, suggested_io_cores = \
                 self.throughput_policy.should_start_shared_worker()
-            if not should_start or \
-                    not self.regret_policy.can_do_move("start_shared_worker"):
+
+            if self.min_iocores > 0:
+                should_start = True
+                suggested_io_cores = self.min_iocores
+
+            if suggested_io_cores > self.max_iocores:
+                suggested_io_cores = self.max_iocores
+
+            if self.min_iocores == 0 and \
+                    (not should_start or not self.regret_policy.can_do_move("start_shared_worker")):
                 return False
             logging.info("round %d" % (iteration,))
             logging.info("\x1b[33menable shared IO workers.\x1b[39m")
@@ -112,7 +124,8 @@ class IOWorkersManager:
             # self.disable_shared_workers()
             # return False
 
-        if self.throughput_policy.should_stop_shared_worker():
+        if self.throughput_policy.should_stop_shared_worker() and \
+                        self.min_iocores == 0:
             if not self.regret_policy.can_do_move("stop_shared_worker"):
                 return False
             logging.info("round %d" % (iteration,))
@@ -139,6 +152,18 @@ class IOWorkersManager:
             self.vm_manager.should_update_core_number()
         batching_remove_io_core = \
             self.throughput_policy.batching_should_reduce_core_number()
+
+        if self.throughput_policy.ratio > 1.3:
+            remove_io_core = True
+
+        if self.min_iocores > len(self.io_workers):
+            add_io_core = can_add_io_core = True
+
+        if self.min_iocores >= len(self.io_workers):
+            remove_io_core = can_remove_io_core = False
+
+        if self.max_iocores == len(self.io_workers):
+            add_io_core = can_add_io_core = False
 
         if batching_remove_io_core and \
                 self.regret_policy.can_do_move("batching_remove_io_core"):
@@ -268,6 +293,7 @@ class IOWorkersManager:
         for dev in self.devices[1:]:
             worker_id = self._add_io_worker()
             vhost_write(vhost.devices[dev.id], "worker", worker_id)
+            vhost_worker_set_cpu_mask(vhost.workers[worker_id], 0xFF)
         vhost.vhost_light.update(rescan=True)
 
         self.backing_devices_manager.balance(self.io_workers)
